@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Perfil - Libreria Cultural</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+    <div class="grain"></div>
+
+    <header class="topbar">
+        <a class="brand" href="/profile" th:text="${'@' + user.username}">@usuario</a>
+        <form method="post" th:action="@{/logout}">
+            <button type="submit" class="ghost-btn">Cerrar sesion</button>
+        </form>
+    </header>
+
+    <main class="profile-wrap">
+        <section class="profile-head card">
+            <div>
+                <p class="kicker">Perfil activo</p>
+                <h1 th:text="${user.username}">usuario</h1>
+                <p class="muted" th:text="${user.email}">correo</p>
+            </div>
+            <div class="summary-pill">
+                <span>Total en biblioteca</span>
+                <strong th:text="${totalCount}">0</strong>
+            </div>
+        </section>
+
+        <section class="flash card" th:if="${successMessage != null}">
+            <p class="ok" th:text="${successMessage}"></p>
+        </section>
+        <section class="flash card" th:if="${errorMessage != null}">
+            <p class="error" th:text="${errorMessage}"></p>
+        </section>
+
+        <section class="card">
+            <h2>Biblioteca separada por tipo</h2>
+            <div class="stats-grid">
+                <article class="stat-item" th:each="entry : ${typeStats}">
+                    <span th:text="${entry.key}">tipo</span>
+                    <strong th:text="${entry.value}">0</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Radar de progreso</h2>
+            <div class="stats-grid">
+                <article class="stat-item" th:each="entry : ${stats}">
+                    <span th:text="${entry.key}">estado</span>
+                    <strong th:text="${entry.value}">0</strong>
+                </article>
+            </div>
+        </section>
+
+        <section class="card">
+            <h2>Anadir contenido a mi biblioteca</h2>
+            <form method="post" th:action="@{/profile/add}" class="add-form">
+                <label for="contentId">Contenido</label>
+                <select id="contentId" name="contentId">
+                    <option th:if="${#lists.isEmpty(contents)}" value="">No hay contenido</option>
+                    <option th:each="content : ${contents}" th:value="${content.id}"
+                            th:text="${content.title + ' - ' + (content.type != null ? content.type : 'sin tipo')}"></option>
+                </select>
+
+                <label for="movieStatus">Estado de pelicula (si aplica)</label>
+                <select id="movieStatus" name="movieStatus">
+                    <option th:each="status : ${movieStatusOptions}" th:value="${status}" th:text="${status}"></option>
+                </select>
+
+                <label for="bookCurrentPage">Pagina actual (si es libro)</label>
+                <input id="bookCurrentPage" name="bookCurrentPage" type="number" min="0" value="0">
+
+                <label for="bookTotalPages">Total de paginas (si es libro)</label>
+                <input id="bookTotalPages" name="bookTotalPages" type="number" min="0" value="0">
+
+                <button type="submit">Guardar en mi perfil</button>
+            </form>
+        </section>
+
+        <section class="card table-card">
+            <div class="media-header media-movie-head">
+                <h2>Peliculas</h2>
+                <span class="count-pill" th:text="${#lists.size(movieEntries) + ' items'}">0 items</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Titulo</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(movieEntries)}">
+                        <td colspan="4" class="muted">Aun no tienes peliculas.</td>
+                    </tr>
+                    <tr th:each="item : ${movieEntries}">
+                        <td th:text="${item.content.title}">Titulo</td>
+                        <td th:text="${item.addedDate != null ? item.addedDate : '-'}">Fecha</td>
+                        <td>
+                            <span class="status-chip"
+                                  th:classappend="${item.status == 'visto'} ? 'chip-seen' : 'chip-unseen'"
+                                  th:text="${item.status}">estado</span>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/movie-status(id=${item.id})}" class="row-form">
+                                <select name="movieStatus">
+                                    <option th:each="status : ${movieStatusOptions}" th:value="${status}"
+                                            th:selected="${status == item.status}" th:text="${status}"></option>
+                                </select>
+                                <button type="submit" class="mini">Actualizar</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/delete(id=${item.id})}">
+                                <button type="submit" class="mini danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card table-card">
+            <div class="media-header media-book-head">
+                <h2>Libros</h2>
+                <span class="count-pill" th:text="${#lists.size(bookEntries) + ' items'}">0 items</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Titulo</th>
+                        <th>Estado</th>
+                        <th>Progreso</th>
+                        <th>Actualizar paginas</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(bookEntries)}">
+                        <td colspan="5" class="muted">Aun no tienes libros.</td>
+                    </tr>
+                    <tr th:each="item : ${bookEntries}">
+                        <td th:text="${item.content.title}">Titulo</td>
+                        <td th:text="${item.status}">leyendo</td>
+                        <td>
+                            <div class="book-progress-label"
+                                 th:text="${(item.bookCurrentPage != null ? item.bookCurrentPage : 0) + ' / ' + (item.bookTotalPages != null ? item.bookTotalPages : 0)}">0 / 0</div>
+                            <div class="book-progress-bar">
+                                <div class="book-progress-fill"
+                                     th:style="${'width:' + ((item.bookTotalPages != null and item.bookTotalPages > 0 and item.bookCurrentPage != null) ? (item.bookCurrentPage * 100 / item.bookTotalPages) : 0) + '%'}"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/book-progress(id=${item.id})}" class="row-form">
+                                <input type="number" min="0" name="currentPage" th:value="${item.bookCurrentPage != null ? item.bookCurrentPage : 0}">
+                                <input type="number" min="0" name="totalPages" th:value="${item.bookTotalPages != null ? item.bookTotalPages : 0}">
+                                <button type="submit" class="mini">Guardar</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/delete(id=${item.id})}">
+                                <button type="submit" class="mini danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card table-card">
+            <div class="media-header media-series-head">
+                <h2>Series (marcar episodios)</h2>
+                <span class="count-pill" th:text="${#lists.size(seriesEntries) + ' items'}">0 items</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Serie</th>
+                        <th>Estado general</th>
+                        <th>Episodios marcados</th>
+                        <th>Marcar episodio</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(seriesEntries)}">
+                        <td colspan="5" class="muted">Aun no tienes series.</td>
+                    </tr>
+                    <tr th:each="item : ${seriesEntries}">
+                        <td th:text="${item.content.title}">Serie</td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
+                                <select name="status">
+                                    <option th:each="status : ${generalStatusOptions}" th:value="${status}"
+                                            th:selected="${status == item.status}" th:text="${status}"></option>
+                                </select>
+                                <button type="submit" class="mini">Actualizar</button>
+                            </form>
+                        </td>
+                        <td>
+                            <div th:if="${#lists.isEmpty(episodesByEntry[item.id])}" class="muted">Sin episodios marcados</div>
+                            <ul class="compact-list" th:if="${!#lists.isEmpty(episodesByEntry[item.id])}">
+                                <li th:each="ep : ${episodesByEntry[item.id]}"
+                                    th:text="${'T' + ep.seasonNumber + 'E' + ep.episodeNumber + ' - ' + (ep.watched ? 'visto' : 'no visto')}"></li>
+                            </ul>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/episodes(id=${item.id})}" class="row-form">
+                                <input type="number" min="1" name="seasonNumber" placeholder="Temporada" required>
+                                <input type="number" min="1" name="episodeNumber" placeholder="Episodio" required>
+                                <label><input type="checkbox" name="watched" value="true"> Visto</label>
+                                <button type="submit" class="mini">Guardar episodio</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/delete(id=${item.id})}">
+                                <button type="submit" class="mini danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="card table-card">
+            <div class="media-header media-disc-head">
+                <h2>Discos (marcar canciones)</h2>
+                <span class="count-pill" th:text="${#lists.size(discEntries) + ' items'}">0 items</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Disco</th>
+                        <th>Estado general</th>
+                        <th>Canciones</th>
+                        <th>Marcar cancion</th>
+                        <th>Acciones</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:if="${#lists.isEmpty(discEntries)}">
+                        <td colspan="5" class="muted">Aun no tienes discos.</td>
+                    </tr>
+                    <tr th:each="item : ${discEntries}">
+                        <td th:text="${item.content.title}">Disco</td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
+                                <select name="status">
+                                    <option th:each="status : ${generalStatusOptions}" th:value="${status}"
+                                            th:selected="${status == item.status}" th:text="${status}"></option>
+                                </select>
+                                <button type="submit" class="mini">Actualizar</button>
+                            </form>
+                        </td>
+                        <td>
+                            <div th:if="${#lists.isEmpty(songsByEntry[item.id])}" class="muted">Sin canciones marcadas</div>
+                            <ul class="compact-list" th:if="${!#lists.isEmpty(songsByEntry[item.id])}">
+                                <li th:each="song : ${songsByEntry[item.id]}"
+                                    th:text="${'#' + song.trackNumber + ' ' + song.trackTitle + ' - ' + (song.listened ? 'escuchada' : 'pendiente')}"></li>
+                            </ul>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/songs(id=${item.id})}" class="row-form">
+                                <input type="number" min="1" name="trackNumber" placeholder="Pista" required>
+                                <input type="text" name="trackTitle" placeholder="Titulo de cancion" required>
+                                <label><input type="checkbox" name="listened" value="true"> Escuchada</label>
+                                <button type="submit" class="mini">Guardar cancion</button>
+                            </form>
+                        </td>
+                        <td>
+                            <form method="post" th:action="@{/profile/{id}/delete(id=${item.id})}">
+                                <button type="submit" class="mini danger">Eliminar</button>
+                            </form>
+                        </td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biblioteca Cultural</title>
+    <link rel="stylesheet" th:href="@{/css/library.css}">
+</head>
+<body>
+    <div class="page-shell">
+        <header class="hero">
+            <p class="eyebrow">Panel de Seguimiento</p>
+            <h1>Biblioteca Cultural</h1>
+            <p class="subtitle">Gestiona contenidos por usuario, cambia estados y revisa estadisticas en una sola vista.</p>
+        </header>
+
+        <main class="layout">
+            <section class="card selector-card">
+                <h2>Usuario activo</h2>
+                <form method="get" th:action="@{/ui/library}" class="inline-form">
+                    <label for="userId">Selecciona usuario</label>
+                    <select id="userId" name="userId" onchange="this.form.submit()">
+                        <option th:if="${#lists.isEmpty(users)}" value="">No hay usuarios</option>
+                        <option th:each="user : ${users}"
+                                th:value="${user.id}"
+                                th:text="${user.username + ' (' + user.email + ')'}"
+                                th:selected="${selectedUserId != null and user.id == selectedUserId}"></option>
+                    </select>
+                </form>
+            </section>
+
+            <section class="card feedback-card" th:if="${successMessage != null}">
+                <p class="success" th:text="${successMessage}"></p>
+            </section>
+
+            <section class="card feedback-card" th:if="${errorMessage != null}">
+                <p class="error" th:text="${errorMessage}"></p>
+            </section>
+
+            <section class="card stats-card">
+                <h2>Resumen</h2>
+                <div class="stats-grid">
+                    <article class="stat-pill total">
+                        <span class="label">Total</span>
+                        <span class="value" th:text="${totalCount}">0</span>
+                    </article>
+                    <article class="stat-pill" th:each="entry : ${stats}">
+                        <span class="label" th:text="${entry.key}">pendiente</span>
+                        <span class="value" th:text="${entry.value}">0</span>
+                    </article>
+                </div>
+            </section>
+
+            <section class="card add-card">
+                <h2>Anadir contenido</h2>
+                <form method="post" th:action="@{/ui/library/add}" class="form-grid">
+                    <input type="hidden" name="userId" th:value="${selectedUserId}">
+
+                    <label for="contentId">Contenido</label>
+                    <select id="contentId" name="contentId" th:disabled="${selectedUserId == null}">
+                        <option th:if="${#lists.isEmpty(contents)}" value="">No hay contenido</option>
+                        <option th:each="content : ${contents}"
+                                th:value="${content.id}"
+                                th:text="${content.title + ' - ' + (content.type != null ? content.type : 'sin tipo')}"></option>
+                    </select>
+
+                    <label for="status">Estado</label>
+                    <select id="status" name="status" th:disabled="${selectedUserId == null}">
+                        <option th:each="status : ${statusOptions}" th:value="${status}" th:text="${status}"></option>
+                    </select>
+
+                    <button type="submit" th:disabled="${selectedUserId == null}">Guardar</button>
+                </form>
+            </section>
+
+            <section class="card table-card">
+                <h2>Biblioteca del usuario</h2>
+                <div class="table-wrapper">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Titulo</th>
+                                <th>Tipo</th>
+                                <th>Fecha</th>
+                                <th>Estado</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr th:if="${#lists.isEmpty(entries)}">
+                                <td colspan="6" class="empty">No hay registros para este usuario.</td>
+                            </tr>
+                            <tr th:each="item : ${entries}">
+                                <td th:text="${item.id}">1</td>
+                                <td th:text="${item.content.title}">Titulo</td>
+                                <td th:text="${item.content.type != null ? item.content.type : '-'}">tipo</td>
+                                <td th:text="${item.addedDate != null ? item.addedDate : '-'}">2026-01-01</td>
+                                <td>
+                                    <form method="post" th:action="@{/ui/library/{id}/status(id=${item.id})}" class="status-form">
+                                        <input type="hidden" name="userId" th:value="${selectedUserId}">
+                                        <select name="status">
+                                            <option th:each="status : ${statusOptions}"
+                                                    th:value="${status}"
+                                                    th:selected="${status == item.status}"
+                                                    th:text="${status}"></option>
+                                        </select>
+                                        <button type="submit" class="secondary">Actualizar</button>
+                                    </form>
+                                </td>
+                                <td>
+                                    <form method="post" th:action="@{/ui/library/{id}/delete(id=${item.id})}">
+                                        <input type="hidden" name="userId" th:value="${selectedUserId}">
+                                        <button type="submit" class="danger">Eliminar</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+</body>
+</html>

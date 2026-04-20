@@ -1,0 +1,513 @@
+package com.proyectofinal.libreriacultural.controllers;
+
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+
+import com.proyectofinal.libreriacultural.Repositories.ContentRepository;
+import com.proyectofinal.libreriacultural.Repositories.UserContentRepository;
+import com.proyectofinal.libreriacultural.Repositories.UserRepository;
+import com.proyectofinal.libreriacultural.Repositories.UserSeriesEpisodeProgressRepository;
+import com.proyectofinal.libreriacultural.Repositories.UserSongProgressRepository;
+import com.proyectofinal.libreriacultural.domain.Content;
+import com.proyectofinal.libreriacultural.domain.User;
+import com.proyectofinal.libreriacultural.domain.UserContent;
+import com.proyectofinal.libreriacultural.domain.UserSeriesEpisodeProgress;
+import com.proyectofinal.libreriacultural.domain.UserSongProgress;
+
+import jakarta.servlet.http.HttpSession;
+
+@Controller
+public class SessionViewController {
+
+    private static final String SESSION_USER_ID = "sessionUserId";
+    private static final Set<String> VALID_CONTENT_TYPES = Set.of("pelicula", "serie", "libro", "disco");
+    private static final Set<String> VALID_GENERAL_STATUSES = Set.of("pendiente", "en_progreso", "abandonado");
+    private static final Set<String> VALID_MOVIE_STATUSES = Set.of("visto", "no_visto");
+
+    private final UserContentRepository userContentRepository;
+    private final UserRepository userRepository;
+    private final ContentRepository contentRepository;
+    private final UserSeriesEpisodeProgressRepository userSeriesEpisodeProgressRepository;
+    private final UserSongProgressRepository userSongProgressRepository;
+
+    public SessionViewController(UserContentRepository userContentRepository, UserRepository userRepository,
+            ContentRepository contentRepository,
+            UserSeriesEpisodeProgressRepository userSeriesEpisodeProgressRepository,
+            UserSongProgressRepository userSongProgressRepository) {
+        this.userContentRepository = userContentRepository;
+        this.userRepository = userRepository;
+        this.contentRepository = contentRepository;
+        this.userSeriesEpisodeProgressRepository = userSeriesEpisodeProgressRepository;
+        this.userSongProgressRepository = userSongProgressRepository;
+    }
+
+    @GetMapping("/")
+    public String home(Model model, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser != null) {
+            return "redirect:/profile";
+        }
+
+        List<Content> featured = contentRepository.findAll().stream().limit(8).toList();
+        model.addAttribute("featured", featured);
+        return "index";
+    }
+
+    @PostMapping("/login")
+    public String login(@RequestParam String username, @RequestParam String password,
+            RedirectAttributes redirectAttributes, HttpSession session) {
+        String normalizedUsername = username == null ? "" : username.trim();
+        User user = userRepository.findByUsername(normalizedUsername).orElse(null);
+
+        if (user == null || user.getPassword() == null || !user.getPassword().equals(password)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Usuario o contrasena incorrectos");
+            return "redirect:/";
+        }
+
+        session.setAttribute(SESSION_USER_ID, user.getId());
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/";
+    }
+
+    @GetMapping("/profile")
+    public String profile(Model model, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        List<UserContent> entries = userContentRepository.findByUserId(sessionUser.getId());
+        List<UserContent> movies = new ArrayList<>();
+        List<UserContent> series = new ArrayList<>();
+        List<UserContent> books = new ArrayList<>();
+        List<UserContent> discs = new ArrayList<>();
+
+        for (UserContent entry : entries) {
+            String type = normalizeType(entry.getContent().getType());
+            switch (type) {
+                case "pelicula" -> movies.add(entry);
+                case "serie" -> series.add(entry);
+                case "libro" -> books.add(entry);
+                case "disco" -> discs.add(entry);
+                default -> {
+                    // Ignore unsupported legacy content types in profile grouping.
+                }
+            }
+        }
+
+        List<Content> contents = contentRepository.findAll();
+        Map<Long, List<UserSeriesEpisodeProgress>> episodesByEntry = loadEpisodesByEntry(series);
+        Map<Long, List<UserSongProgress>> songsByEntry = loadSongsByEntry(discs);
+
+        model.addAttribute("user", sessionUser);
+        model.addAttribute("entries", entries);
+        model.addAttribute("movieEntries", movies);
+        model.addAttribute("seriesEntries", series);
+        model.addAttribute("bookEntries", books);
+        model.addAttribute("discEntries", discs);
+        model.addAttribute("contents", contents);
+        model.addAttribute("movieStatusOptions", List.of("no_visto", "visto"));
+        model.addAttribute("generalStatusOptions", List.of("pendiente", "en_progreso", "abandonado"));
+        model.addAttribute("episodesByEntry", episodesByEntry);
+        model.addAttribute("songsByEntry", songsByEntry);
+        model.addAttribute("stats", loadStats(sessionUser.getId()));
+        model.addAttribute("typeStats", loadTypeStats(sessionUser.getId()));
+        model.addAttribute("totalCount", userContentRepository.countByUserId(sessionUser.getId()));
+
+        return "profile";
+    }
+
+    @PostMapping("/profile/add")
+    public String addToProfileLibrary(@RequestParam Long contentId,
+            @RequestParam(required = false) String movieStatus,
+            @RequestParam(required = false) Integer bookCurrentPage,
+            @RequestParam(required = false) Integer bookTotalPages,
+            RedirectAttributes redirectAttributes, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        Content content = contentRepository.findById(contentId).orElse(null);
+        if (content == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Contenido no encontrado");
+            return "redirect:/profile";
+        }
+
+        String contentType = normalizeAndValidateType(content.getType());
+
+        if (userContentRepository.existsByUserIdAndContentId(sessionUser.getId(), contentId)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Ese contenido ya esta en tu biblioteca");
+            return "redirect:/profile";
+        }
+
+        UserContent entry = new UserContent();
+        entry.setUser(sessionUser);
+        entry.setContent(content);
+        entry.setAddedDate(LocalDate.now());
+
+        try {
+            applyTypeSpecificData(entry, contentType, movieStatus, bookCurrentPage, bookTotalPages);
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:/profile";
+        }
+
+        try {
+            userContentRepository.save(entry);
+            redirectAttributes.addFlashAttribute("successMessage", "Contenido anadido a tu perfil");
+        } catch (DataIntegrityViolationException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Ese contenido ya esta en tu biblioteca");
+        }
+
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/{entryId}/status")
+    public String updateProfileEntryStatus(@PathVariable Long entryId, @RequestParam String status,
+            RedirectAttributes redirectAttributes, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        UserContent entry = userContentRepository.findById(entryId).orElse(null);
+        if (entry == null || entry.getUser() == null || !sessionUser.getId().equals(entry.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No tienes permiso para editar ese registro");
+            return "redirect:/profile";
+        }
+
+        String type = normalizeType(entry.getContent().getType());
+        if ("pelicula".equals(type) || "libro".equals(type)) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Usa las acciones especificas de pelicula o libro para actualizar su progreso");
+            return "redirect:/profile";
+        }
+
+        String normalizedStatus = normalizeGeneralStatus(status);
+        if (!VALID_GENERAL_STATUSES.contains(normalizedStatus)) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Estado no valido. Usa: pendiente, en_progreso o abandonado");
+            return "redirect:/profile";
+        }
+
+        entry.setStatus(normalizedStatus);
+        userContentRepository.save(entry);
+        redirectAttributes.addFlashAttribute("successMessage", "Estado actualizado");
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/{entryId}/movie-status")
+    public String updateMovieStatus(@PathVariable Long entryId, @RequestParam String movieStatus,
+            RedirectAttributes redirectAttributes, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        UserContent entry = userContentRepository.findById(entryId).orElse(null);
+        if (entry == null || entry.getUser() == null || !sessionUser.getId().equals(entry.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No tienes permiso para editar ese registro");
+            return "redirect:/profile";
+        }
+
+        if (!"pelicula".equals(normalizeType(entry.getContent().getType()))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Este registro no es una pelicula");
+            return "redirect:/profile";
+        }
+
+        String normalizedMovieStatus = normalizeMovieStatus(movieStatus);
+        if (!VALID_MOVIE_STATUSES.contains(normalizedMovieStatus)) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Estado de pelicula no valido: visto o no_visto");
+            return "redirect:/profile";
+        }
+
+        entry.setMovieWatched("visto".equals(normalizedMovieStatus));
+        entry.setStatus(normalizedMovieStatus);
+        userContentRepository.save(entry);
+        redirectAttributes.addFlashAttribute("successMessage", "Estado de pelicula actualizado");
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/{entryId}/book-progress")
+    public String updateBookProgress(@PathVariable Long entryId, @RequestParam Integer currentPage,
+            @RequestParam(required = false) Integer totalPages,
+            RedirectAttributes redirectAttributes, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        UserContent entry = userContentRepository.findById(entryId).orElse(null);
+        if (entry == null || entry.getUser() == null || !sessionUser.getId().equals(entry.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No tienes permiso para editar ese registro");
+            return "redirect:/profile";
+        }
+
+        if (!"libro".equals(normalizeType(entry.getContent().getType()))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Este registro no es un libro");
+            return "redirect:/profile";
+        }
+
+        int safeCurrent = currentPage == null ? 0 : currentPage;
+        int safeTotal = totalPages == null ? defaultPageValue(entry.getBookTotalPages()) : totalPages;
+
+        if (!isValidBookProgress(safeCurrent, safeTotal)) {
+            redirectAttributes.addFlashAttribute("errorMessage",
+                    "Progreso invalido: revisa pagina actual y total de paginas");
+            return "redirect:/profile";
+        }
+
+        entry.setBookCurrentPage(safeCurrent);
+        entry.setBookTotalPages(safeTotal);
+        entry.setStatus(resolveBookStatus(safeCurrent, safeTotal));
+        userContentRepository.save(entry);
+
+        redirectAttributes.addFlashAttribute("successMessage", "Progreso de lectura actualizado");
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/{entryId}/episodes")
+    public String saveEpisodeProgress(@PathVariable Long entryId, @RequestParam Integer seasonNumber,
+            @RequestParam Integer episodeNumber, @RequestParam(required = false) Boolean watched,
+            RedirectAttributes redirectAttributes, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        UserContent entry = userContentRepository.findById(entryId).orElse(null);
+        if (entry == null || entry.getUser() == null || !sessionUser.getId().equals(entry.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No tienes permiso para editar ese registro");
+            return "redirect:/profile";
+        }
+
+        if (!"serie".equals(normalizeType(entry.getContent().getType()))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Este registro no es una serie");
+            return "redirect:/profile";
+        }
+
+        if (seasonNumber == null || seasonNumber < 1 || episodeNumber == null || episodeNumber < 1) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Temporada y episodio deben ser >= 1");
+            return "redirect:/profile";
+        }
+
+        boolean watchedFlag = watched != null && watched;
+        UserSeriesEpisodeProgress progress = userSeriesEpisodeProgressRepository
+                .findByUserContentIdAndSeasonNumberAndEpisodeNumber(entry.getId(), seasonNumber, episodeNumber)
+                .orElseGet(UserSeriesEpisodeProgress::new);
+
+        progress.setUserContent(entry);
+        progress.setSeasonNumber(seasonNumber);
+        progress.setEpisodeNumber(episodeNumber);
+        progress.setWatched(watchedFlag);
+        userSeriesEpisodeProgressRepository.save(progress);
+
+        redirectAttributes.addFlashAttribute("successMessage", "Progreso de episodio guardado");
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/{entryId}/songs")
+    public String saveSongProgress(@PathVariable Long entryId, @RequestParam Integer trackNumber,
+            @RequestParam String trackTitle, @RequestParam(required = false) Boolean listened,
+            RedirectAttributes redirectAttributes, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        UserContent entry = userContentRepository.findById(entryId).orElse(null);
+        if (entry == null || entry.getUser() == null || !sessionUser.getId().equals(entry.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No tienes permiso para editar ese registro");
+            return "redirect:/profile";
+        }
+
+        if (!"disco".equals(normalizeType(entry.getContent().getType()))) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Este registro no es un disco");
+            return "redirect:/profile";
+        }
+
+        if (trackNumber == null || trackNumber < 1 || trackTitle == null || trackTitle.isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Cancion invalida: revisa numero y titulo");
+            return "redirect:/profile";
+        }
+
+        boolean listenedFlag = listened != null && listened;
+        UserSongProgress progress = userSongProgressRepository.findByUserContentIdAndTrackNumber(entry.getId(), trackNumber)
+                .orElseGet(UserSongProgress::new);
+
+        progress.setUserContent(entry);
+        progress.setTrackNumber(trackNumber);
+        progress.setTrackTitle(trackTitle.trim());
+        progress.setListened(listenedFlag);
+        userSongProgressRepository.save(progress);
+
+        redirectAttributes.addFlashAttribute("successMessage", "Progreso de cancion guardado");
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/{entryId}/delete")
+    public String deleteProfileEntry(@PathVariable Long entryId, RedirectAttributes redirectAttributes,
+            HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        UserContent entry = userContentRepository.findById(entryId).orElse(null);
+        if (entry == null || entry.getUser() == null || !sessionUser.getId().equals(entry.getUser().getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No tienes permiso para eliminar ese registro");
+            return "redirect:/profile";
+        }
+
+        userContentRepository.deleteById(entryId);
+        redirectAttributes.addFlashAttribute("successMessage", "Registro eliminado");
+        return "redirect:/profile";
+    }
+
+    private User getSessionUser(HttpSession session) {
+        Object sessionUserId = session.getAttribute(SESSION_USER_ID);
+        if (!(sessionUserId instanceof Long)) {
+            return null;
+        }
+        return userRepository.findById((Long) sessionUserId).orElse(null);
+    }
+
+    private Map<String, Long> loadStats(Long userId) {
+        Map<String, Long> stats = new LinkedHashMap<>();
+        stats.put("visto", userContentRepository.countByUserIdAndStatus(userId, "visto"));
+        stats.put("no_visto", userContentRepository.countByUserIdAndStatus(userId, "no_visto"));
+        stats.put("leyendo", userContentRepository.countByUserIdAndStatus(userId, "leyendo"));
+        stats.put("leido", userContentRepository.countByUserIdAndStatus(userId, "leido"));
+        return stats;
+    }
+
+    private Map<String, Long> loadTypeStats(Long userId) {
+        Map<String, Long> stats = new LinkedHashMap<>();
+        stats.put("peliculas", userContentRepository.countByUserIdAndContentType(userId, "pelicula"));
+        stats.put("series", userContentRepository.countByUserIdAndContentType(userId, "serie"));
+        stats.put("libros", userContentRepository.countByUserIdAndContentType(userId, "libro"));
+        stats.put("discos", userContentRepository.countByUserIdAndContentType(userId, "disco"));
+        return stats;
+    }
+
+    private Map<Long, List<UserSeriesEpisodeProgress>> loadEpisodesByEntry(List<UserContent> seriesEntries) {
+        Map<Long, List<UserSeriesEpisodeProgress>> map = new HashMap<>();
+        for (UserContent entry : seriesEntries) {
+            map.put(entry.getId(),
+                    userSeriesEpisodeProgressRepository.findByUserContentIdOrderBySeasonNumberAscEpisodeNumberAsc(
+                            entry.getId()));
+        }
+        return map;
+    }
+
+    private Map<Long, List<UserSongProgress>> loadSongsByEntry(List<UserContent> discEntries) {
+        Map<Long, List<UserSongProgress>> map = new HashMap<>();
+        for (UserContent entry : discEntries) {
+            map.put(entry.getId(), userSongProgressRepository.findByUserContentIdOrderByTrackNumberAsc(entry.getId()));
+        }
+        return map;
+    }
+
+    private void applyTypeSpecificData(UserContent entry, String contentType, String movieStatus,
+            Integer bookCurrentPage, Integer bookTotalPages) {
+        if ("pelicula".equals(contentType)) {
+            String normalizedMovieStatus = normalizeMovieStatus(movieStatus);
+            if (!VALID_MOVIE_STATUSES.contains(normalizedMovieStatus)) {
+                throw new IllegalArgumentException("Estado de pelicula no valido: visto o no_visto");
+            }
+            entry.setMovieWatched("visto".equals(normalizedMovieStatus));
+            entry.setStatus(normalizedMovieStatus);
+            return;
+        }
+
+        if ("libro".equals(contentType)) {
+            int safeCurrent = bookCurrentPage == null ? 0 : bookCurrentPage;
+            int safeTotal = bookTotalPages == null ? 0 : bookTotalPages;
+
+            if (!isValidBookProgress(safeCurrent, safeTotal)) {
+                throw new IllegalArgumentException("Progreso de libro invalido: revisa paginas");
+            }
+
+            entry.setBookCurrentPage(safeCurrent);
+            entry.setBookTotalPages(safeTotal);
+            entry.setStatus(resolveBookStatus(safeCurrent, safeTotal));
+            return;
+        }
+
+        if ("serie".equals(contentType)) {
+            entry.setStatus("seguimiento_episodios");
+            return;
+        }
+
+        entry.setStatus("seguimiento_canciones");
+    }
+
+    private boolean isValidBookProgress(int currentPage, int totalPages) {
+        if (currentPage < 0 || totalPages < 0) {
+            return false;
+        }
+        return totalPages <= 0 || currentPage <= totalPages;
+    }
+
+    private String resolveBookStatus(int currentPage, int totalPages) {
+        if (currentPage <= 0) {
+            return "no_iniciado";
+        }
+
+        if (totalPages > 0 && currentPage >= totalPages) {
+            return "leido";
+        }
+
+        return "leyendo";
+    }
+
+    private int defaultPageValue(Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    private String normalizeAndValidateType(String rawType) {
+        String normalized = normalizeType(rawType);
+        if (!VALID_CONTENT_TYPES.contains(normalized)) {
+            throw new IllegalArgumentException("Tipo no valido. Usa pelicula, serie, libro o disco");
+        }
+        return normalized;
+    }
+
+    private String normalizeType(String rawType) {
+        return rawType == null ? "" : rawType.trim().toLowerCase();
+    }
+
+    private String normalizeMovieStatus(String movieStatus) {
+        if (movieStatus == null || movieStatus.isBlank()) {
+            return "no_visto";
+        }
+        return movieStatus.trim().toLowerCase();
+    }
+
+    private String normalizeGeneralStatus(String rawStatus) {
+        if (rawStatus == null || rawStatus.isBlank()) {
+            return "pendiente";
+        }
+        return rawStatus.trim().toLowerCase();
+    }
+}

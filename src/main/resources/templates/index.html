@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Libreria Cultural</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+</head>
+<body>
+    <div class="grain"></div>
+    <header class="topbar">
+        <a class="brand" href="/">Libreria Cultural</a>
+        <a class="ghost-link" href="/ui/library">Vista tecnica</a>
+    </header>
+
+    <main class="landing-wrap">
+        <section class="hero-block">
+            <p class="kicker">Track. Discover. Remember.</p>
+            <h1>Tu diario cultural con alma de cine.</h1>
+            <p class="lead">
+                Guarda series, peliculas, libros o podcast. Marca estados, revisa estadisticas y convierte tus gustos
+                en un perfil personal.
+            </p>
+            <div class="chips">
+                <span>Pendiente</span>
+                <span>En progreso</span>
+                <span>Visto</span>
+                <span>Abandonado</span>
+            </div>
+        </section>
+
+        <section class="login-card">
+            <h2>Inicia sesion</h2>
+            <p class="muted">Usa el usuario que ya tienes en la base de datos.</p>
+
+            <p class="error" th:if="${errorMessage != null}" th:text="${errorMessage}"></p>
+
+            <form method="post" th:action="@{/login}" class="login-form">
+                <label for="username">Usuario</label>
+                <input id="username" name="username" type="text" placeholder="paula" required>
+
+                <label for="password">Contrasena</label>
+                <input id="password" name="password" type="password" placeholder="1234" required>
+
+                <button type="submit">Entrar a mi perfil</button>
+            </form>
+        </section>
+    </main>
+
+    <section class="featured-section">
+        <div class="featured-head">
+            <h3>Ahora en la biblioteca</h3>
+            <p>Contenido destacado del catalogo actual.</p>
+        </div>
+
+        <div class="poster-grid">
+            <article class="poster-card" th:each="item : ${featured}">
+                <div class="poster-glow"></div>
+                <h4 th:text="${item.title}">Titulo</h4>
+                <p th:text="${item.type != null ? item.type : 'sin tipo'}">tipo</p>
+            </article>
+            <article class="poster-card empty" th:if="${#lists.isEmpty(featured)}">
+                <h4>Aun no hay contenido</h4>
+                <p>Agrega contenido desde la API o la vista tecnica.</p>
+            </article>
+        </div>
+    </section>
+</body>
+</html>
