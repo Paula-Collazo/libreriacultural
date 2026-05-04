@@ -3,14 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${album != null ? album.title + ' - Libreria Cultural' : 'Disco - Libreria Cultural'}">Disco - Libreria Cultural</title>
+    <title th:text="${(album != null ? album.title : 'Disco') + ' - Libreria Cultural'}">Disco</title>
     <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/music.css}">
 </head>
 <body>
     <div class="grain"></div>
 
     <header class="topbar">
-        <a class="brand" href="/profile" th:text="${'@' + user.username}">@usuario</a>
+        <a class="brand" href="/profile" th:text="${user != null ? '@' + user.username : '@usuario'}">@usuario</a>
         <div class="topbar-actions">
             <div class="theme-switch">
                 <label for="themePicker">Tema</label>
@@ -30,110 +31,70 @@
 
     <main class="album-wrap">
         <section class="type-nav card compact-nav">
-            <a th:href="@{/profile}" th:classappend="${activeType == 'profile'} ? ' active' : ''">Mi perfil</a>
-            <a th:href="@{/explore/pelicula}" th:classappend="${activeType == 'pelicula'} ? ' active' : ''">Peliculas</a>
-            <a th:href="@{/explore/serie}" th:classappend="${activeType == 'serie'} ? ' active' : ''">Series</a>
-            <a th:href="@{/explore/libro}" th:classappend="${activeType == 'libro'} ? ' active' : ''">Libros</a>
-            <a th:href="@{/explore/disco}" th:classappend="${activeType == 'disco'} ? ' active' : ''">Discos</a>
+            <a th:href="@{/profile}">Mi perfil</a>
+            <a th:href="@{/explore/pelicula}">Peliculas</a>
+            <a th:href="@{/explore/serie}">Series</a>
+            <a th:href="@{/explore/libro}">Libros</a>
+            <a th:href="@{/explore/disco}" class="active">Discos</a>
         </section>
 
-        <section class="card" th:if="${errorMessage != null}">
-            <p class="error" th:text="${errorMessage}"></p>
-        </section>
-
+        <!-- Detalle del Disco -->
         <section class="card album-hero" th:if="${album != null}">
-            <div class="media-cover" th:if="${album.coverUrl != null and !album.coverUrl.isBlank()}">
-                <img th:src="${album.coverUrl}" th:alt="${'Portada de ' + album.title}">
+            <div class="media-cover" th:if="${album.coverUrl != null and !#strings.isEmpty(album.coverUrl)}">
+                <img th:src="${album.coverUrl}" th:alt="${album.title}">
             </div>
-            <div class="media-cover placeholder" th:if="${album.coverUrl == null or album.coverUrl.isBlank()}">
-                <span>Sin portada</span>
-            </div>
-
             <div>
                 <p class="kicker">Disco</p>
-                <h1 th:text="${album.title}">Album</h1>
-                <p class="muted" th:if="${album.artistName != null and !#strings.isEmpty(album.artistName)}">
-                    Artista:
-                    <a class="artist-link" th:href="@{/explore/disco(artistId=${album.artistId})}" th:text="${album.artistName}">Artista</a>
+                <h1 th:text="${album.title}">Titulo</h1>
+                <p class="muted" th:if="${album.releaseDate != null}">
+                    Lanzamiento: <span th:text="${album.releaseDate.toString().length() >= 4 ? album.releaseDate.toString().substring(0,4) : album.releaseDate}">2024</span>
                 </p>
-                <p class="muted" th:if="${album.metricLabel != null and !album.metricLabel.isBlank()}"
-                   th:text="${album.metricLabel}">Canciones</p>
-                <p class="muted" th:if="${album.releaseDate != null}"
-                   th:text="${'Año de salida: ' + album.releaseDate.year}">Año</p>
-                <p class="muted" th:if="${!#strings.isEmpty(album.description)}" th:text="${album.description}">Descripcion</p>
-
+                <p class="muted">
+                    Artista: <a class="artist-link" th:href="@{/explore/disco(q=${album.artist})}" th:text="${album.artist}">Artista</a>
+                </p>
+                
                 <form method="post" th:action="@{/profile/import-api}" class="add-form">
                     <input type="hidden" name="externalTitle" th:value="${album.title}">
-                    <input type="hidden" name="externalType" th:value="${album.type}">
-                    <input type="hidden" name="externalDescription" th:value="${album.description}">
-                    <input type="hidden" name="externalReleaseDate" th:value="${album.releaseDate}">
-                    <input type="hidden" name="externalMetric" th:value="${album.metricLabel}">
-                    <input type="hidden" name="returnTo" th:value="${'/explore/disco/' + album.externalId}">
-                    <button type="submit">Anadir a mi perfil</button>
+                    <input type="hidden" name="externalType" value="disco">
+                    <input type="hidden" name="externalCoverUrl" th:value="${album.coverUrl}">
+                    <input type="hidden" name="externalReleaseDate" th:value="${album.releaseDate != null ? album.releaseDate.toString() : ''}">
+                    <button type="submit">Añadir a mi perfil</button>
                 </form>
             </div>
         </section>
 
-        <section class="card" th:if="${album != null}">
-            <h2>Tracklist</h2>
-            <ol class="track-list">
-                <li class="track-row" th:each="track : ${tracks}">
-                    <span th:text="${track.trackNumber != null ? track.trackNumber : '-'}">1</span>
-                    <strong th:text="${track.title}">Tema</strong>
-                    <span th:text="${track.durationLabel}">3:25</span>
-                </li>
-                <li class="track-row" th:if="${#lists.isEmpty(tracks)}">
-                    <span>-</span>
-                    <strong>No hay canciones disponibles</strong>
-                    <span></span>
-                </li>
-            </ol>
+        <!-- Lista de canciones mejorada -->
+        <section class="card" th:if="${tracks != null and !#lists.isEmpty(tracks)}">
+            <h2>Lista de canciones</h2>
+            <div class="tracks-list">
+                <div class="track-item" th:each="t : ${tracks}">
+                    <div class="track-info">
+                        <span class="track-num" th:text="${t.number}">1</span>
+                        <span class="track-title" th:text="${t.title}">Titulo</span>
+                    </div>
+                    <span class="track-duration" th:text="${t.duration}">3:45</span>
+                </div>
+            </div>
         </section>
 
-        <section class="card" th:if="${!#lists.isEmpty(otherAlbums)}">
-            <div class="media-header media-disc-head">
-                <h2>Otros discos</h2>
-                <span class="count-pill" th:text="${#lists.size(otherAlbums) + ' items'}">0 items</span>
+        <!-- Otros albunes del artista -->
+        <section class="card" th:if="${relatedAlbums != null and !#lists.isEmpty(relatedAlbums)}">
+            <h2 th:text="${'Mas de ' + album.artist}">Mas del artista</h2>
+            <div class="actor-grid">
+                <div class="actor-card" th:each="rel : ${relatedAlbums}">
+                    <a th:href="@{/explore/disco/{id}(id=${rel.externalId})}">
+                        <div class="media-cover mini-cover">
+                            <img th:if="${rel.coverUrl != null and !#strings.isEmpty(rel.coverUrl)}" th:src="${rel.coverUrl}" th:alt="${rel.title}">
+                            <div th:if="${rel.coverUrl == null or #strings.isEmpty(rel.coverUrl)}" class="media-cover placeholder"><span>?</span></div>
+                        </div>
+                        <p class="small-title" th:text="${rel.title}">Titulo</p>
+                    </a>
+                </div>
             </div>
-            <div class="content-grid">
-                <article class="media-card" th:each="item : ${otherAlbums}">
-                    <div class="media-cover" th:if="${item.coverUrl != null and !item.coverUrl.isBlank()}" style="width:100%; aspect-ratio:1/1;">
-                        <a th:href="@{/explore/disco/{id}(id=${item.externalId})}">
-                            <img th:src="${item.coverUrl}" th:alt="${'Portada de ' + item.title}" style="width:100%; height:100%; object-fit:cover; display:block;">
-                        </a>
-                    </div>
-                    <div class="media-cover placeholder" th:if="${item.coverUrl == null or item.coverUrl.isBlank()}" style="width:100%; aspect-ratio:1/1;">
-                        <a th:href="@{/explore/disco/{id}(id=${item.externalId})}" style="display:flex; width:100%; height:100%; align-items:center; justify-content:center; text-decoration:none; color:inherit;">
-                            <span>Sin portada</span>
-                        </a>
-                    </div>
-                    <div class="media-body">
-                        <h3>
-                            <a th:href="@{/explore/disco/{id}(id=${item.externalId})}" th:text="${item.title}" style="text-decoration:none; color:inherit;">Titulo</a>
-                        </h3>
-                        <p class="muted" th:text="${item.source}">Fuente</p>
-                        <p class="muted" th:if="${item.artistName != null and !#strings.isEmpty(item.artistName)}">
-                            Artista:
-                            <a class="artist-link" th:href="@{/explore/disco(artistId=${item.artistId})}" th:text="${item.artistName}">Artista</a>
-                        </p>
-                        <p class="media-metric" th:if="${item.metricLabel != null and !item.metricLabel.isBlank()}"
-                           th:text="${item.metricLabel}">Canciones</p>
-                        <p class="muted" th:if="${item.releaseDate != null}" th:text="${'Año: ' + item.releaseDate.year}" style="font-weight:800; color:#d00;">Año</p>
-                        <p class="muted" th:if="${item.releaseDate == null}" style="font-weight:800; color:#d00;">Año: s/f</p>
-                    </div>
-                    <div class="media-actions">
-                        <form method="post" th:action="@{/profile/import-api}" style="width:100%;">
-                            <input type="hidden" name="externalTitle" th:value="${item.title}">
-                            <input type="hidden" name="externalType" th:value="${item.type}">
-                            <input type="hidden" name="externalDescription" th:value="${item.description}">
-                            <input type="hidden" name="externalReleaseDate" th:value="${item.releaseDate}">
-                            <input type="hidden" name="externalMetric" th:value="${item.metricLabel}">
-                            <input type="hidden" name="returnTo" th:value="${'/explore/disco/' + item.externalId}">
-                            <button type="submit" style="width:100%;">Anadir a mi perfil</button>
-                        </form>
-                    </div>
-                </article>
-            </div>
+        </section>
+
+        <section class="card">
+            <a href="/profile" class="artist-link">Volver al perfil</a>
         </section>
     </main>
 

@@ -1,17 +1,18 @@
 package com.proyectofinal.libreriacultural.services;
 
 public class ExternalTrack {
-    private final Integer trackNumber;
-    private final String title;
-    private final String durationLabel;
+    private int number;
+    private String title;
+    private String duration;
 
-    public ExternalTrack(Integer trackNumber, String title, String durationLabel) {
-        this.trackNumber = trackNumber;
+    public ExternalTrack(int number, String title, String duration) {
+        this.number = number;
         this.title = title;
-        this.durationLabel = durationLabel;
+        this.duration = duration;
     }
 
-    public Integer getTrackNumber() { return trackNumber; }
+    // Getters
+    public int getNumber() { return number; }
     public String getTitle() { return title; }
-    public String getDurationLabel() { return durationLabel; }
+    public String getDuration() { return duration; }
 }

@@ -64,4 +64,26 @@ public class UserContent {
     @EqualsAndHashCode.Exclude
     @JsonIgnore
     private List<UserSongProgress> songProgresses;
+
+    // Getters y Setters manuales
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+    public Content getContent() { return content; }
+    public void setContent(Content content) { this.content = content; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
+    public Boolean getMovieWatched() { return movieWatched; }
+    public void setMovieWatched(Boolean movieWatched) { this.movieWatched = movieWatched; }
+    public Integer getBookCurrentPage() { return bookCurrentPage; }
+    public void setBookCurrentPage(Integer bookCurrentPage) { this.bookCurrentPage = bookCurrentPage; }
+    public Integer getBookTotalPages() { return bookTotalPages; }
+    public void setBookTotalPages(Integer bookTotalPages) { this.bookTotalPages = bookTotalPages; }
+    public LocalDate getAddedDate() { return addedDate; }
+    public void setAddedDate(LocalDate addedDate) { this.addedDate = addedDate; }
+    public List<UserSeriesEpisodeProgress> getEpisodeProgresses() { return episodeProgresses; }
+    public void setEpisodeProgresses(List<UserSeriesEpisodeProgress> episodeProgresses) { this.episodeProgresses = episodeProgresses; }
+    public List<UserSongProgress> getSongProgresses() { return songProgresses; }
+    public void setSongProgresses(List<UserSongProgress> songProgresses) { this.songProgresses = songProgresses; }
 }

@@ -145,67 +145,55 @@ public class SessionViewController {
         return "explore";
     }
 
-    @GetMapping("/explore/disco/{albumId}")
-    public String exploreAlbumDetail(@PathVariable String albumId, Model model, HttpSession session) {
+    @GetMapping("/explore/disco/{id}")
+    public String exploreAlbumDetail(@PathVariable String id, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) {
-            return "redirect:/";
-        }
+        if (sessionUser == null) return "redirect:/";
 
         try {
-            ExternalAlbumDetails details = externalContentSearchService.getAlbumDetails(albumId);
-            ExternalContentItem album = details.getAlbum();
-            List<ExternalContentItem> otherAlbums = List.of();
-                    if (album.getArtistId() != null && !album.getArtistId().isBlank()) {
-                otherAlbums = externalContentSearchService.searchArtistAlbums(album.getArtistId()).stream()
-                        .filter(item -> !album.getExternalId().equals(item.getExternalId()))
-                        .limit(8)
-                        .collect(Collectors.toList());
-            }
-
+            Map<String, Object> details = externalContentSearchService.getDetails("Spotify", id, "musica");
             model.addAttribute("user", sessionUser);
-            model.addAttribute("album", album);
-            model.addAttribute("tracks", details.getTracks());
-            model.addAttribute("otherAlbums", otherAlbums);
+            model.addAttribute("album", details);
+            Object tracks = details.get("tracks");
+            model.addAttribute("tracks", tracks != null ? tracks : List.of());
+            
+            String artist = (String) details.get("artist");
+            if (artist != null && !artist.isBlank()) {
+                model.addAttribute("relatedAlbums", externalContentSearchService.searchSpotify(artist).stream().limit(6).collect(Collectors.toList()));
+            }
+            
             model.addAttribute("activeType", "disco");
             return "album";
         } catch (Exception ex) {
-            model.addAttribute("errorMessage", "Error cargando disco: " + ex.getMessage());
-            model.addAttribute("user", sessionUser);
-            model.addAttribute("activeType", "disco");
-            return "album";
+            System.err.println("[ERROR] Detalle Album: " + ex.getMessage());
+            ex.printStackTrace();
+            return "redirect:/explore/disco";
         }
     }
 
-    @GetMapping("/explore/pelicula/{imdbId}")
-    public String exploreMovieDetail(@PathVariable String imdbId, Model model, HttpSession session) {
+    @GetMapping("/explore/pelicula/{id}")
+    public String exploreMovieDetail(@PathVariable String id, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) {
-            return "redirect:/";
-        }
+        if (sessionUser == null) return "redirect:/";
 
         try {
-            ExternalContentItem movie = externalContentSearchService.getMovieDetails(imdbId);
+            Map<String, Object> movie = externalContentSearchService.getDetails("TMDb", id, "pelicula");
             model.addAttribute("user", sessionUser);
             model.addAttribute("movie", movie);
-            model.addAttribute("actors", splitActors(movie.getActors()));
+            model.addAttribute("actors", movie.get("actors"));
             model.addAttribute("activeType", "pelicula");
             return "movie";
         } catch (Exception ex) {
-            model.addAttribute("errorMessage", "No se pudo cargar el detalle de la pelicula");
-            model.addAttribute("user", sessionUser);
-            model.addAttribute("activeType", "pelicula");
-            return "movie";
+            System.err.println("[ERROR] Detalle Pelicula: " + ex.getMessage());
+            ex.printStackTrace();
+            return "redirect:/explore/pelicula";
         }
     }
 
     @GetMapping("/explore/actor/{name}")
     public String exploreActorDetail(@PathVariable String name, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) {
-            return "redirect:/";
-        }
-
+        if (sessionUser == null) return "redirect:/";
         try {
             Map<String, Object> actor = externalContentSearchService.getActorDetails(name);
             model.addAttribute("user", sessionUser);
@@ -222,42 +210,36 @@ public class SessionViewController {
     @GetMapping("/explore/serie/{id}")
     public String exploreSerieDetail(@PathVariable String id, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) {
-            return "redirect:/";
-        }
+        if (sessionUser == null) return "redirect:/";
 
         try {
-            ExternalContentItem serie = externalContentSearchService.getSerieDetails(id);
+            Map<String, Object> serie = externalContentSearchService.getDetails("TMDb", id, "serie");
             model.addAttribute("user", sessionUser);
-            model.addAttribute("movie", serie);
+            model.addAttribute("movie", serie); // La plantilla 'serie.html' usa 'movie' como objeto base
             model.addAttribute("activeType", "serie");
             return "serie";
         } catch (Exception ex) {
-            model.addAttribute("errorMessage", "No se pudo cargar el detalle de la serie");
-            model.addAttribute("user", sessionUser);
-            model.addAttribute("activeType", "serie");
-            return "serie";
+            System.err.println("[ERROR] Detalle Serie: " + ex.getMessage());
+            ex.printStackTrace();
+            return "redirect:/explore/serie";
         }
     }
 
     @GetMapping("/explore/libro/{id}")
     public String exploreBookDetail(@PathVariable String id, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) {
-            return "redirect:/";
-        }
+        if (sessionUser == null) return "redirect:/";
 
         try {
-            ExternalContentItem book = externalContentSearchService.getBookDetails(id);
+            Map<String, Object> book = externalContentSearchService.getDetails("GoogleBooks", id, "libro");
             model.addAttribute("user", sessionUser);
-            model.addAttribute("movie", book);
+            model.addAttribute("movie", book); // Cambio a 'movie' para que coincida con la plantilla libro.html
             model.addAttribute("activeType", "libro");
             return "libro";
         } catch (Exception ex) {
-            model.addAttribute("errorMessage", "No se pudo cargar el detalle del libro");
-            model.addAttribute("user", sessionUser);
-            model.addAttribute("activeType", "libro");
-            return "libro";
+            System.err.println("[ERROR] Detalle Libro: " + ex.getMessage());
+            ex.printStackTrace();
+            return "redirect:/explore/libro";
         }
     }
 

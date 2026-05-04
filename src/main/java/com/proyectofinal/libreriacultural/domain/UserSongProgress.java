@@ -34,4 +34,16 @@ public class UserSongProgress {
 
     @Column(nullable = false)
     private Boolean listened;
+
+    // Getters y Setters manuales
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public UserContent getUserContent() { return userContent; }
+    public void setUserContent(UserContent userContent) { this.userContent = userContent; }
+    public Integer getTrackNumber() { return trackNumber; }
+    public void setTrackNumber(Integer trackNumber) { this.trackNumber = trackNumber; }
+    public String getTrackTitle() { return trackTitle; }
+    public void setTrackTitle(String trackTitle) { this.trackTitle = trackTitle; }
+    public Boolean getListened() { return listened; }
+    public void setListened(Boolean listened) { this.listened = listened; }
 }

@@ -35,4 +35,16 @@ public class UserSeriesEpisodeProgress {
 
     @Column(nullable = false)
     private Boolean watched;
+
+    // Getters y Setters manuales
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public UserContent getUserContent() { return userContent; }
+    public void setUserContent(UserContent userContent) { this.userContent = userContent; }
+    public Integer getSeasonNumber() { return seasonNumber; }
+    public void setSeasonNumber(Integer seasonNumber) { this.seasonNumber = seasonNumber; }
+    public Integer getEpisodeNumber() { return episodeNumber; }
+    public void setEpisodeNumber(Integer episodeNumber) { this.episodeNumber = episodeNumber; }
+    public Boolean getWatched() { return watched; }
+    public void setWatched(Boolean watched) { this.watched = watched; }
 }

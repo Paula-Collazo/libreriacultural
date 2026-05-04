@@ -1,0 +1,103 @@
+/* Estilos específicos para la seccion de discos y pistas */
+.tracks-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 1rem;
+}
+
+.track-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    transition: all 0.2s ease;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.track-item:hover {
+    background: rgba(255, 255, 255, 0.8);
+    transform: translateX(5px);
+    border-color: var(--primary);
+}
+
+.track-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.track-num {
+    font-family: 'Outfit', sans-serif;
+    font-weight: 600;
+    color: var(--primary);
+    width: 25px;
+    font-size: 0.9rem;
+}
+
+.track-title {
+    font-weight: 500;
+    color: #444;
+}
+
+.track-duration {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.85rem;
+    color: #888;
+    background: rgba(0,0,0,0.05);
+    padding: 2px 8px;
+    border-radius: 20px;
+}
+
+/* Ajustes para la cuadricula de recomendados */
+.actor-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.actor-card {
+    text-align: center;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.actor-card:hover {
+    transform: translateY(-10px);
+}
+
+.mini-cover {
+    aspect-ratio: 1/1;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+    margin-bottom: 0.75rem;
+    border: 3px solid white;
+}
+
+.small-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #555;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    line-height: 1.2;
+}
+
+/* Enlaces de artista */
+.artist-link {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 600;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s;
+}
+
+.artist-link:hover {
+    border-bottom-color: var(--primary);
+    opacity: 0.8;
+}
