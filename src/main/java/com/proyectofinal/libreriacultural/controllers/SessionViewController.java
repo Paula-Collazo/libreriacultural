@@ -198,6 +198,49 @@ public class SessionViewController {
         }
     }
 
+    @GetMapping("/explore/serie/{id}")
+    public String exploreSerieDetail(@PathVariable String id, Model model, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        try {
+            ExternalContentItem serie = externalContentSearchService.getSerieDetails(id);
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("movie", serie);
+            model.addAttribute("activeType", "serie");
+            return "serie";
+        } catch (Exception ex) {
+            model.addAttribute("errorMessage", "No se pudo cargar el detalle de la serie");
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("activeType", "serie");
+            return "serie";
+        }
+    }
+
+    @GetMapping("/explore/libro/{id}")
+    public String exploreBookDetail(@PathVariable String id, Model model, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        try {
+            ExternalContentItem book = externalContentSearchService.getBookDetails(id);
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("movie", book);
+            model.addAttribute("activeType", "libro");
+            return "libro";
+        } catch (Exception ex) {
+            model.addAttribute("errorMessage", "No se pudo cargar el detalle del libro");
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("activeType", "libro");
+            return "libro";
+        }
+    }
+
+
     @GetMapping("/profile")
     public String profile(@RequestParam(required = false) String apiQuery,
             @RequestParam(required = false, defaultValue = "pelicula") String apiType,

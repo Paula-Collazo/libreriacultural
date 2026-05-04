@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title th:text="${movie != null ? movie.title + ' - Libreria Cultural' : 'Pelicula - Libreria Cultural'}">Pelicula - Libreria Cultural</title>
+    <title th:text="${movie != null ? movie.title + ' - Libreria Cultural' : 'Serie - Libreria Cultural'}">Serie - Libreria Cultural</title>
     <link rel="stylesheet" th:href="@{/css/site.css}">
 </head>
 <body>
@@ -50,15 +50,10 @@
             </div>
 
             <div>
-                <p class="kicker">Pelicula</p>
-                <h1 th:text="${movie.title}">Pelicula</h1>
+                <p class="kicker">Serie</p>
+                <h1 th:text="${movie.title}">Serie</h1>
                 <p class="muted" th:if="${movie.metricLabel != null and !movie.metricLabel.isBlank()}" th:text="${movie.metricLabel}">Duracion</p>
-                <p class="muted" th:if="${movie.directorName != null and !#strings.isEmpty(movie.directorName)}">
-                    Director:
-                    <a class="artist-link" target="_blank" rel="noopener"
-                       th:href="${'https://es.wikipedia.org/wiki/Special:Search?search=' + #strings.replace(movie.directorName, ' ', '+')}"
-                       th:text="${movie.directorName}">Director</a>
-                </p>
+                
                 <p class="muted" th:if="${movie.releaseDate != null}" th:text="${'Año de salida: ' + movie.releaseDate.year}">Año</p>
                 <p class="muted" th:if="${movie.description != null and !#strings.isEmpty(movie.description)}" th:text="${movie.description}">Descripcion</p>
 
@@ -68,23 +63,12 @@
                     <input type="hidden" name="externalDescription" th:value="${movie.description}">
                     <input type="hidden" name="externalReleaseDate" th:value="${movie.releaseDate}">
                     <input type="hidden" name="externalMetric" th:value="${movie.metricLabel}">
-                    <input type="hidden" name="returnTo" th:value="${'/explore/pelicula/' + movie.externalId}">
+                    <input type="hidden" name="returnTo" th:value="${'/explore/serie/' + movie.externalId}">
                     <button type="submit">Anadir a mi perfil</button>
                 </form>
             </div>
         </section>
 
-        <section class="card" th:if="${movie != null}">
-            <h2>Actores</h2>
-            <ul class="compact-list" th:if="${!#lists.isEmpty(actors)}">
-                <li th:each="actor : ${actors}">
-                    <a class="artist-link" target="_blank" rel="noopener"
-                       th:href="${'https://es.wikipedia.org/wiki/Special:Search?search=' + #strings.replace(actor, ' ', '+')}"
-                       th:text="${actor}">Actor</a>
-                </li>
-            </ul>
-            <p class="muted" th:if="${#lists.isEmpty(actors)}">No hay actores disponibles.</p>
-        </section>
     </main>
 
     <script defer th:src="@{/js/theme.js}"></script>

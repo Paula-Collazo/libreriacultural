@@ -363,50 +363,90 @@ public class ExternalContentSearchService {
             throw new IllegalArgumentException("albumId invalido");
         }
 
-        String url = UriComponentsBuilder.fromUriString("https://itunes.apple.com/lookup")
-                .queryParam("id", safeId)
-                .queryParam("entity", "song")
-                .queryParam("country", "us")
-                .build(true)
-                .toUriString();
+        try {
+            String url = UriComponentsBuilder.fromUriString("https://itunes.apple.com/lookup")
+                    .queryParam("id", safeId)
+                    .queryParam("entity", "song")
+                    .queryParam("country", "us")
+                    .build(true)
+                    .toUriString();
 
-        Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
-        if (body == null) {
-            throw new IllegalStateException("No se pudo consultar el album");
+            Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
+            if (body != null) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> rows = (List<Map<String, Object>>) body.getOrDefault("results", List.of());
+                if (!rows.isEmpty()) {
+                    Map<String, Object> albumRow = rows.stream()
+                            .filter(row -> "collection".equalsIgnoreCase(asString(row.get("wrapperType"))))
+                            .findFirst()
+                            .orElse(rows.get(0));
+
+                    ExternalContentItem album = toAlbumItem(albumRow);
+                    List<ExternalTrack> tracks = new ArrayList<>();
+                    for (Map<String, Object> row : rows) {
+                        if (!"track".equalsIgnoreCase(asString(row.get("wrapperType")))) {
+                            continue;
+                        }
+                        if (!"song".equalsIgnoreCase(asString(row.get("kind")))) {
+                            continue;
+                        }
+
+                        String trackName = asString(row.get("trackName"));
+                        if (trackName.isBlank()) {
+                            continue;
+                        }
+                        Integer trackNumber = asInteger(row.get("trackNumber"));
+                        Long durationMillis = asLong(row.get("trackTimeMillis"));
+                        String durationLabel = formatTrackDuration(durationMillis);
+                        tracks.add(new ExternalTrack(trackNumber, trackName, durationLabel));
+                    }
+                    return new ExternalAlbumDetails(album, tracks);
+                }
+            }
+        } catch (Exception ex) {
+            // Ignorar para intentar con Deezer
         }
 
-        @SuppressWarnings("unchecked")
-        List<Map<String, Object>> rows = (List<Map<String, Object>>) body.getOrDefault("results", List.of());
-        if (rows.isEmpty()) {
-            throw new IllegalStateException("Album sin resultados");
+        // Fallback to Deezer
+        try {
+            String url = UriComponentsBuilder.fromUriString("https://api.deezer.com/album/" + safeId).toUriString();
+            Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
+            if (body == null || body.containsKey("error")) {
+                throw new IllegalStateException("Album sin resultados en Deezer tampoco");
+            }
+
+            String title = asString(body.get("title"));
+            @SuppressWarnings("unchecked")
+            Map<String, Object> artistMap = (Map<String, Object>) body.get("artist");
+            String artistName = artistMap == null ? "" : asString(artistMap.get("name"));
+            String artistId = artistMap == null ? "" : asString(artistMap.get("id"));
+            String description = artistName.isBlank() ? "Importado desde Deezer" : "Artista: " + artistName;
+            LocalDate releaseDate = parseDateSafely(asString(body.get("release_date")));
+            Integer trackCount = asInteger(body.get("nb_tracks"));
+            String metricLabel = trackCount != null && trackCount > 0 ? trackCount + " canciones" : "Canciones sin dato";
+            String coverUrl = asString(body.get("cover_medium"));
+
+            ExternalContentItem album = new ExternalContentItem("Deezer", safeId, title, "disco", description, releaseDate, coverUrl, metricLabel, artistName, artistId, null, null);
+
+            List<ExternalTrack> tracks = new ArrayList<>();
+            @SuppressWarnings("unchecked")
+            Map<String, Object> tracksMap = (Map<String, Object>) body.get("tracks");
+            if (tracksMap != null) {
+                @SuppressWarnings("unchecked")
+                List<Map<String, Object>> data = (List<Map<String, Object>>) tracksMap.getOrDefault("data", List.of());
+                int i = 1;
+                for (Map<String, Object> trackRow : data) {
+                    String trackName = asString(trackRow.get("title"));
+                    Integer durationSec = asInteger(trackRow.get("duration"));
+                    String durationLabel = durationSec != null ? formatTrackDuration(durationSec * 1000L) : "";
+                    tracks.add(new ExternalTrack(i++, trackName, durationLabel));
+                }
+            }
+
+            return new ExternalAlbumDetails(album, tracks);
+        } catch (Exception ex) {
+            throw new IllegalStateException("No se pudo consultar el album en Deezer", ex);
         }
-
-        Map<String, Object> albumRow = rows.stream()
-                .filter(row -> "collection".equalsIgnoreCase(asString(row.get("wrapperType"))))
-                .findFirst()
-                .orElse(rows.get(0));
-
-        ExternalContentItem album = toAlbumItem(albumRow);
-        List<ExternalTrack> tracks = new ArrayList<>();
-        for (Map<String, Object> row : rows) {
-            if (!"track".equalsIgnoreCase(asString(row.get("wrapperType")))) {
-                continue;
-            }
-            if (!"song".equalsIgnoreCase(asString(row.get("kind")))) {
-                continue;
-            }
-
-            String trackName = asString(row.get("trackName"));
-            if (trackName.isBlank()) {
-                continue;
-            }
-            Integer trackNumber = asInteger(row.get("trackNumber"));
-            Long durationMillis = asLong(row.get("trackTimeMillis"));
-            String durationLabel = formatTrackDuration(durationMillis);
-            tracks.add(new ExternalTrack(trackNumber, trackName, durationLabel));
-        }
-
-        return new ExternalAlbumDetails(album, tracks);
     }
 
     public List<ExternalContentItem> searchArtistAlbums(String artistId) {
@@ -505,6 +545,61 @@ public class ExternalContentSearchService {
 
         return new ExternalContentItem("iTunes", id, title, "disco", description, releaseDate, coverUrl,
             metricLabel, artist, artistId, null, null);
+    }
+
+    public ExternalContentItem getSerieDetails(String tvmazeId) {
+        String url = UriComponentsBuilder.fromUriString("https://api.tvmaze.com/shows/" + tvmazeId).toUriString();
+        try {
+            Map<String, Object> show = restClient.get().uri(url).retrieve().body(Map.class);
+            if (show == null) throw new IllegalStateException("Serie no encontrada");
+            String title = asString(show.get("name"));
+            String idStr = asString(show.get("id"));
+            String desc = asString(show.get("summary"));
+            if (desc != null) desc = desc.replaceAll("<[^>]*>", "");
+            String premiered = asString(show.get("premiered"));
+            LocalDate releaseDate = parseDateSafely(premiered);
+            @SuppressWarnings("unchecked")
+            Map<String, Object> image = (Map<String, Object>) show.get("image");
+            String coverUrl = image == null ? "" : asString(image.get("medium"));
+            if (coverUrl.isBlank()) {
+                coverUrl = image == null ? "" : asString(image.get("original"));
+            }
+            Integer runtime = asInteger(show.get("runtime"));
+            if (runtime == null || runtime <= 0) {
+                runtime = asInteger(show.get("averageRuntime"));
+            }
+            String metricLabel = runtime != null && runtime > 0 ? runtime + " min por episodio" : "Duracion sin dato";
+            
+            return new ExternalContentItem("TVMaze", idStr, title, "serie", desc, releaseDate, coverUrl, metricLabel, null, null, null, null);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Error consultando serie", ex);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public ExternalContentItem getBookDetails(String olid) {
+        String safeId = olid.startsWith("/works/") ? olid : "/works/" + olid;
+        String url = UriComponentsBuilder.fromUriString("https://openlibrary.org" + safeId + ".json").toUriString();
+        try {
+            Map<String, Object> doc = restClient.get().uri(url).retrieve().body(Map.class);
+            if (doc == null) throw new IllegalStateException("Libro no encontrado");
+            String title = asString(doc.get("title"));
+            String desc = "";
+            Object descObj = doc.get("description");
+            if (descObj instanceof Map m) {
+                desc = asString(m.get("value"));
+            } else if (descObj instanceof String s) {
+                desc = s;
+            }
+            LocalDate releaseDate = null;
+            
+            List<Integer> covers = (List<Integer>) doc.get("covers");
+            String coverUrl = (covers != null && !covers.isEmpty()) ? "https://covers.openlibrary.org/b/id/" + covers.get(0) + "-M.jpg" : "";
+            
+            return new ExternalContentItem("OpenLibrary", olid, title, "libro", desc, releaseDate, coverUrl, "", null, null, null, null);
+        } catch (Exception ex) {
+            throw new IllegalStateException("Error consultando libro", ex);
+        }
     }
 
     public ExternalContentItem getMovieDetails(String imdbId) {
