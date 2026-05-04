@@ -119,7 +119,7 @@ public class ExternalContentSearchService {
         return new ExternalContentItem("Spotify", asString(res.get("id")), asString(res.get("name")), "disco", "Álbum de " + artist, parseDate(asString(res.get("release_date"))), cover, null, artist, artistId, null, null);
     }
 
-    private List<ExternalContentItem> searchGoogleBooks(String query) {
+    public List<ExternalContentItem> searchGoogleBooks(String query) {
         List<ExternalContentItem> items = new ArrayList<>();
         try {
             String url = UriComponentsBuilder.fromUriString("https://www.googleapis.com/books/v1/volumes")

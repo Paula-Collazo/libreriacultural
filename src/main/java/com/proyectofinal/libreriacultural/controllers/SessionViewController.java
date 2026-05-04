@@ -234,6 +234,12 @@ public class SessionViewController {
             Map<String, Object> book = externalContentSearchService.getDetails("GoogleBooks", id, "libro");
             model.addAttribute("user", sessionUser);
             model.addAttribute("movie", book); // Cambio a 'movie' para que coincida con la plantilla libro.html
+            
+            String author = (String) book.get("author");
+            if (author != null && !author.isBlank()) {
+                model.addAttribute("relatedBooks", externalContentSearchService.searchGoogleBooks(author).stream().limit(6).collect(Collectors.toList()));
+            }
+            
             model.addAttribute("activeType", "libro");
             return "libro";
         } catch (Exception ex) {
