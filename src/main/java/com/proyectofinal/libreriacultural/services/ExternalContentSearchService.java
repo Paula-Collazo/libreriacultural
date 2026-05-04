@@ -219,6 +219,9 @@ public class ExternalContentSearchService {
                         ? trackCount + " canciones"
                         : "Canciones sin dato";
                 String coverUrl = asString(row.get("artworkUrl100"));
+                if (coverUrl != null) {
+                    coverUrl = coverUrl.replace("100x100bb.jpg", "600x600bb.jpg");
+                }
 
                 results.add(new ExternalContentItem("iTunes", id, title, "disco", description, releaseDate, coverUrl,
                     metricLabel, artist, artistId, null, null));
@@ -263,7 +266,10 @@ public class ExternalContentSearchService {
                         ? trackCount + " canciones"
                         : "Canciones sin dato";
 
-                String coverUrl = asString(row.get("cover_medium"));
+                String coverUrl = asString(row.get("cover_big"));
+                if (coverUrl == null || coverUrl.isBlank()) {
+                    coverUrl = asString(row.get("cover_medium"));
+                }
                 if (coverUrl.isBlank()) {
                     coverUrl = asString(row.get("cover"));
                 }
@@ -376,6 +382,9 @@ public class ExternalContentSearchService {
                         ? Math.max(1, trackTimeMillis / 60000L) + " min"
                         : "Duracion sin dato";
                 String coverUrl = asString(row.get("artworkUrl100"));
+                if (coverUrl != null) {
+                    coverUrl = coverUrl.replace("100x100bb.jpg", "600x600bb.jpg");
+                }
 
                 results.add(new ExternalContentItem("iTunes", id, title, "pelicula", description, releaseDate,
                         coverUrl, metricLabel, null, null, null, null));

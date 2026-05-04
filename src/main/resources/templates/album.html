@@ -97,14 +97,20 @@
             </div>
             <div class="content-grid">
                 <article class="media-card" th:each="item : ${otherAlbums}">
-                    <div class="media-cover" th:if="${item.coverUrl != null and !item.coverUrl.isBlank()}">
-                        <img th:src="${item.coverUrl}" th:alt="${'Portada de ' + item.title}">
+                    <div class="media-cover" th:if="${item.coverUrl != null and !item.coverUrl.isBlank()}" style="width:100%; aspect-ratio:1/1;">
+                        <a th:href="@{/explore/disco/{id}(id=${item.externalId})}">
+                            <img th:src="${item.coverUrl}" th:alt="${'Portada de ' + item.title}" style="width:100%; height:100%; object-fit:cover; display:block;">
+                        </a>
                     </div>
-                    <div class="media-cover placeholder" th:if="${item.coverUrl == null or item.coverUrl.isBlank()}">
-                        <span>Sin portada</span>
+                    <div class="media-cover placeholder" th:if="${item.coverUrl == null or item.coverUrl.isBlank()}" style="width:100%; aspect-ratio:1/1;">
+                        <a th:href="@{/explore/disco/{id}(id=${item.externalId})}" style="display:flex; width:100%; height:100%; align-items:center; justify-content:center; text-decoration:none; color:inherit;">
+                            <span>Sin portada</span>
+                        </a>
                     </div>
                     <div class="media-body">
-                        <h3 th:text="${item.title}">Titulo</h3>
+                        <h3>
+                            <a th:href="@{/explore/disco/{id}(id=${item.externalId})}" th:text="${item.title}" style="text-decoration:none; color:inherit;">Titulo</a>
+                        </h3>
                         <p class="muted" th:text="${item.source}">Fuente</p>
                         <p class="muted" th:if="${item.artistName != null and !#strings.isEmpty(item.artistName)}">
                             Artista:
@@ -112,7 +118,8 @@
                         </p>
                         <p class="media-metric" th:if="${item.metricLabel != null and !item.metricLabel.isBlank()}"
                            th:text="${item.metricLabel}">Canciones</p>
-                        <p class="muted" th:if="${item.releaseDate != null}" th:text="${'Año de salida: ' + item.releaseDate.year}">Año</p>
+                        <p class="muted" th:if="${item.releaseDate != null}" th:text="${'Año: ' + item.releaseDate.year}" style="font-weight:800; color:#d00;">Año</p>
+                        <p class="muted" th:if="${item.releaseDate == null}" style="font-weight:800; color:#d00;">Año: s/f</p>
                     </div>
                     <div class="media-actions">
                         <form method="post" th:action="@{/profile/import-api}" style="width:100%;">

@@ -86,8 +86,10 @@
                         Artista:
                         <a class="artist-link" th:href="@{/explore/disco(artistId=${item.artistId})}" th:text="${item.artistName}">Artista</a>
                     </p>
-                    <p class="media-metric" style="font-weight: 700; color: var(--color-primary); margin-bottom: 4px;"
-                       th:if="${item.releaseDate != null}" th:text="${'Año de salida: ' + item.releaseDate.year}">Año</p>
+                    <p class="media-metric" style="font-weight: 800; color: #d00; margin-bottom: 4px;"
+                       th:if="${item.releaseDate != null}" th:text="${'Año: ' + item.releaseDate.year}">Año</p>
+                    <p class="media-metric" style="font-weight: 800; color: #d00; margin-bottom: 4px;"
+                       th:if="${item.releaseDate == null}">Año: s/f</p>
                     <p class="media-metric" th:if="${item.metricLabel != null and !item.metricLabel.isBlank()}" style="font-weight: 500; opacity: 0.8;"
                        th:text="${activeType == 'pelicula' ? 'Duracion: ' + item.metricLabel : item.metricLabel}">Metric</p>
                     <p class="muted" th:if="${activeType != 'disco' and activeType != 'pelicula' and !#strings.isEmpty(item.description)}" th:text="${item.description}">Descripcion</p>

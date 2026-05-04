@@ -581,10 +581,9 @@ button.mini.danger {
     border-radius: 12px;
     padding: 0.8rem;
     background: rgba(255, 255, 255, 0.55);
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.55rem;
-    height: var(--media-card-height);
-    grid-template-rows: var(--media-cover-height) 1fr auto;
     overflow: hidden;
 }
 
@@ -597,8 +596,10 @@ button.mini.danger {
     border: 1px solid var(--line);
     border-radius: 10px;
     overflow: hidden;
-    height: var(--media-cover-height);
+    width: 100%;
+    aspect-ratio: 1 / 1;
     background: rgba(255, 255, 255, 0.6);
+    position: relative;
 }
 
 .media-cover img {
@@ -636,10 +637,9 @@ button.mini.danger {
     border-radius: 14px;
     background: rgba(255, 255, 255, 0.6);
     padding: 0.75rem;
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.65rem;
-    height: var(--media-card-height);
-    grid-template-rows: var(--media-cover-height) 1fr auto;
     overflow: hidden;
 }
 
