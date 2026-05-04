@@ -5,59 +5,96 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Detalle - Libreria Cultural</title>
     <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="stylesheet" th:href="@{/css/music.css}">
 </head>
 <body>
     <div class="grain"></div>
 
     <header class="topbar">
-        <a class="brand" href="/profile">@usuario</a>
+        <a class="brand" href="/profile" th:text="${user != null ? '@' + user.username : '@usuario'}">@usuario</a>
         <div class="topbar-actions">
+            <div class="theme-switch">
+                <label for="themePicker">Tema</label>
+                <select id="themePicker" data-theme-select>
+                    <option value="rosa">Rosa Pastel</option>
+                    <option value="azul">Azul Pastel</option>
+                    <option value="menta">Menta Pastel</option>
+                    <option value="durazno">Durazno Pastel</option>
+                </select>
+            </div>
             <a class="ghost-link" href="/profile">Mi perfil</a>
+            <form method="post" th:action="@{/logout}">
+                <button type="submit" class="ghost-btn">Cerrar sesion</button>
+            </form>
         </div>
     </header>
 
     <main class="album-wrap">
-        <!-- Contenido para Peliculas, Series y Libros -->
+        <section class="type-nav card compact-nav">
+            <a th:href="@{/profile}">Mi perfil</a>
+            <a th:href="@{/explore/pelicula}" th:classappend="${activeType == 'pelicula'} ? ' active' : ''">Peliculas</a>
+            <a th:href="@{/explore/serie}" th:classappend="${activeType == 'serie'} ? ' active' : ''">Series</a>
+            <a th:href="@{/explore/libro}">Libros</a>
+            <a th:href="@{/explore/disco}">Discos</a>
+        </section>
+
+        <!-- Bloque Principal -->
         <section class="card album-hero" th:if="${movie != null}">
-            <div class="media-cover" th:if="${movie.coverUrl != null and !movie.coverUrl.isBlank()}">
-                <img th:src="${movie.coverUrl}" th:alt="${movie.title}">
+            <div class="media-cover">
+                <img th:if="${movie['coverUrl'] != null and !#strings.isEmpty(movie['coverUrl'])}" th:src="${movie['coverUrl']}" th:alt="${movie['title']}">
+                <div th:if="${movie['coverUrl'] == null or #strings.isEmpty(movie['coverUrl'])}" class="media-cover placeholder"><span>?</span></div>
             </div>
             <div>
-                <h1 th:text="${movie.title}">Titulo</h1>
-                <p class="muted" th:text="${movie.description}">Descripcion</p>
-                <p class="muted" th:if="${movie.releaseDate != null}" th:text="${'Lanzamiento: ' + movie.releaseDate}">Fecha</p>
+                <p class="kicker" th:text="${movie['type'] == 'serie' ? 'Serie' : 'Pelicula'}">Contenido</p>
+                <h1 th:text="${movie['title'] != null ? movie['title'] : 'Sin titulo'}">Titulo</h1>
                 
-                <form method="post" th:action="@{/profile/import-api}" class="add-form">
-                    <input type="hidden" name="externalTitle" th:value="${movie.title}">
-                    <input type="hidden" name="externalType" th:value="${movie.type}">
-                    <input type="hidden" name="externalDescription" th:value="${movie.description}">
-                    <input type="hidden" name="externalCoverUrl" th:value="${movie.coverUrl}">
+                <p class="muted" th:if="${movie['releaseDate'] != null and !#strings.isEmpty(movie['releaseDate'])}">
+                    Lanzamiento: <span th:text="${movie['releaseDate']}">2024</span>
+                </p>
+                
+                <!-- Enlace manual al director para evitar el error de SpringHrefTagProcessor -->
+                <p class="muted" th:if="${movie['directorName'] != null and !#strings.isEmpty(movie['directorName'])}">
+                    Director: <a class="artist-link" th:href="|/explore/actor/${movie['directorName']}|" th:text="${movie['directorName']}">Director</a>
+                </p>
+                
+                <form method="post" th:action="@{/profile/import-api}" class="add-form" th:if="${movie['title'] != null}">
+                    <input type="hidden" name="externalTitle" th:value="${movie['title']}">
+                    <input type="hidden" name="externalType" th:value="${movie['type']}">
+                    <input type="hidden" name="externalCoverUrl" th:value="${movie['coverUrl']}">
+                    <input type="hidden" name="externalDescription" th:value="${movie['description']}">
+                    <input type="hidden" name="externalReleaseDate" th:value="${movie['releaseDate'] != null ? movie['releaseDate'].toString() : ''}">
                     <button type="submit">Añadir a mi perfil</button>
                 </form>
             </div>
         </section>
 
-        <!-- Contenido para Discos -->
-        <section class="card album-hero" th:if="${album != null}">
-            <div class="media-cover" th:if="${album.coverUrl != null and !album.coverUrl.isBlank()}">
-                <img th:src="${album.coverUrl}" th:alt="${album.title}">
-            </div>
-            <div>
-                <h1 th:text="${album.title}">Titulo</h1>
-                <p class="muted" th:text="${'Artista: ' + album.artist}">Artista</p>
-                
-                <form method="post" th:action="@{/profile/import-api}" class="add-form">
-                    <input type="hidden" name="externalTitle" th:value="${album.title}">
-                    <input type="hidden" name="externalType" value="disco">
-                    <input type="hidden" name="externalCoverUrl" th:value="${album.coverUrl}">
-                    <button type="submit">Añadir a mi perfil</button>
-                </form>
+        <!-- Resumen -->
+        <section class="card" th:if="${movie != null and movie['description'] != null and !#strings.isEmpty(movie['description'])}">
+            <h2>Resumen</h2>
+            <p class="muted" style="line-height: 1.6;" th:text="${movie['description']}">Descripcion.</p>
+        </section>
+
+        <!-- Reparto con enlaces manuales -->
+        <section class="card" th:if="${actors != null and !#lists.isEmpty(actors)}">
+            <h2>Reparto</h2>
+            <div class="actor-grid">
+                <div class="actor-card" th:each="actor : ${actors}">
+                    <a th:if="${actor['name'] != null and !#strings.isEmpty(actor['name'])}" th:href="|/explore/actor/${actor['name']}|">
+                        <div class="media-cover mini-cover">
+                            <img th:if="${actor['photoUrl'] != null and !#strings.isEmpty(actor['photoUrl'])}" th:src="${actor['photoUrl']}" th:alt="${actor['name']}">
+                            <div th:if="${actor['photoUrl'] == null or #strings.isEmpty(actor['photoUrl'])}" class="media-cover placeholder"><span>?</span></div>
+                        </div>
+                        <p class="small-title" th:text="${actor['name']}">Actor</p>
+                    </a>
+                </div>
             </div>
         </section>
-        
+
         <section class="card">
             <a href="/profile" class="artist-link">Volver al perfil</a>
         </section>
     </main>
+
+    <script defer th:src="@{/js/theme.js}"></script>
 </body>
 </html>

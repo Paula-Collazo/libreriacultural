@@ -152,6 +152,8 @@ public class SessionViewController {
 
         try {
             Map<String, Object> details = externalContentSearchService.getDetails("Spotify", id, "musica");
+            if (details == null || details.isEmpty()) return "redirect:/explore/disco";
+            
             model.addAttribute("user", sessionUser);
             model.addAttribute("album", details);
             Object tracks = details.get("tracks");
@@ -165,8 +167,7 @@ public class SessionViewController {
             model.addAttribute("activeType", "disco");
             return "album";
         } catch (Exception ex) {
-            System.err.println("[ERROR] Detalle Album: " + ex.getMessage());
-            ex.printStackTrace();
+            System.err.println("[ERROR] Detalle Disco: " + ex.getMessage());
             return "redirect:/explore/disco";
         }
     }
@@ -178,6 +179,8 @@ public class SessionViewController {
 
         try {
             Map<String, Object> movie = externalContentSearchService.getDetails("TMDb", id, "pelicula");
+            if (movie == null || movie.isEmpty()) return "redirect:/explore/pelicula";
+            
             model.addAttribute("user", sessionUser);
             model.addAttribute("movie", movie);
             model.addAttribute("actors", movie.get("actors"));
@@ -185,7 +188,6 @@ public class SessionViewController {
             return "movie";
         } catch (Exception ex) {
             System.err.println("[ERROR] Detalle Pelicula: " + ex.getMessage());
-            ex.printStackTrace();
             return "redirect:/explore/pelicula";
         }
     }
@@ -214,13 +216,15 @@ public class SessionViewController {
 
         try {
             Map<String, Object> serie = externalContentSearchService.getDetails("TMDb", id, "serie");
+            if (serie == null || serie.isEmpty()) return "redirect:/explore/serie";
+            
             model.addAttribute("user", sessionUser);
             model.addAttribute("movie", serie); // La plantilla 'serie.html' usa 'movie' como objeto base
+            model.addAttribute("actors", serie.get("actors"));
             model.addAttribute("activeType", "serie");
             return "serie";
         } catch (Exception ex) {
             System.err.println("[ERROR] Detalle Serie: " + ex.getMessage());
-            ex.printStackTrace();
             return "redirect:/explore/serie";
         }
     }
@@ -232,6 +236,8 @@ public class SessionViewController {
 
         try {
             Map<String, Object> book = externalContentSearchService.getDetails("GoogleBooks", id, "libro");
+            if (book == null || book.isEmpty()) return "redirect:/explore/libro";
+            
             model.addAttribute("user", sessionUser);
             model.addAttribute("movie", book); // Cambio a 'movie' para que coincida con la plantilla libro.html
             
@@ -244,7 +250,6 @@ public class SessionViewController {
             return "libro";
         } catch (Exception ex) {
             System.err.println("[ERROR] Detalle Libro: " + ex.getMessage());
-            ex.printStackTrace();
             return "redirect:/explore/libro";
         }
     }

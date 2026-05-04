@@ -184,13 +184,15 @@ public class ExternalContentSearchService {
             if (credits != null) {
                 List<Map<String, Object>> cast = (List<Map<String, Object>>) credits.get("cast");
                 if (cast != null) {
-                    result.put("actors", cast.stream().limit(10).map(c -> {
-                        Map<String, String> a = new HashMap<>();
-                        a.put("name", asString(c.get("name")));
-                        String path = asString(c.get("profile_path"));
-                        a.put("photoUrl", path.isEmpty() ? "" : "https://image.tmdb.org/t/p/w200" + path);
-                        return a;
-                    }).collect(Collectors.toList()));
+                    result.put("actors", cast.stream()
+                        .filter(c -> c.get("name") != null && !asString(c.get("name")).isBlank())
+                        .limit(10).map(c -> {
+                            Map<String, String> a = new HashMap<>();
+                            a.put("name", asString(c.get("name")));
+                            String path = asString(c.get("profile_path"));
+                            a.put("photoUrl", path.isEmpty() ? "" : "https://image.tmdb.org/t/p/w200" + path);
+                            return a;
+                        }).collect(Collectors.toList()));
                 }
             }
         } catch (Exception e) {
