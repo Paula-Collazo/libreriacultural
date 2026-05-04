@@ -27,6 +27,9 @@ import com.proyectofinal.libreriacultural.domain.User;
 import com.proyectofinal.libreriacultural.domain.UserContent;
 import com.proyectofinal.libreriacultural.domain.UserSeriesEpisodeProgress;
 import com.proyectofinal.libreriacultural.domain.UserSongProgress;
+import com.proyectofinal.libreriacultural.services.ExternalAlbumDetails;
+import com.proyectofinal.libreriacultural.services.ExternalContentItem;
+import com.proyectofinal.libreriacultural.services.ExternalContentSearchService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -43,16 +46,19 @@ public class SessionViewController {
     private final ContentRepository contentRepository;
     private final UserSeriesEpisodeProgressRepository userSeriesEpisodeProgressRepository;
     private final UserSongProgressRepository userSongProgressRepository;
+    private final ExternalContentSearchService externalContentSearchService;
 
     public SessionViewController(UserContentRepository userContentRepository, UserRepository userRepository,
             ContentRepository contentRepository,
             UserSeriesEpisodeProgressRepository userSeriesEpisodeProgressRepository,
-            UserSongProgressRepository userSongProgressRepository) {
+            UserSongProgressRepository userSongProgressRepository,
+            ExternalContentSearchService externalContentSearchService) {
         this.userContentRepository = userContentRepository;
         this.userRepository = userRepository;
         this.contentRepository = contentRepository;
         this.userSeriesEpisodeProgressRepository = userSeriesEpisodeProgressRepository;
         this.userSongProgressRepository = userSongProgressRepository;
+        this.externalContentSearchService = externalContentSearchService;
     }
 
     @GetMapping("/")
@@ -88,8 +94,114 @@ public class SessionViewController {
         return "redirect:/";
     }
 
+    @GetMapping("/explore")
+    public String exploreRoot() {
+        return "redirect:/explore/pelicula";
+    }
+
+    @GetMapping("/explore/{type}")
+    public String exploreByType(@PathVariable String type,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String artistId,
+            Model model,
+            HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        String normalizedType;
+        try {
+            normalizedType = normalizeAndValidateType(type);
+        } catch (IllegalArgumentException ex) {
+            return "redirect:/explore/pelicula";
+        }
+
+        String query = q == null ? "" : q.trim();
+        if (query.isBlank()) {
+            query = defaultExploreQuery(normalizedType);
+        }
+
+        List<ExternalContentItem> results = List.of();
+        try {
+            if ("disco".equals(normalizedType) && artistId != null && !artistId.isBlank()) {
+                results = externalContentSearchService.searchArtistAlbums(artistId.trim());
+                model.addAttribute("artistFilter", resolveArtistName(results));
+            } else {
+                results = externalContentSearchService.search(query, normalizedType);
+            }
+        } catch (IllegalArgumentException ex) {
+            model.addAttribute("apiErrorMessage", ex.getMessage());
+        } catch (Exception ex) {
+            model.addAttribute("apiErrorMessage", "No se pudo consultar la API externa en este momento");
+        }
+
+        model.addAttribute("user", sessionUser);
+        model.addAttribute("activeType", normalizedType);
+        model.addAttribute("typeLabel", displayTypeName(normalizedType));
+        model.addAttribute("searchQuery", query);
+        model.addAttribute("apiResults", results);
+        return "explore";
+    }
+
+    @GetMapping("/explore/disco/{albumId}")
+    public String exploreAlbumDetail(@PathVariable String albumId, Model model, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        try {
+            ExternalAlbumDetails details = externalContentSearchService.getAlbumDetails(albumId);
+            ExternalContentItem album = details.album();
+            List<ExternalContentItem> otherAlbums = List.of();
+            if (album.artistId() != null && !album.artistId().isBlank()) {
+                otherAlbums = externalContentSearchService.searchArtistAlbums(album.artistId()).stream()
+                        .filter(item -> !album.externalId().equals(item.externalId()))
+                        .limit(8)
+                        .toList();
+            }
+
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("album", album);
+            model.addAttribute("tracks", details.tracks());
+            model.addAttribute("otherAlbums", otherAlbums);
+            model.addAttribute("activeType", "disco");
+            return "album";
+        } catch (Exception ex) {
+            model.addAttribute("errorMessage", "No se pudo cargar el detalle del disco");
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("activeType", "disco");
+            return "album";
+        }
+    }
+
+    @GetMapping("/explore/pelicula/{imdbId}")
+    public String exploreMovieDetail(@PathVariable String imdbId, Model model, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        try {
+            ExternalContentItem movie = externalContentSearchService.getMovieDetails(imdbId);
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("movie", movie);
+            model.addAttribute("actors", splitActors(movie.actors()));
+            model.addAttribute("activeType", "pelicula");
+            return "movie";
+        } catch (Exception ex) {
+            model.addAttribute("errorMessage", "No se pudo cargar el detalle de la pelicula");
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("activeType", "pelicula");
+            return "movie";
+        }
+    }
+
     @GetMapping("/profile")
-    public String profile(Model model, HttpSession session) {
+    public String profile(@RequestParam(required = false) String apiQuery,
+            @RequestParam(required = false, defaultValue = "pelicula") String apiType,
+            Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
         if (sessionUser == null) {
             return "redirect:/";
@@ -118,6 +230,22 @@ public class SessionViewController {
         Map<Long, List<UserSeriesEpisodeProgress>> episodesByEntry = loadEpisodesByEntry(series);
         Map<Long, List<UserSongProgress>> songsByEntry = loadSongsByEntry(discs);
 
+        String normalizedApiType = normalizeType(apiType);
+        if (!VALID_CONTENT_TYPES.contains(normalizedApiType)) {
+            normalizedApiType = "pelicula";
+        }
+
+        List<ExternalContentItem> apiResults = List.of();
+        if (apiQuery != null && !apiQuery.isBlank()) {
+            try {
+                apiResults = externalContentSearchService.search(apiQuery, normalizedApiType);
+            } catch (IllegalArgumentException ex) {
+                model.addAttribute("apiErrorMessage", ex.getMessage());
+            } catch (Exception ex) {
+                model.addAttribute("apiErrorMessage", "No se pudo consultar la API externa en este momento");
+            }
+        }
+
         model.addAttribute("user", sessionUser);
         model.addAttribute("entries", entries);
         model.addAttribute("movieEntries", movies);
@@ -132,8 +260,79 @@ public class SessionViewController {
         model.addAttribute("stats", loadStats(sessionUser.getId()));
         model.addAttribute("typeStats", loadTypeStats(sessionUser.getId()));
         model.addAttribute("totalCount", userContentRepository.countByUserId(sessionUser.getId()));
+        model.addAttribute("apiTypeOptions", List.of("pelicula", "serie", "libro", "disco"));
+        model.addAttribute("selectedApiType", normalizedApiType);
+        model.addAttribute("apiQuery", apiQuery == null ? "" : apiQuery);
+        model.addAttribute("apiResults", apiResults);
+        model.addAttribute("activeType", "profile");
 
         return "profile";
+    }
+
+    @PostMapping("/profile/import-api")
+    public String importFromApi(@RequestParam String externalTitle,
+            @RequestParam String externalType,
+            @RequestParam(required = false) String externalDescription,
+            @RequestParam(required = false) String externalReleaseDate,
+            RedirectAttributes redirectAttributes,
+            @RequestParam(required = false) String externalMetric,
+            @RequestParam(required = false) String returnTo,
+            HttpSession session) {
+        String redirectPath = resolveReturnPath(returnTo);
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        String title = externalTitle == null ? "" : externalTitle.trim();
+        String type;
+        try {
+            type = normalizeAndValidateType(externalType);
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            return "redirect:" + redirectPath;
+        }
+        if (title.isBlank()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No se puede importar contenido sin titulo");
+            return "redirect:" + redirectPath;
+        }
+
+        Content content = contentRepository.findFirstByTitleIgnoreCaseAndTypeIgnoreCase(title, type)
+                .orElseGet(() -> {
+                    Content created = new Content();
+                    created.setTitle(title);
+                    created.setType(type);
+                    created.setDescription(buildImportedDescription(externalDescription, externalMetric));
+                    if (externalReleaseDate != null && !externalReleaseDate.isBlank()) {
+                        try {
+                            created.setReleaseDate(LocalDate.parse(externalReleaseDate.trim()));
+                        } catch (Exception ignored) {
+                            created.setReleaseDate(null);
+                        }
+                    }
+                    return contentRepository.save(created);
+                });
+
+        if (userContentRepository.existsByUserIdAndContentId(sessionUser.getId(), content.getId())) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Ese contenido ya esta en tu biblioteca");
+            return "redirect:" + redirectPath;
+        }
+
+        UserContent entry = new UserContent();
+        entry.setUser(sessionUser);
+        entry.setContent(content);
+        entry.setAddedDate(LocalDate.now());
+
+        try {
+            Integer importedPages = "libro".equals(type) ? parsePagesFromMetric(externalMetric) : null;
+            applyTypeSpecificData(entry, type, null, null, importedPages);
+            userContentRepository.save(entry);
+            redirectAttributes.addFlashAttribute("successMessage", "Contenido importado y anadido a tu biblioteca");
+        } catch (Exception ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", "No se pudo importar el contenido seleccionado");
+        }
+
+        return "redirect:" + redirectPath;
     }
 
     @PostMapping("/profile/add")
@@ -455,11 +654,11 @@ public class SessionViewController {
         }
 
         if ("serie".equals(contentType)) {
-            entry.setStatus("seguimiento_episodios");
+            entry.setStatus("en_progreso");
             return;
         }
 
-        entry.setStatus("seguimiento_canciones");
+        entry.setStatus("en_progreso");
     }
 
     private boolean isValidBookProgress(int currentPage, int totalPages) {
@@ -509,5 +708,92 @@ public class SessionViewController {
             return "pendiente";
         }
         return rawStatus.trim().toLowerCase();
+    }
+
+    private String defaultExploreQuery(String normalizedType) {
+        return switch (normalizedType) {
+            case "pelicula" -> "popular";
+            case "serie" -> "top";
+            case "libro" -> "bestseller";
+            case "disco" -> "popular albums";
+            default -> "popular";
+        };
+    }
+
+    private String displayTypeName(String normalizedType) {
+        return switch (normalizedType) {
+            case "pelicula" -> "Peliculas";
+            case "serie" -> "Series";
+            case "libro" -> "Libros";
+            case "disco" -> "Discos";
+            default -> "Catalogo";
+        };
+    }
+
+    private String resolveReturnPath(String returnTo) {
+        if (returnTo == null || returnTo.isBlank()) {
+            return "/profile";
+        }
+
+        String candidate = returnTo.trim();
+        if (candidate.startsWith("/explore/") || candidate.startsWith("/profile")) {
+            return candidate;
+        }
+
+        return "/profile";
+    }
+
+    private String buildImportedDescription(String externalDescription, String externalMetric) {
+        String description = externalDescription == null ? "" : externalDescription.trim();
+        String metric = externalMetric == null ? "" : externalMetric.trim();
+
+        if (metric.isBlank()) {
+            return description;
+        }
+        if (description.isBlank()) {
+            return "Detalle: " + metric;
+        }
+        return description + " | " + metric;
+    }
+
+    private Integer parsePagesFromMetric(String metric) {
+        if (metric == null || metric.isBlank()) {
+            return null;
+        }
+
+        String digits = metric.replaceAll("[^0-9]", "");
+        if (digits.isBlank()) {
+            return null;
+        }
+
+        try {
+            return Integer.valueOf(digits);
+        } catch (NumberFormatException ex) {
+            return null;
+        }
+    }
+
+    private String resolveArtistName(List<ExternalContentItem> results) {
+        return results.stream()
+                .map(ExternalContentItem::artistName)
+                .filter(name -> name != null && !name.isBlank())
+                .findFirst()
+                .orElse(null);
+    }
+
+    private List<String> splitActors(String rawActors) {
+        if (rawActors == null || rawActors.isBlank()) {
+            return List.of();
+        }
+
+        String[] parts = rawActors.split(",");
+        List<String> actors = new ArrayList<>();
+        for (String part : parts) {
+            String cleaned = part.trim();
+            if (!cleaned.isBlank()) {
+                actors.add(cleaned);
+            }
+        }
+        return actors;
     }
 }

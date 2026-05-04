@@ -10,7 +10,18 @@
     <div class="grain"></div>
     <header class="topbar">
         <a class="brand" href="/">Libreria Cultural</a>
-        <a class="ghost-link" href="/ui/library">Vista tecnica</a>
+        <div class="topbar-actions">
+            <div class="theme-switch">
+                <label for="themePicker">Tema</label>
+                <select id="themePicker" data-theme-select>
+                    <option value="rosa">Rosa Pastel</option>
+                    <option value="azul">Azul Pastel</option>
+                    <option value="menta">Menta Pastel</option>
+                    <option value="durazno">Durazno Pastel</option>
+                </select>
+            </div>
+            <a class="ghost-link" href="/ui/library">Vista tecnica</a>
+        </div>
     </header>
 
     <main class="landing-wrap">
@@ -65,5 +76,6 @@
             </article>
         </div>
     </section>
+    <script defer th:src="@{/js/theme.js}"></script>
 </body>
 </html>
