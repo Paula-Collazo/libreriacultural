@@ -115,15 +115,14 @@
                         <p class="muted" th:if="${item.releaseDate != null}" th:text="${'Año de salida: ' + item.releaseDate.year}">Año</p>
                     </div>
                     <div class="media-actions">
-                        <a class="mini-link" th:href="@{/explore/disco/{id}(id=${item.externalId})}">Ver canciones</a>
-                        <form method="post" th:action="@{/profile/import-api}">
+                        <form method="post" th:action="@{/profile/import-api}" style="width:100%;">
                             <input type="hidden" name="externalTitle" th:value="${item.title}">
                             <input type="hidden" name="externalType" th:value="${item.type}">
                             <input type="hidden" name="externalDescription" th:value="${item.description}">
                             <input type="hidden" name="externalReleaseDate" th:value="${item.releaseDate}">
                             <input type="hidden" name="externalMetric" th:value="${item.metricLabel}">
                             <input type="hidden" name="returnTo" th:value="${'/explore/disco/' + item.externalId}">
-                            <button type="submit">Anadir a mi perfil</button>
+                            <button type="submit" style="width:100%;">Anadir a mi perfil</button>
                         </form>
                     </div>
                 </article>

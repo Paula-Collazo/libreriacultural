@@ -169,7 +169,7 @@ public class SessionViewController {
             model.addAttribute("activeType", "disco");
             return "album";
         } catch (Exception ex) {
-            model.addAttribute("errorMessage", "No se pudo cargar el detalle del disco");
+            model.addAttribute("errorMessage", "Error cargando disco: " + ex.getMessage());
             model.addAttribute("user", sessionUser);
             model.addAttribute("activeType", "disco");
             return "album";

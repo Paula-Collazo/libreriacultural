@@ -9,9 +9,15 @@ import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.client.ClientHttpResponse;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
+import java.io.IOException;
+import java.io.InputStream;
+import org.springframework.http.HttpStatusCode;
 
 @Service
 public class ExternalContentSearchService {
@@ -22,7 +28,31 @@ public class ExternalContentSearchService {
     private final String omdbApiKey;
 
     public ExternalContentSearchService(@Value("${omdb.api.key:thewdb}") String omdbApiKey) {
-        this.restClient = RestClient.builder().build();
+        this.restClient = RestClient.builder()
+            .requestInterceptor((request, body, execution) -> {
+                ClientHttpResponse response = execution.execute(request, body);
+                // Si la respuesta es text/javascript (iTunes), la tratamos como JSON
+                return new ClientHttpResponse() {
+                    @Override
+                    public HttpStatusCode getStatusCode() throws IOException { return response.getStatusCode(); }
+                    @Override
+                    public String getStatusText() throws IOException { return response.getStatusText(); }
+                    @Override
+                    public void close() { response.close(); }
+                    @Override
+                    public InputStream getBody() throws IOException { return response.getBody(); }
+                    @Override
+                    public HttpHeaders getHeaders() {
+                        HttpHeaders headers = new HttpHeaders();
+                        headers.putAll(response.getHeaders());
+                        if (headers.getContentType() != null && headers.getContentType().toString().contains("javascript")) {
+                            headers.setContentType(MediaType.APPLICATION_JSON);
+                        }
+                        return headers;
+                    }
+                };
+            })
+            .build();
         this.omdbApiKey = omdbApiKey == null ? "" : omdbApiKey.trim();
     }
 
@@ -52,7 +82,7 @@ public class ExternalContentSearchService {
         String url = UriComponentsBuilder.fromUriString("https://openlibrary.org/search.json")
                 .queryParam("q", query)
                 .queryParam("limit", 8)
-                .build(true)
+                .build()
                 .toUriString();
 
         Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -98,7 +128,7 @@ public class ExternalContentSearchService {
     private List<ExternalContentItem> searchSeries(String query) {
         String url = UriComponentsBuilder.fromUriString("https://api.tvmaze.com/search/shows")
                 .queryParam("q", query)
-                .build(true)
+                .build()
                 .toUriString();
 
         List<Map<String, Object>> body = restClient.get().uri(url).retrieve().body(List.class);
@@ -162,7 +192,7 @@ public class ExternalContentSearchService {
                     .queryParam("entity", "album")
                     .queryParam("country", "us")
                     .queryParam("limit", 8)
-                    .build(true)
+                    .build()
                     .toUriString();
 
             Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -204,7 +234,7 @@ public class ExternalContentSearchService {
         try {
                 String url = UriComponentsBuilder.fromUriString("http://api.deezer.com/search/album")
                     .queryParam("q", query)
-                    .build(true)
+                    .build()
                     .toUriString();
 
             Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -259,7 +289,7 @@ public class ExternalContentSearchService {
                     .queryParam("apikey", omdbApiKey)
                     .queryParam("s", query)
                     .queryParam("type", "movie")
-                    .build(true)
+                    .build()
                     .toUriString();
 
             Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -314,7 +344,7 @@ public class ExternalContentSearchService {
                     .queryParam("media", "movie")
                     .queryParam("country", "us")
                     .queryParam("limit", 8)
-                    .build(true)
+                    .build()
                     .toUriString();
 
             Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -368,7 +398,7 @@ public class ExternalContentSearchService {
                     .queryParam("id", safeId)
                     .queryParam("entity", "song")
                     .queryParam("country", "us")
-                    .build(true)
+                    .build()
                     .toUriString();
 
             Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -403,7 +433,7 @@ public class ExternalContentSearchService {
                     return new ExternalAlbumDetails(album, tracks);
                 }
             }
-        } catch (Exception ex) {
+        } catch (Throwable ex) {
             // Ignorar para intentar con Deezer
         }
 
@@ -459,7 +489,7 @@ public class ExternalContentSearchService {
                 .queryParam("id", safeId)
                 .queryParam("entity", "album")
                 .queryParam("country", "us")
-                .build(true)
+                .build()
                 .toUriString();
 
         Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -650,7 +680,7 @@ public class ExternalContentSearchService {
         String url = UriComponentsBuilder.fromUriString("https://www.omdbapi.com/")
                 .queryParam("apikey", omdbApiKey)
                 .queryParam("i", safeId)
-                .build(true)
+                .build()
                 .toUriString();
 
         Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
@@ -704,7 +734,7 @@ public class ExternalContentSearchService {
                     .path(safeKey)
                     .path("/editions.json")
                     .queryParam("limit", 5)
-                    .build(true)
+                    .build()
                     .toUriString();
 
             Map<String, Object> body = restClient.get().uri(url).retrieve().body(Map.class);
