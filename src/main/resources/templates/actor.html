@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title th:text="${actor['name'] + ' - Libreria Cultural'}">Actor - Libreria Cultural</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <style>
+        .actor-hero {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 2rem;
+            align-items: start;
+            margin-bottom: 2.5rem;
+        }
+        .actor-photo {
+            width: 100%;
+            aspect-ratio: 2 / 3;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+        .actor-photo img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .actor-bio {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            color: var(--text);
+        }
+        .actor-bio p {
+            margin-top: 0.5rem;
+            opacity: 0.9;
+        }
+        .filmography-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 1.5rem;
+        }
+        .film-card {
+            transition: transform 0.3s ease;
+        }
+        .film-card:hover {
+            transform: translateY(-5px);
+        }
+        @media (max-width: 768px) {
+            .actor-hero {
+                grid-template-columns: 1fr;
+                text-align: center;
+            }
+            .actor-photo {
+                max-width: 200px;
+                margin: 0 auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="grain"></div>
+
+    <header class="topbar">
+        <a class="brand" href="/profile" th:text="${'@' + user.username}">@usuario</a>
+        <div class="topbar-actions">
+            <div class="theme-switch">
+                <label for="themePicker">Tema</label>
+                <select id="themePicker" data-theme-select>
+                    <option value="rosa">Rosa Pastel</option>
+                    <option value="azul">Azul Pastel</option>
+                    <option value="menta">Menta Pastel</option>
+                    <option value="durazno">Durazno Pastel</option>
+                </select>
+            </div>
+            <a class="ghost-link" href="/profile">Mi perfil</a>
+            <form method="post" th:action="@{/logout}">
+                <button type="submit" class="ghost-btn">Cerrar sesion</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="album-wrap">
+        <section class="type-nav card compact-nav">
+            <a th:href="@{/profile}" th:classappend="${activeType == 'profile'} ? ' active' : ''">Mi perfil</a>
+            <a th:href="@{/explore/pelicula}" th:classappend="${activeType == 'pelicula'} ? ' active' : ''">Peliculas</a>
+            <a th:href="@{/explore/serie}" th:classappend="${activeType == 'serie'} ? ' active' : ''">Series</a>
+            <a th:href="@{/explore/libro}" th:classappend="${activeType == 'libro'} ? ' active' : ''">Libros</a>
+            <a th:href="@{/explore/disco}" th:classappend="${activeType == 'disco'} ? ' active' : ''">Discos</a>
+        </section>
+
+        <section class="card">
+            <div class="actor-hero">
+                <div class="actor-photo">
+                    <img th:if="${actor['photoUrl'] != null}" th:src="${actor['photoUrl']}" th:alt="${actor['name']}">
+                    <div th:if="${actor['photoUrl'] == null}" class="media-cover placeholder">
+                        <span>Sin foto</span>
+                    </div>
+                </div>
+                <div class="actor-info">
+                    <p class="kicker">Actor / Director</p>
+                    <h1 th:text="${actor['name']}">Nombre del Actor</h1>
+                    <div class="actor-bio">
+                        <p th:text="${actor['bio']}">Biografía no disponible.</p>
+                    </div>
+                </div>
+            </div>
+
+            <h2>Filmografía</h2>
+            <div class="filmography-grid">
+                <div class="film-card" th:each="movie : ${actor['movies']}">
+                    <a th:href="@{/explore/pelicula/{id}(id=${movie.externalId})}" style="text-decoration: none;">
+                        <div class="media-cover">
+                            <img th:src="${movie.coverUrl}" th:alt="${movie.title}">
+                        </div>
+                        <p class="muted" style="margin-top: 0.5rem; font-weight: 700; font-size: 0.9rem; text-align: center;" th:text="${movie.title}">Titulo</p>
+                    </a>
+                </div>
+            </div>
+            <p class="muted" th:if="${#lists.isEmpty(actor['movies'])}" style="margin-top: 1rem;">No se encontraron películas en iTunes para este actor.</p>
+        </section>
+    </main>
+
+    <script defer th:src="@{/js/theme.js}"></script>
+</body>
+</html>

@@ -689,7 +689,17 @@ button.mini.danger {
 
 .album-hero .media-cover {
     height: auto;
-    min-height: 240px;
+    aspect-ratio: auto;
+    background: transparent;
+    border: none;
+}
+
+.album-hero .media-cover img {
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
 }
 
 .track-list {

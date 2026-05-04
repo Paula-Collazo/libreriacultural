@@ -3,15 +3,18 @@ package com.proyectofinal.libreriacultural.services;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.ClientHttpResponse;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -137,7 +140,7 @@ public class ExternalContentSearchService {
         }
 
         List<ExternalContentItem> results = new ArrayList<>();
-        for (Map<String, Object> row : body.stream().limit(8).toList()) {
+        for (Map<String, Object> row : body.stream().limit(8).collect(Collectors.toList())) {
             Map<String, Object> show = (Map<String, Object>) row.get("show");
             if (show == null) {
                 continue;
@@ -248,7 +251,7 @@ public class ExternalContentSearchService {
             List<Map<String, Object>> rows = (List<Map<String, Object>>) body.getOrDefault("data", List.of());
             List<ExternalContentItem> results = new ArrayList<>();
 
-            for (Map<String, Object> row : rows.stream().limit(8).toList()) {
+            for (Map<String, Object> row : rows.stream().limit(8).collect(Collectors.toList())) {
                 String title = asString(row.get("title"));
                 if (title.isBlank()) {
                     continue;
@@ -306,7 +309,7 @@ public class ExternalContentSearchService {
             List<Map<String, Object>> rows = (List<Map<String, Object>>) body.getOrDefault("Search", List.of());
             List<ExternalContentItem> results = new ArrayList<>();
 
-            for (Map<String, Object> row : rows.stream().limit(8).toList()) {
+            for (Map<String, Object> row : rows.stream().limit(8).collect(Collectors.toList())) {
                 String title = asString(row.get("Title"));
                 if (title.isBlank()) {
                     continue;
@@ -330,6 +333,9 @@ public class ExternalContentSearchService {
                 String coverUrl = normalizeOmdbValue(asString(row.get("Poster")));
                 if (coverUrl.isBlank()) {
                     coverUrl = details.poster();
+                }
+                if (!coverUrl.isBlank()) {
+                    coverUrl = coverUrl.replace("SX300", "SX1000");
                 }
 
                 results.add(new ExternalContentItem("OMDb", id, title, "pelicula", description,
@@ -520,7 +526,68 @@ public class ExternalContentSearchService {
             results.add(album);
         }
 
-        return results.stream().limit(8).toList();
+        return results.stream().limit(8).collect(Collectors.toList());
+    }
+
+    public Map<String, Object> getActorDetails(String name) {
+        String safeName = name == null ? "" : name.trim();
+        Map<String, Object> result = new HashMap<>();
+        result.put("name", safeName);
+
+        // Bio y Foto de Wikipedia
+        try {
+            String wikiUrl = "https://es.wikipedia.org/api/rest_v1/page/summary/" + safeName.replace(" ", "_");
+            ResponseEntity<Map> response = restClient.get().uri(wikiUrl)
+                .retrieve()
+                .onStatus(status -> status.isError(), (req, res) -> { /* ignore */ })
+                .toEntity(Map.class);
+            
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                Map<String, Object> wiki = response.getBody();
+                result.put("bio", wiki.get("extract"));
+                Object thumbObj = wiki.get("thumbnail");
+                if (thumbObj instanceof Map) {
+                    Map<?, ?> thumb = (Map<?, ?>) thumbObj;
+                    result.put("photoUrl", thumb.get("source"));
+                }
+            } else {
+                result.put("bio", "No se encontro biografia en Wikipedia.");
+            }
+        } catch (Exception ex) {
+            result.put("bio", "Biografia no disponible temporalmente.");
+        }
+
+        // Peliculas de iTunes
+        try {
+            String itunesUrl = UriComponentsBuilder.fromUriString("https://itunes.apple.com/search")
+                .queryParam("term", safeName)
+                .queryParam("media", "movie")
+                .queryParam("entity", "movie")
+                .queryParam("limit", 15)
+                .build().toUriString();
+            
+            Map<String, Object> body = restClient.get().uri(itunesUrl).retrieve().body(Map.class);
+            List<ExternalContentItem> movies = new ArrayList<>();
+            if (body != null && body.get("results") instanceof List) {
+                List<?> rows = (List<?>) body.get("results");
+                for (Object obj : rows) {
+                    if (obj instanceof Map) {
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> row = (Map<String, Object>) obj;
+                        String title = asString(row.get("trackName"));
+                        String id = asString(row.get("trackId"));
+                        String coverUrl = asString(row.get("artworkUrl100"));
+                        if (coverUrl != null) coverUrl = coverUrl.replace("100x100bb.jpg", "600x600bb.jpg");
+                        movies.add(new ExternalContentItem("iTunes", id, title, "pelicula", "", null, coverUrl, "", null, null, null, null));
+                    }
+                }
+            }
+            result.put("movies", movies);
+        } catch (Exception ex) {
+            result.put("movies", new ArrayList<ExternalContentItem>());
+        }
+
+        return result;
     }
 
     private String asString(Object value) {
@@ -531,10 +598,11 @@ public class ExternalContentSearchService {
         if (value == null) {
             return null;
         }
-        if (value instanceof Number number) {
-            return number.intValue();
+        if (value instanceof Number) {
+            return ((Number) value).intValue();
         }
-        if (value instanceof String text) {
+        if (value instanceof String) {
+            String text = (String) value;
             if (text.isBlank()) {
                 return null;
             }
@@ -552,10 +620,11 @@ public class ExternalContentSearchService {
         if (value == null) {
             return null;
         }
-        if (value instanceof Number number) {
-            return number.longValue();
+        if (value instanceof Number) {
+            return ((Number) value).longValue();
         }
-        if (value instanceof String text) {
+        if (value instanceof String) {
+            String text = (String) value;
             if (text.isBlank()) {
                 return null;
             }
@@ -625,10 +694,11 @@ public class ExternalContentSearchService {
             String title = asString(doc.get("title"));
             String desc = "";
             Object descObj = doc.get("description");
-            if (descObj instanceof Map m) {
+            if (descObj instanceof Map) {
+                Map<?, ?> m = (Map<?, ?>) descObj;
                 desc = asString(m.get("value"));
-            } else if (descObj instanceof String s) {
-                desc = s;
+            } else if (descObj instanceof String) {
+                desc = (String) descObj;
             }
             LocalDate releaseDate = null;
             
@@ -650,6 +720,9 @@ public class ExternalContentSearchService {
         OmdbMovieDetails details = fetchOmdbMovieDetails(safeId);
         String title = details.title().isBlank() ? "Pelicula" : details.title();
         String coverUrl = normalizeOmdbValue(details.poster());
+        if (!coverUrl.isBlank()) {
+            coverUrl = coverUrl.replace("SX300", "SX1000");
+        }
         LocalDate releaseDate = parseOmdbReleaseDate(details.released());
         String description = details.plot();
         String metricLabel = normalizeRuntime(details.runtime());
@@ -728,8 +801,33 @@ public class ExternalContentSearchService {
         }
     }
 
-    private record OmdbMovieDetails(String plot, String runtime, String director, String actors, String released,
-            String poster, String title) {
+    private static class OmdbMovieDetails {
+        private final String plot;
+        private final String runtime;
+        private final String director;
+        private final String actors;
+        private final String released;
+        private final String poster;
+        private final String title;
+
+        public OmdbMovieDetails(String plot, String runtime, String director, String actors, String released,
+                String poster, String title) {
+            this.plot = plot;
+            this.runtime = runtime;
+            this.director = director;
+            this.actors = actors;
+            this.released = released;
+            this.poster = poster;
+            this.title = title;
+        }
+
+        public String plot() { return plot; }
+        public String runtime() { return runtime; }
+        public String director() { return director; }
+        public String actors() { return actors; }
+        public String released() { return released; }
+        public String poster() { return poster; }
+        public String title() { return title; }
     }
 
     private Integer fetchBookPageCount(String workKey) {

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -153,18 +154,18 @@ public class SessionViewController {
 
         try {
             ExternalAlbumDetails details = externalContentSearchService.getAlbumDetails(albumId);
-            ExternalContentItem album = details.album();
+            ExternalContentItem album = details.getAlbum();
             List<ExternalContentItem> otherAlbums = List.of();
-            if (album.artistId() != null && !album.artistId().isBlank()) {
-                otherAlbums = externalContentSearchService.searchArtistAlbums(album.artistId()).stream()
-                        .filter(item -> !album.externalId().equals(item.externalId()))
+                    if (album.getArtistId() != null && !album.getArtistId().isBlank()) {
+                otherAlbums = externalContentSearchService.searchArtistAlbums(album.getArtistId()).stream()
+                        .filter(item -> !album.getExternalId().equals(item.getExternalId()))
                         .limit(8)
-                        .toList();
+                        .collect(Collectors.toList());
             }
 
             model.addAttribute("user", sessionUser);
             model.addAttribute("album", album);
-            model.addAttribute("tracks", details.tracks());
+            model.addAttribute("tracks", details.getTracks());
             model.addAttribute("otherAlbums", otherAlbums);
             model.addAttribute("activeType", "disco");
             return "album";
@@ -187,7 +188,7 @@ public class SessionViewController {
             ExternalContentItem movie = externalContentSearchService.getMovieDetails(imdbId);
             model.addAttribute("user", sessionUser);
             model.addAttribute("movie", movie);
-            model.addAttribute("actors", splitActors(movie.actors()));
+            model.addAttribute("actors", splitActors(movie.getActors()));
             model.addAttribute("activeType", "pelicula");
             return "movie";
         } catch (Exception ex) {
@@ -195,6 +196,26 @@ public class SessionViewController {
             model.addAttribute("user", sessionUser);
             model.addAttribute("activeType", "pelicula");
             return "movie";
+        }
+    }
+
+    @GetMapping("/explore/actor/{name}")
+    public String exploreActorDetail(@PathVariable String name, Model model, HttpSession session) {
+        User sessionUser = getSessionUser(session);
+        if (sessionUser == null) {
+            return "redirect:/";
+        }
+
+        try {
+            Map<String, Object> actor = externalContentSearchService.getActorDetails(name);
+            model.addAttribute("user", sessionUser);
+            model.addAttribute("actor", actor);
+            model.addAttribute("activeType", "pelicula");
+            return "actor";
+        } catch (Exception ex) {
+            System.err.println("Error cargando perfil de actor: " + ex.getMessage());
+            ex.printStackTrace();
+            return "redirect:/explore/pelicula";
         }
     }
 
@@ -818,7 +839,7 @@ public class SessionViewController {
 
     private String resolveArtistName(List<ExternalContentItem> results) {
         return results.stream()
-                .map(ExternalContentItem::artistName)
+                .map(ExternalContentItem::getArtistName)
                 .filter(name -> name != null && !name.isBlank())
                 .findFirst()
                 .orElse(null);
