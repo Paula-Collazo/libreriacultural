@@ -538,6 +538,7 @@ public class ExternalContentSearchService {
         try {
             String wikiUrl = "https://es.wikipedia.org/api/rest_v1/page/summary/" + safeName.replace(" ", "_");
             ResponseEntity<Map> response = restClient.get().uri(wikiUrl)
+                .header("User-Agent", "LibreriaCultural/1.0 (contact: test@example.com)")
                 .retrieve()
                 .onStatus(status -> status.isError(), (req, res) -> { /* ignore */ })
                 .toEntity(Map.class);
@@ -575,7 +576,9 @@ public class ExternalContentSearchService {
                         @SuppressWarnings("unchecked")
                         Map<String, Object> row = (Map<String, Object>) obj;
                         String title = asString(row.get("trackName"));
+                        if (title.isBlank()) title = asString(row.get("collectionName"));
                         String id = asString(row.get("trackId"));
+                        if (id.isBlank()) id = asString(row.get("collectionId"));
                         String coverUrl = asString(row.get("artworkUrl100"));
                         if (coverUrl != null) coverUrl = coverUrl.replace("100x100bb.jpg", "600x600bb.jpg");
                         movies.add(new ExternalContentItem("iTunes", id, title, "pelicula", "", null, coverUrl, "", null, null, null, null));
