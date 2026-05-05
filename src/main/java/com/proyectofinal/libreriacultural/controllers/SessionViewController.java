@@ -119,17 +119,42 @@ public class SessionViewController {
         }
 
         String query = q == null ? "" : q.trim();
-        if (query.isBlank()) {
-            query = defaultExploreQuery(normalizedType);
-        }
+        String effectiveQuery = query;
 
         List<ExternalContentItem> results = List.of();
         try {
             if ("disco".equals(normalizedType) && artistId != null && !artistId.isBlank()) {
                 results = externalContentSearchService.searchArtistAlbums(artistId.trim());
                 model.addAttribute("artistFilter", resolveArtistName(results));
+            } else if (query.isBlank() && "pelicula".equals(normalizedType)) {
+                results = externalContentSearchService.getWeeklyTrendingMovies();
+                if (results.isEmpty()) {
+                    effectiveQuery = defaultExploreQuery(normalizedType);
+                    results = externalContentSearchService.search(effectiveQuery, normalizedType);
+                }
+            } else if (query.isBlank() && "serie".equals(normalizedType)) {
+                results = externalContentSearchService.getWeeklyTrendingSeries();
+                if (results.isEmpty()) {
+                    effectiveQuery = defaultExploreQuery(normalizedType);
+                    results = externalContentSearchService.search(effectiveQuery, normalizedType);
+                }
+            } else if (query.isBlank() && "disco".equals(normalizedType)) {
+                results = externalContentSearchService.getWeeklyTrendingDiscs();
+                if (results.isEmpty()) {
+                    effectiveQuery = defaultExploreQuery(normalizedType);
+                    results = externalContentSearchService.search(effectiveQuery, normalizedType);
+                }
+            } else if (query.isBlank() && "libro".equals(normalizedType)) {
+                results = externalContentSearchService.getWeeklyTrendingBooks();
+                if (results.isEmpty()) {
+                    effectiveQuery = defaultExploreQuery(normalizedType);
+                    results = externalContentSearchService.search(effectiveQuery, normalizedType);
+                }
             } else {
-                results = externalContentSearchService.search(query, normalizedType);
+                if (effectiveQuery.isBlank()) {
+                    effectiveQuery = defaultExploreQuery(normalizedType);
+                }
+                results = externalContentSearchService.search(effectiveQuery, normalizedType);
             }
         } catch (IllegalArgumentException ex) {
             model.addAttribute("apiErrorMessage", ex.getMessage());

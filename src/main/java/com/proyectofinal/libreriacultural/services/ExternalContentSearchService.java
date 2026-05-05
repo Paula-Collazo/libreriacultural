@@ -81,6 +81,54 @@ public class ExternalContentSearchService {
         return items;
     }
 
+    public List<ExternalContentItem> getWeeklyTrendingMovies() {
+        List<ExternalContentItem> items = new ArrayList<>();
+        try {
+            String url = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/trending/movie/week")
+                .queryParam("api_key", TMDB_API_KEY)
+                .queryParam("language", "es-ES")
+                .build().toUriString();
+            Map body = restClient.get().uri(url).retrieve().body(Map.class);
+            if (body == null) return items;
+            List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
+            if (results != null) {
+                int count = 0;
+                for (Map<String, Object> res : results) {
+                    items.add(parseTmdbItem(res, "movie"));
+                    count++;
+                    if (count >= 8) break;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] TMDb Trending: " + e.getMessage());
+        }
+        return items;
+    }
+
+    public List<ExternalContentItem> getWeeklyTrendingSeries() {
+        List<ExternalContentItem> items = new ArrayList<>();
+        try {
+            String url = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/trending/tv/week")
+                .queryParam("api_key", TMDB_API_KEY)
+                .queryParam("language", "es-ES")
+                .build().toUriString();
+            Map body = restClient.get().uri(url).retrieve().body(Map.class);
+            if (body == null) return items;
+            List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("results");
+            if (results != null) {
+                int count = 0;
+                for (Map<String, Object> res : results) {
+                    items.add(parseTmdbItem(res, "tv"));
+                    count++;
+                    if (count >= 8) break;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] TMDb Trending Series: " + e.getMessage());
+        }
+        return items;
+    }
+
     private ExternalContentItem parseTmdbItem(Map<String, Object> res, String type) {
         String id = String.valueOf(res.get("id"));
         String title = asString(res.get(type.equals("movie") ? "title" : "name"));
@@ -106,6 +154,24 @@ public class ExternalContentSearchService {
             if (results != null) for (Map<String, Object> res : results) items.add(parseSpotifyItem(res));
         } catch (Exception e) {
             System.err.println("[ERROR] Spotify Search: " + e.getMessage());
+        }
+        return items;
+    }
+
+    public List<ExternalContentItem> getWeeklyTrendingDiscs() {
+        List<ExternalContentItem> items = new ArrayList<>();
+        String token = getSpotifyToken();
+        if (token == null) return items;
+        try {
+            java.net.URI url = UriComponentsBuilder.fromHttpUrl("https://api.spotify.com/v1/browse/new-releases")
+                .queryParam("limit", 8)
+                .build().toUri();
+            Map body = restClient.get().uri(url).header("Authorization", "Bearer " + token).retrieve().body(Map.class);
+            if (body == null || body.get("albums") == null) return items;
+            List<Map<String, Object>> results = (List<Map<String, Object>>) ((Map) body.get("albums")).get("items");
+            if (results != null) for (Map<String, Object> res : results) items.add(parseSpotifyItem(res));
+        } catch (Exception e) {
+            System.err.println("[ERROR] Spotify Trending: " + e.getMessage());
         }
         return items;
     }
@@ -138,6 +204,34 @@ public class ExternalContentSearchService {
             }
         } catch (Exception e) {
             System.err.println("[ERROR] GoogleBooks Search: " + e.getMessage());
+        }
+        return items;
+    }
+
+    public List<ExternalContentItem> getWeeklyTrendingBooks() {
+        List<ExternalContentItem> items = new ArrayList<>();
+        try {
+            String url = UriComponentsBuilder.fromUriString("https://www.googleapis.com/books/v1/volumes")
+                .queryParam("q", "bestsellers")
+                .queryParam("orderBy", "newest")
+                .queryParam("maxResults", 8)
+                .build().toUriString();
+            Map body = restClient.get().uri(url).retrieve().body(Map.class);
+            if (body == null) return items;
+            List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("items");
+            if (results != null) {
+                for (Map<String, Object> res : results) {
+                    Map<String, Object> info = (Map<String, Object>) res.get("volumeInfo");
+                    List<String> authors = (List<String>) info.get("authors");
+                    Map<String, Object> imgs = (Map<String, Object>) info.get("imageLinks");
+                    String cover = (imgs != null) ? asString(imgs.get("thumbnail")).replace("http://", "https://") : "";
+                    items.add(new ExternalContentItem("GoogleBooks", asString(res.get("id")), asString(info.get("title")), "libro",
+                        asString(info.get("description")), parseDate(asString(info.get("publishedDate"))), cover, null,
+                        (authors != null && !authors.isEmpty()) ? authors.get(0) : "", null, null, null));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("[ERROR] GoogleBooks Trending: " + e.getMessage());
         }
         return items;
     }
