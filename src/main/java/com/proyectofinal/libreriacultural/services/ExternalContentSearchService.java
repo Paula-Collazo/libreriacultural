@@ -175,6 +175,7 @@ public class ExternalContentSearchService {
             Map body = restClient.get().uri(url).retrieve().body(Map.class);
             result.put("title", asString(body.get(tmdbType.equals("movie") ? "title" : "name")));
             result.put("description", asString(body.get("overview")));
+            result.put("tagline", asString(body.get("tagline")));
             String poster = asString(body.get("poster_path"));
             result.put("coverUrl", poster.isEmpty() ? "" : "https://image.tmdb.org/t/p/w500" + poster);
             result.put("releaseDate", parseDate(asString(body.get(tmdbType.equals("movie") ? "release_date" : "first_air_date"))));
@@ -194,6 +195,22 @@ public class ExternalContentSearchService {
                             return a;
                         }).collect(Collectors.toList()));
                 }
+            }
+            // 3. Obtener Recomendaciones / Similares
+            String recUrl = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/" + tmdbType + "/" + id + "/recommendations")
+                .queryParam("api_key", TMDB_API_KEY).queryParam("language", "es-ES").build().toUriString();
+            Map recBody = restClient.get().uri(recUrl).retrieve().body(Map.class);
+            List<Map<String, Object>> recResults = (List<Map<String, Object>>) recBody.get("results");
+            if (recResults != null) {
+                result.put("recommendations", recResults.stream().limit(6).map(r -> {
+                    Map<String, String> item = new HashMap<>();
+                    item.put("externalId", String.valueOf(r.get("id")));
+                    item.put("type", type);
+                    item.put("title", asString(r.get(tmdbType.equals("movie") ? "title" : "name")));
+                    String p = asString(r.get("poster_path"));
+                    item.put("coverUrl", p.isEmpty() ? "" : "https://image.tmdb.org/t/p/w300" + p);
+                    return item;
+                }).collect(Collectors.toList()));
             }
         } catch (Exception e) {
             System.err.println("[ERROR] TMDb Details: " + e.getMessage());
@@ -258,24 +275,61 @@ public class ExternalContentSearchService {
         Map<String, Object> result = new HashMap<>();
         result.put("name", name);
         try {
-            String wikiUrl = UriComponentsBuilder.fromUriString("https://es.wikipedia.org/w/api.php")
-                .queryParam("action", "query").queryParam("prop", "extracts|pageimages").queryParam("exintro", "").queryParam("explaintext", "").queryParam("piprop", "original").queryParam("titles", name).queryParam("format", "json").queryParam("origin", "*").build().toUriString();
-            Map body = restClient.get().uri(wikiUrl).retrieve().body(Map.class);
-            Map<String, Object> page = (Map<String, Object>) ((Map)((Map)body.get("query")).get("pages")).values().iterator().next();
-            result.put("bio", asString(page.get("extract")));
-            if (page.get("original") != null) result.put("photoUrl", asString(((Map)page.get("original")).get("source")));
-
-            String sUrl = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/search/person").queryParam("api_key", TMDB_API_KEY).queryParam("query", name).build().toUriString();
+            // 1. Buscar ID de la persona en TMDb
+            String sUrl = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/search/person")
+                .queryParam("api_key", TMDB_API_KEY).queryParam("query", name).queryParam("language", "es-ES").build().toUriString();
             Map tmdbBody = restClient.get().uri(sUrl).retrieve().body(Map.class);
             List<Map<String, Object>> tmdbRes = (List<Map<String, Object>>) tmdbBody.get("results");
+            
             if (tmdbRes != null && !tmdbRes.isEmpty()) {
-                String pId = String.valueOf(tmdbRes.get(0).get("id"));
-                String cUrl = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/person/" + pId + "/movie_credits").queryParam("api_key", TMDB_API_KEY).queryParam("language", "es-ES").build().toUriString();
+                Map<String, Object> personSearch = tmdbRes.get(0);
+                String pId = String.valueOf(personSearch.get("id"));
+                
+                // 2. Obtener detalles reales (Biografia y Foto HQ)
+                String dUrl = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/person/" + pId)
+                    .queryParam("api_key", TMDB_API_KEY).queryParam("language", "es-ES").build().toUriString();
+                Map pDetail = restClient.get().uri(dUrl).retrieve().body(Map.class);
+                
+                String bio = asString(pDetail.get("biography"));
+                result.put("bio", bio.isEmpty() ? "Biografía no disponible." : bio);
+                String path = asString(pDetail.get("profile_path"));
+                result.put("photoUrl", path.isEmpty() ? "" : "https://image.tmdb.org/t/p/w600_and_h900_bestv2" + path);
+                
+                // 3. Obtener Filmografia completa
+                String cUrl = UriComponentsBuilder.fromUriString("https://api.themoviedb.org/3/person/" + pId + "/combined_credits")
+                    .queryParam("api_key", TMDB_API_KEY).queryParam("language", "es-ES").build().toUriString();
                 Map cBody = restClient.get().uri(cUrl).retrieve().body(Map.class);
                 List<Map<String, Object>> cast = (List<Map<String, Object>>) cBody.get("cast");
-                if (cast != null) result.put("movies", cast.stream().limit(20).map(m -> parseTmdbItem(m, "movie")).collect(Collectors.toList()));
+                
+                if (cast != null) {
+                    result.put("movies", cast.stream()
+                        .filter(m -> m.get("poster_path") != null)
+                        .filter(m -> {
+                            String character = asString(m.get("character")).toLowerCase();
+                            return !character.contains("self") && !character.contains("himself") && !character.contains("herself");
+                        })
+                        .sorted((m1, m2) -> {
+                            double p2 = m2.get("popularity") != null ? ((Number)m2.get("popularity")).doubleValue() : 0;
+                            double p1 = m1.get("popularity") != null ? ((Number)m1.get("popularity")).doubleValue() : 0;
+                            return Double.compare(p2, p1);
+                        })
+                        .limit(24)
+                        .map(m -> {
+                            Map<String, String> item = new HashMap<>();
+                            String mId = String.valueOf(m.get("id"));
+                            String mType = "movie".equals(m.get("media_type")) ? "pelicula" : "serie";
+                            item.put("externalId", mId);
+                            item.put("type", mType);
+                            item.put("title", asString(m.get("title") != null ? m.get("title") : m.get("name")));
+                            item.put("coverUrl", "https://image.tmdb.org/t/p/w300" + asString(m.get("poster_path")));
+                            return item;
+                        }).collect(Collectors.toList()));
+                }
             }
-        } catch (Exception e) {}
+        } catch (Exception e) {
+            System.err.println("[ERROR] Actor Deep Search: " + e.getMessage());
+            result.put("bio", "No se pudo cargar la información detallada.");
+        }
         return result;
     }
 

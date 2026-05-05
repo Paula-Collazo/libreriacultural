@@ -46,7 +46,10 @@
             </div>
             <div>
                 <p class="kicker" th:text="${movie['type'] == 'serie' ? 'Serie' : 'Pelicula'}">Contenido</p>
-                <h1 th:text="${movie['title'] != null ? movie['title'] : 'Sin titulo'}">Titulo</h1>
+                <h1 th:text="${movie['title'] != null ? movie['title'] : 'Sin titulo'}" style="margin-bottom: 0.2rem;">Titulo</h1>
+                <p class="muted" th:if="${movie['tagline'] != null and !#strings.isEmpty(movie['tagline'])}" 
+                   style="font-style: italic; font-size: 1.2rem; margin-bottom: 1.5rem; opacity: 0.8;" 
+                   th:text="${'«' + movie['tagline'] + '»'}">Lema de la pelicula</p>
                 
                 <p class="muted" th:if="${movie['releaseDate'] != null and !#strings.isEmpty(movie['releaseDate'])}">
                     Lanzamiento: <span th:text="${movie['releaseDate']}">2024</span>
@@ -68,10 +71,11 @@
             </div>
         </section>
 
-        <!-- Resumen -->
+        <!-- Resumen Vitaminado -->
         <section class="card" th:if="${movie != null and movie['description'] != null and !#strings.isEmpty(movie['description'])}">
-            <h2>Resumen</h2>
-            <p class="muted" style="line-height: 1.6;" th:text="${movie['description']}">Descripcion.</p>
+            <h2 style="font-size: 1.8rem; margin-bottom: 1rem;">Resumen de la trama</h2>
+            <p class="muted" style="line-height: 1.8; font-size: 1.25rem; color: var(--text); opacity: 0.9;" 
+               th:text="${movie['description']}">Descripcion larga.</p>
         </section>
 
         <!-- Reparto con enlaces manuales -->
@@ -85,6 +89,21 @@
                             <div th:if="${actor['photoUrl'] == null or #strings.isEmpty(actor['photoUrl'])}" class="media-cover placeholder"><span>?</span></div>
                         </div>
                         <p class="small-title" th:text="${actor['name']}">Actor</p>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <!-- Recomendaciones -->
+        <section class="card" th:if="${movie['recommendations'] != null and !#lists.isEmpty(movie['recommendations'])}">
+            <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;">También te puede gustar</h2>
+            <div class="filmography-grid">
+                <div class="actor-card" th:each="r : ${movie['recommendations']}">
+                    <a th:href="|/explore/${r['type']}/${r['externalId']}|">
+                        <div class="media-cover">
+                            <img th:src="${r['coverUrl']}" th:alt="${r['title']}">
+                        </div>
+                        <p class="small-title" th:text="${r['title']}">Título</p>
                     </a>
                 </div>
             </div>
