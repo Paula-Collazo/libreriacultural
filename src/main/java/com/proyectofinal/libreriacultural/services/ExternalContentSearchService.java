@@ -4,8 +4,10 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.http.MediaType;
@@ -163,17 +165,118 @@ public class ExternalContentSearchService {
         String token = getSpotifyToken();
         if (token == null) return items;
         try {
-            java.net.URI url = UriComponentsBuilder.fromHttpUrl("https://api.spotify.com/v1/browse/new-releases")
-                .queryParam("limit", 8)
+            String playlistId = findToplistPlaylistId(token, "ES");
+            if (playlistId.isBlank()) {
+                playlistId = findToplistPlaylistId(token, "US");
+            }
+            if (playlistId.isBlank()) {
+                playlistId = findPlaylistId(token, "Viral 50 Spain", "ES");
+            }
+            if (playlistId.isBlank()) {
+                playlistId = findPlaylistId(token, "Top 50 Spain", "ES");
+            }
+            if (playlistId.isBlank()) {
+                playlistId = findPlaylistId(token, "Viral 50", "US");
+            }
+            if (playlistId.isBlank()) {
+                playlistId = findPlaylistId(token, "Top 50", "US");
+            }
+            if (playlistId.isBlank()) return items;
+
+            java.net.URI tracksUrl = UriComponentsBuilder
+                .fromHttpUrl("https://api.spotify.com/v1/playlists/" + playlistId + "/tracks")
+                .queryParam("limit", 50)
                 .build().toUri();
-            Map body = restClient.get().uri(url).header("Authorization", "Bearer " + token).retrieve().body(Map.class);
-            if (body == null || body.get("albums") == null) return items;
-            List<Map<String, Object>> results = (List<Map<String, Object>>) ((Map) body.get("albums")).get("items");
-            if (results != null) for (Map<String, Object> res : results) items.add(parseSpotifyItem(res));
+            Map tracksBody = restClient.get().uri(tracksUrl).header("Authorization", "Bearer " + token)
+                .retrieve().body(Map.class);
+            if (tracksBody == null) return items;
+            List<Map<String, Object>> trackItems = (List<Map<String, Object>>) tracksBody.get("items");
+            if (trackItems == null) return items;
+
+            Set<String> seenAlbums = new HashSet<>();
+            List<Map<String, Object>> albumRows = new ArrayList<>();
+            for (Map<String, Object> item : trackItems) {
+                Map<String, Object> track = (Map<String, Object>) item.get("track");
+                if (track == null) continue;
+                Map<String, Object> album = (Map<String, Object>) track.get("album");
+                if (album == null) continue;
+                albumRows.add(album);
+            }
+
+            int minYear = LocalDate.now().getYear() - 1;
+            addTrendingAlbums(items, albumRows, seenAlbums, minYear, true);
+            if (items.size() < 8) {
+                addTrendingAlbums(items, albumRows, seenAlbums, minYear, false);
+            }
         } catch (Exception e) {
             System.err.println("[ERROR] Spotify Trending: " + e.getMessage());
         }
         return items;
+    }
+
+    private void addTrendingAlbums(List<ExternalContentItem> items, List<Map<String, Object>> albumRows,
+            Set<String> seenAlbums, int minYear, boolean onlyRecent) {
+        for (Map<String, Object> album : albumRows) {
+            String albumId = asString(album.get("id"));
+            if (albumId.isBlank() || seenAlbums.contains(albumId)) continue;
+            LocalDate releaseDate = parseDate(asString(album.get("release_date")));
+            if (onlyRecent && releaseDate != null && releaseDate.getYear() < minYear) continue;
+            seenAlbums.add(albumId);
+            items.add(parseSpotifyItem(album));
+            if (items.size() >= 8) break;
+        }
+    }
+
+    private String findToplistPlaylistId(String token, String country) {
+        try {
+            java.net.URI url = UriComponentsBuilder
+                .fromHttpUrl("https://api.spotify.com/v1/browse/categories/toplists/playlists")
+                .queryParam("country", country)
+                .queryParam("limit", 20)
+                .build().toUri();
+            Map body = restClient.get().uri(url).header("Authorization", "Bearer " + token).retrieve().body(Map.class);
+            if (body == null || body.get("playlists") == null) return "";
+            List<Map<String, Object>> results = (List<Map<String, Object>>) ((Map) body.get("playlists")).get("items");
+            if (results == null) return "";
+            String id = findPlaylistByName(results, "Viral 50");
+            if (!id.isBlank()) return id;
+            return findPlaylistByName(results, "Top 50");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    private String findPlaylistByName(List<Map<String, Object>> playlists, String token) {
+        for (Map<String, Object> playlist : playlists) {
+            String name = asString(playlist.get("name")).toLowerCase();
+            if (name.contains(token.toLowerCase())) {
+                String id = asString(playlist.get("id"));
+                if (!id.isBlank()) return id;
+            }
+        }
+        return "";
+    }
+
+    private String findPlaylistId(String token, String query, String market) {
+        try {
+            java.net.URI url = UriComponentsBuilder.fromHttpUrl("https://api.spotify.com/v1/search")
+                .queryParam("q", query)
+                .queryParam("type", "playlist")
+                .queryParam("limit", 5)
+                .queryParam("market", market)
+                .build().toUri();
+            Map body = restClient.get().uri(url).header("Authorization", "Bearer " + token).retrieve().body(Map.class);
+            if (body == null || body.get("playlists") == null) return "";
+            List<Map<String, Object>> results = (List<Map<String, Object>>) ((Map) body.get("playlists")).get("items");
+            if (results == null) return "";
+            for (Map<String, Object> playlist : results) {
+                String id = asString(playlist.get("id"));
+                if (!id.isBlank()) return id;
+            }
+        } catch (Exception e) {
+            return "";
+        }
+        return "";
     }
 
     private ExternalContentItem parseSpotifyItem(Map<String, Object> res) {

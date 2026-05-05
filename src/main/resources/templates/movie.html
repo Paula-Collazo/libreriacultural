@@ -97,10 +97,10 @@
         <!-- Recomendaciones -->
         <section class="card" th:if="${movie['recommendations'] != null and !#lists.isEmpty(movie['recommendations'])}">
             <h2 style="font-size: 1.8rem; margin-bottom: 1.5rem;">También te puede gustar</h2>
-            <div class="filmography-grid">
+            <div class="actor-grid">
                 <div class="actor-card" th:each="r : ${movie['recommendations']}">
                     <a th:href="|/explore/${r['type']}/${r['externalId']}|">
-                        <div class="media-cover">
+                        <div class="media-cover mini-cover">
                             <img th:src="${r['coverUrl']}" th:alt="${r['title']}">
                         </div>
                         <p class="small-title" th:text="${r['title']}">Título</p>
