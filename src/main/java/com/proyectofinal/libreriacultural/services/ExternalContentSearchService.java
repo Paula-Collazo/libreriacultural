@@ -149,89 +149,140 @@ public class ExternalContentSearchService {
     }
 
     public List<ExternalContentItem> searchSpotify(String query) {
+        return searchSpotifyAlbums(query, 20);
+    }
+
+    public List<ExternalContentItem> getWeeklyTrendingDiscs() {
+        List<ExternalContentItem> candidates = new ArrayList<>();
+        Set<String> candidateKeys = new HashSet<>();
+        int currentYear = LocalDate.now().getYear();
+
+        appendDiscSearchCandidates(candidates, candidateKeys, "tag:new year:" + currentYear, 60);
+        appendDiscSearchCandidates(candidates, candidateKeys, "tag:new year:" + (currentYear - 1), 40);
+        appendDiscSearchCandidates(candidates, candidateKeys, "tag:new", 40);
+        appendDiscSearchCandidates(candidates, candidateKeys, "year:" + currentYear, 40);
+
+        if (candidates.isEmpty()) {
+            return List.of();
+        }
+
+        int maxCount = 16;
+        List<ExternalContentItem> results = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+
+        appendDiscCandidates(results, seen, candidates, LocalDate.now().minusDays(7), false, maxCount);
+        if (results.size() < maxCount) {
+            appendDiscCandidates(results, seen, candidates, LocalDate.now().minusDays(30), false, maxCount);
+        }
+        if (results.size() < maxCount) {
+            appendDiscCandidates(results, seen, candidates, null, true, maxCount);
+        }
+
+        return results;
+    }
+
+    private void appendDiscCandidates(List<ExternalContentItem> results, Set<String> seen,
+            List<ExternalContentItem> candidates, LocalDate minDate, boolean allowMissingDate, int maxCount) {
+        for (ExternalContentItem item : candidates) {
+            String title = item.getTitle();
+            if (containsPopularTitle(title)) {
+                continue;
+            }
+            LocalDate releaseDate = item.getReleaseDate();
+            if (releaseDate == null && !allowMissingDate) {
+                continue;
+            }
+            if (minDate != null && releaseDate != null && releaseDate.isBefore(minDate)) {
+                continue;
+            }
+            String key = item.getExternalId();
+            if (key == null || key.isBlank()) {
+                key = title;
+            }
+            if (key == null || key.isBlank() || seen.contains(key)) {
+                continue;
+            }
+            seen.add(key);
+            results.add(item);
+            if (results.size() >= maxCount) {
+                return;
+            }
+        }
+    }
+
+    private List<ExternalContentItem> searchSpotifyAlbums(String query, int limit) {
         List<ExternalContentItem> items = new ArrayList<>();
         String token = getSpotifyToken();
         if (token == null) return items;
         try {
-            java.net.URI url = UriComponentsBuilder.fromHttpUrl("https://api.spotify.com/v1/search")
-                .queryParam("q", query)
-                .queryParam("type", "album")
-                .queryParam("limit", 10)
-                .build().toUri();
-            Map body = restClient.get().uri(url).header("Authorization", "Bearer " + token).retrieve().body(Map.class);
-            if (body == null || body.get("albums") == null) return items;
-            List<Map<String, Object>> results = (List<Map<String, Object>>) ((Map)body.get("albums")).get("items");
-            if (results != null) for (Map<String, Object> res : results) items.add(parseSpotifyItem(res));
+            int maxResults = Math.max(1, limit);
+            int offset = 0;
+            int pageSize = 10;
+
+            while (items.size() < maxResults) {
+                java.net.URI url = UriComponentsBuilder.fromHttpUrl("https://api.spotify.com/v1/search")
+                    .queryParam("q", query)
+                    .queryParam("type", "album")
+                    .queryParam("limit", pageSize)
+                    .queryParam("offset", offset)
+                    .build()
+                    .encode()
+                    .toUri();
+                Map body = restClient.get().uri(url).header("Authorization", "Bearer " + token).retrieve().body(Map.class);
+                if (body == null || body.get("albums") == null) break;
+                List<Map<String, Object>> results = (List<Map<String, Object>>) ((Map)body.get("albums")).get("items");
+                if (results == null || results.isEmpty()) break;
+
+                for (Map<String, Object> res : results) {
+                    items.add(parseSpotifyItem(res));
+                    if (items.size() >= maxResults) {
+                        break;
+                    }
+                }
+
+                if (results.size() < pageSize) {
+                    break;
+                }
+                offset += pageSize;
+                if (offset >= 200) {
+                    break;
+                }
+            }
         } catch (Exception e) {
             System.err.println("[ERROR] Spotify Search: " + e.getMessage());
         }
         return items;
     }
 
-    public List<ExternalContentItem> getWeeklyTrendingDiscs() {
-        List<ExternalContentItem> items = new ArrayList<>();
-        String token = getSpotifyToken();
-        if (token == null) return items;
-        try {
-            String playlistId = findToplistPlaylistId(token, "ES");
-            if (playlistId.isBlank()) {
-                playlistId = findToplistPlaylistId(token, "US");
-            }
-            if (playlistId.isBlank()) {
-                playlistId = findPlaylistId(token, "Viral 50 Spain", "ES");
-            }
-            if (playlistId.isBlank()) {
-                playlistId = findPlaylistId(token, "Top 50 Spain", "ES");
-            }
-            if (playlistId.isBlank()) {
-                playlistId = findPlaylistId(token, "Viral 50", "US");
-            }
-            if (playlistId.isBlank()) {
-                playlistId = findPlaylistId(token, "Top 50", "US");
-            }
-            if (playlistId.isBlank()) return items;
-
-            java.net.URI tracksUrl = UriComponentsBuilder
-                .fromHttpUrl("https://api.spotify.com/v1/playlists/" + playlistId + "/tracks")
-                .queryParam("limit", 50)
-                .build().toUri();
-            Map tracksBody = restClient.get().uri(tracksUrl).header("Authorization", "Bearer " + token)
-                .retrieve().body(Map.class);
-            if (tracksBody == null) return items;
-            List<Map<String, Object>> trackItems = (List<Map<String, Object>>) tracksBody.get("items");
-            if (trackItems == null) return items;
-
-            Set<String> seenAlbums = new HashSet<>();
-            List<Map<String, Object>> albumRows = new ArrayList<>();
-            for (Map<String, Object> item : trackItems) {
-                Map<String, Object> track = (Map<String, Object>) item.get("track");
-                if (track == null) continue;
-                Map<String, Object> album = (Map<String, Object>) track.get("album");
-                if (album == null) continue;
-                albumRows.add(album);
-            }
-
-            LocalDate minDate = LocalDate.now().minusDays(30);
-            addTrendingAlbums(items, albumRows, seenAlbums, minDate);
-            if (items.size() < 8) {
-                List<Map<String, Object>> newReleaseAlbums = fetchSpotifyNewReleases(token, "ES", 30);
-                addTrendingAlbums(items, newReleaseAlbums, seenAlbums, minDate);
-            }
-            items.removeIf(item -> containsPopularTitle(item.getTitle()));
-        } catch (Exception e) {
-            System.err.println("[ERROR] Spotify Trending: " + e.getMessage());
+    private void appendDiscSearchCandidates(List<ExternalContentItem> candidates, Set<String> keys,
+            String query, int limit) {
+        if (query == null || query.isBlank()) {
+            return;
         }
-        return items;
+        List<ExternalContentItem> batch = searchSpotifyAlbums(query, limit);
+        for (ExternalContentItem item : batch) {
+            String key = item.getExternalId();
+            if (key == null || key.isBlank()) {
+                key = item.getTitle();
+            }
+            if (key == null || key.isBlank() || keys.contains(key)) {
+                continue;
+            }
+            keys.add(key);
+            candidates.add(item);
+        }
     }
 
     private List<Map<String, Object>> fetchSpotifyNewReleases(String token, String country, int limit) {
         List<Map<String, Object>> albums = new ArrayList<>();
         try {
-            java.net.URI url = UriComponentsBuilder
+            UriComponentsBuilder builder = UriComponentsBuilder
                 .fromHttpUrl("https://api.spotify.com/v1/browse/new-releases")
-                .queryParam("country", country)
-                .queryParam("limit", limit)
-                .build().toUri();
+                .queryParam("limit", limit);
+            if (country != null && !country.isBlank()) {
+                builder.queryParam("country", country);
+            }
+            java.net.URI url = builder.build().toUri();
             Map body = restClient.get().uri(url).header("Authorization", "Bearer " + token).retrieve().body(Map.class);
             if (body == null || body.get("albums") == null) return albums;
             List<Map<String, Object>> results = (List<Map<String, Object>>) ((Map) body.get("albums")).get("items");

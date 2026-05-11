@@ -84,7 +84,8 @@
                     </p>
                     <p class="muted" th:if="${activeType == 'disco' and item.artistName != null and !#strings.isEmpty(item.artistName)}">
                         Artista:
-                        <a class="artist-link" th:href="@{/explore/disco(artistId=${item.artistId})}" th:text="${item.artistName}">Artista</a>
+                        <a class="artist-link" th:if="${item.artistId != null and !#strings.isEmpty(item.artistId)}" th:href="@{/explore/disco(artistId=${item.artistId})}" th:text="${item.artistName}">Artista</a>
+                        <a class="artist-link" th:if="${item.artistId == null or #strings.isEmpty(item.artistId)}" th:href="@{/explore/disco(q=${item.artistName})}" th:text="${item.artistName}">Artista</a>
                     </p>
                     <p class="muted" th:if="${activeType == 'libro' and item.artistName != null and !#strings.isEmpty(item.artistName)}">
                         Autor:

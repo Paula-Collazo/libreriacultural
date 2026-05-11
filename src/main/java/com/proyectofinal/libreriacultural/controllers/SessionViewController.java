@@ -145,7 +145,7 @@ public class SessionViewController {
                     results = externalContentSearchService.search(effectiveQuery, normalizedType);
                 }
             } else if (query.isBlank() && "disco".equals(normalizedType)) {
-                results = filterRecentDiscs(externalContentSearchService.getWeeklyTrendingDiscs(), 30);
+                results = externalContentSearchService.getWeeklyTrendingDiscs();
             } else if (query.isBlank() && "libro".equals(normalizedType)) {
                 results = externalContentSearchService.getWeeklyTrendingBooks();
                 if (results.isEmpty()) {
