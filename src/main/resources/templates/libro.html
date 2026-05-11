@@ -47,7 +47,7 @@
                 <p class="kicker">Libro</p>
                 <h1 th:text="${movie.title}">Titulo</h1>
                 <p class="muted" th:if="${movie.author != null}">
-                    Autor: <a class="artist-link" th:href="@{/explore/libro(q=${movie.author})}" th:text="${movie.author}">Autor</a>
+                    Autor: <a class="artist-link" th:href="@{/explore/libro(author=${movie.author})}" th:text="${movie.author}">Autor</a>
                 </p>
                 <p class="muted" th:if="${movie.releaseDate != null}">
                     Lanzamiento: <span th:text="${movie.releaseDate}">2024</span>

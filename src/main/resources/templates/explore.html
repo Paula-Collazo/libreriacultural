@@ -73,7 +73,7 @@
 
                 <div class="media-body">
                     <h3>
-                        <a th:href="@{/explore/{type}/{id}(type=${activeType}, id=${#strings.replace(item.externalId, '/works/', '')})}" style="text-decoration:none; color:inherit;" th:text="${item.title}">Titulo</a>
+                        <a th:href="@{/explore/{type}/{id}(type=${activeType}, id=${#strings.replace(item.externalId, '/works/', '')}, author=${activeType == 'libro' ? item.artistName : null})}" style="text-decoration:none; color:inherit;" th:text="${item.title}">Titulo</a>
                     </h3>
                     <p class="muted" th:if="${activeType != 'pelicula'}" th:text="${item.source}">Fuente</p>
                     <p class="muted" th:if="${activeType == 'pelicula' and item.directorName != null and !#strings.isEmpty(item.directorName)}">
@@ -86,13 +86,15 @@
                         Artista:
                         <a class="artist-link" th:href="@{/explore/disco(artistId=${item.artistId})}" th:text="${item.artistName}">Artista</a>
                     </p>
-                    <p class="media-metric" style="font-weight: 800; color: #d00; margin-bottom: 4px;"
-                       th:if="${item.releaseDate != null}" th:text="${'Año: ' + item.releaseDate.year}">Año</p>
-                    <p class="media-metric" style="font-weight: 800; color: #d00; margin-bottom: 4px;"
-                       th:if="${item.releaseDate == null}">Año: s/f</p>
+                    <p class="muted" th:if="${activeType == 'libro' and item.artistName != null and !#strings.isEmpty(item.artistName)}">
+                        Autor:
+                        <a class="artist-link" th:href="@{/explore/libro(author=${item.artistName})}" th:text="${item.artistName}">Autor</a>
+                    </p>
+                          <p class="media-year" th:if="${item.releaseDate != null}" th:text="${'Año: ' + item.releaseDate.year}">Año</p>
+                          <p class="media-year" th:if="${item.releaseDate == null}">Año: s/f</p>
                     <p class="media-metric" th:if="${item.metricLabel != null and !item.metricLabel.isBlank()}" style="font-weight: 500; opacity: 0.8;"
                        th:text="${activeType == 'pelicula' ? 'Duracion: ' + item.metricLabel : item.metricLabel}">Metric</p>
-                    <p class="muted" th:if="${activeType != 'disco' and activeType != 'pelicula' and !#strings.isEmpty(item.description)}" th:text="${item.description}">Descripcion</p>
+                    <p class="muted" th:if="${activeType != 'disco' and activeType != 'pelicula' and !#strings.isEmpty(item.description) and !(activeType == 'libro' and #strings.startsWith(#strings.toLowerCase(item.description), 'autor:'))}" th:text="${item.description}">Descripcion</p>
                 </div>
 
                 <div class="media-actions">

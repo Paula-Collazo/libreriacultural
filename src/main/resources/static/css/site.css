@@ -735,6 +735,12 @@ button.mini.danger {
     font-weight: 700;
 }
 
+.media-year {
+    margin: 0.2rem 0 0.35rem;
+    color: var(--text);
+    font-weight: 700;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import java.util.Locale;
 import java.util.stream.Collectors;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Controller;
@@ -104,6 +105,7 @@ public class SessionViewController {
     public String exploreByType(@PathVariable String type,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String artistId,
+            @RequestParam(required = false) String author,
             Model model,
             HttpSession session) {
         User sessionUser = getSessionUser(session);
@@ -120,6 +122,10 @@ public class SessionViewController {
 
         String query = q == null ? "" : q.trim();
         String effectiveQuery = query;
+        if ("libro".equals(normalizedType) && author != null && !author.isBlank()) {
+            query = author.trim();
+            effectiveQuery = "inauthor:" + query;
+        }
 
         List<ExternalContentItem> results = List.of();
         try {
@@ -139,11 +145,7 @@ public class SessionViewController {
                     results = externalContentSearchService.search(effectiveQuery, normalizedType);
                 }
             } else if (query.isBlank() && "disco".equals(normalizedType)) {
-                results = externalContentSearchService.getWeeklyTrendingDiscs();
-                if (results.isEmpty()) {
-                    effectiveQuery = defaultExploreQuery(normalizedType);
-                    results = externalContentSearchService.search(effectiveQuery, normalizedType);
-                }
+                results = filterRecentDiscs(externalContentSearchService.getWeeklyTrendingDiscs(), 30);
             } else if (query.isBlank() && "libro".equals(normalizedType)) {
                 results = externalContentSearchService.getWeeklyTrendingBooks();
                 if (results.isEmpty()) {
@@ -255,7 +257,9 @@ public class SessionViewController {
     }
 
     @GetMapping("/explore/libro/{id}")
-    public String exploreBookDetail(@PathVariable String id, Model model, HttpSession session) {
+        public String exploreBookDetail(@PathVariable String id,
+            @RequestParam(required = false) String author,
+            Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
         if (sessionUser == null) return "redirect:/";
 
@@ -263,12 +267,18 @@ public class SessionViewController {
             Map<String, Object> book = externalContentSearchService.getDetails("GoogleBooks", id, "libro");
             if (book == null || book.isEmpty()) return "redirect:/explore/libro";
             
+            if ((book.get("author") == null || String.valueOf(book.get("author")).isBlank())
+                    && author != null && !author.isBlank()) {
+                book.put("author", author.trim());
+            }
+
             model.addAttribute("user", sessionUser);
             model.addAttribute("movie", book); // Cambio a 'movie' para que coincida con la plantilla libro.html
             
-            String author = (String) book.get("author");
-            if (author != null && !author.isBlank()) {
-                model.addAttribute("relatedBooks", externalContentSearchService.searchGoogleBooks(author).stream().limit(6).collect(Collectors.toList()));
+            String authorName = (String) book.get("author");
+            if (authorName != null && !authorName.isBlank()) {
+                String authorQuery = "inauthor:" + authorName.trim();
+                model.addAttribute("relatedBooks", externalContentSearchService.searchGoogleBooks(authorQuery).stream().limit(6).collect(Collectors.toList()));
             }
             
             model.addAttribute("activeType", "libro");
@@ -836,6 +846,18 @@ public class SessionViewController {
             return "Detalle: " + metric;
         }
         return description + " | " + metric;
+    }
+
+    private List<ExternalContentItem> filterRecentDiscs(List<ExternalContentItem> results, int daysBack) {
+        if (results == null || results.isEmpty()) {
+            return List.of();
+        }
+        LocalDate minDate = LocalDate.now().minusDays(daysBack);
+        return results.stream()
+                .filter(item -> item.getReleaseDate() != null && !item.getReleaseDate().isBefore(minDate))
+                .filter(item -> item.getTitle() != null
+                        && !item.getTitle().toLowerCase(Locale.ROOT).contains("popular"))
+                .toList();
     }
 
     private Integer parsePagesFromMetric(String metric) {
