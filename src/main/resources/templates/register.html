@@ -380,7 +380,10 @@
 <body>
 
 <header class="site-header">
-    <a class="logo" href="/">The Cultured<span class="logo-dot"> ·</span> Dept</a>
+    <a class="logo" href="/" style="display:flex; align-items:center; gap:0.5rem; text-decoration:none;">
+        <img src="/img/logo.png" alt="Logo TCD" style="height: 36px;">
+        <span style="color:var(--text);">The Cultured Dept</span>
+    </a>
     <div class="header-right">
         <button class="mode-toggle" data-mode-toggle aria-label="Cambiar modo">☀</button>
         <a class="back-link" th:href="@{/}">← Inicio</a>

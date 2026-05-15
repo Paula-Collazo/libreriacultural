@@ -10,7 +10,10 @@
     <div class="grain"></div>
 
     <header class="topbar">
-        <a class="brand" th:href="${user != null ? '/profile' : '/'}" th:text="${user != null ? '@' + user.username : 'The Cultured Dept.'}">@usuario</a>
+        <a class="brand" th:href="${user != null ? '/profile' : '/'}" style="display:flex; align-items:center; gap:0.5rem;">
+            <img th:src="@{/img/logo.png}" alt="TCD Logo" style="height: 24px;">
+            <span th:text="${user != null ? '@' + user.username : 'The Cultured Dept.'}"></span>
+        </a>
         <div class="topbar-actions" style="display:flex; align-items:center; gap:1rem;">
             <button class="ghost-btn" style="padding:0.4rem; min-height:unset; font-size:1rem;" data-mode-toggle aria-label="Cambiar modo">☀</button>
             <a class="ghost-link" href="/profile" th:if="${user != null}">Mi perfil</a>

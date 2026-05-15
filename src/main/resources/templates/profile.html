@@ -10,7 +10,10 @@
     <div class="grain"></div>
 
     <header class="topbar">
-        <a class="brand" href="/profile" th:text="${'@' + user.username}">@usuario</a>
+        <a class="brand" href="/profile" style="display:flex; align-items:center; gap:0.5rem;">
+            <img th:src="@{/img/logo.png}" alt="TCD Logo" style="height: 24px;">
+            <span th:text="${'@' + user.username}"></span>
+        </a>
         <div class="topbar-actions">
             <div class="theme-switch">
                 <label for="themePicker">Tema</label>
