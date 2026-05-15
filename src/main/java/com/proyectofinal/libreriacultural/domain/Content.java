@@ -38,6 +38,9 @@ public class Content {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "cover_url", columnDefinition = "TEXT")
+    private String coverUrl;
+
     @OneToMany(mappedBy = "content")
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
@@ -55,6 +58,8 @@ public class Content {
     public void setReleaseDate(LocalDate releaseDate) { this.releaseDate = releaseDate; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getCoverUrl() { return coverUrl; }
+    public void setCoverUrl(String coverUrl) { this.coverUrl = coverUrl; }
     public List<UserContent> getUserContents() { return userContents; }
     public void setUserContents(List<UserContent> userContents) { this.userContents = userContents; }
 }

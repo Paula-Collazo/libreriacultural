@@ -359,6 +359,7 @@ public class SessionViewController {
     @PostMapping("/profile/import-api")
     public String importFromApi(@RequestParam String externalTitle,
             @RequestParam String externalType,
+            @RequestParam(required = false) String externalCoverUrl,
             @RequestParam(required = false) String externalDescription,
             @RequestParam(required = false) String externalReleaseDate,
             RedirectAttributes redirectAttributes,
@@ -366,6 +367,8 @@ public class SessionViewController {
             @RequestParam(required = false) Integer externalEpisodes,
             @RequestParam(required = false) Integer externalSeasons,
             @RequestParam(required = false) Integer externalTracks,
+            @RequestParam(required = false) String externalTrackList,
+            @RequestParam(required = false) String externalSeasonData,
             @RequestParam(required = false) Integer externalPages,
             @RequestParam(required = false) String returnTo,
             HttpSession session) {
@@ -376,6 +379,7 @@ public class SessionViewController {
         }
 
         String title = externalTitle == null ? "" : externalTitle.trim();
+        String coverUrl = (externalCoverUrl == null || externalCoverUrl.isBlank()) ? null : externalCoverUrl.trim();
         String type;
         try {
             type = normalizeAndValidateType(externalType);
@@ -388,21 +392,51 @@ public class SessionViewController {
             return "redirect:" + redirectPath;
         }
 
+        // REFUERZO: Si faltan datos clave (portada, episodios, pistas), intentamos recuperarlos de la API 
+        // por si el formulario los envio vacios.
+        if (coverUrl == null || (type.equals("serie") && externalEpisodes == null) || (type.equals("disco") && externalTrackList == null)) {
+            try {
+                // Buscamos el contenido en la API para obtener los datos frescos
+                List<ExternalContentItem> searchResults = externalContentSearchService.search(title, type);
+                if (!searchResults.isEmpty()) {
+                    ExternalContentItem first = searchResults.get(0);
+                    String apiId = first.getExternalId();
+                    Map<String, Object> details = externalContentSearchService.getDetails(
+                        type.equals("disco") ? "Spotify" : (type.equals("libro") ? "OpenLibrary" : "TMDb"),
+                        apiId, type);
+                    
+                    if (coverUrl == null) coverUrl = (String) details.get("coverUrl");
+                    if (externalEpisodes == null) externalEpisodes = (Integer) details.get("totalEpisodes");
+                    if (externalSeasons == null) externalSeasons = (Integer) details.get("totalSeasons");
+                    if (externalTracks == null) externalTracks = (Integer) details.get("totalTracks");
+                    if (externalTrackList == null) externalTrackList = (String) details.get("trackListString");
+                    if (externalSeasonData == null) externalSeasonData = (String) details.get("seasonData");
+                }
+            } catch (Exception ignored) {}
+        }
+
         Content content = contentRepository.findFirstByTitleIgnoreCaseAndTypeIgnoreCase(title, type)
-                .orElseGet(() -> {
-                    Content created = new Content();
-                    created.setTitle(title);
-                    created.setType(type);
-                    created.setDescription(buildImportedDescription(externalDescription, externalMetric));
-                    if (externalReleaseDate != null && !externalReleaseDate.isBlank()) {
-                        try {
-                            created.setReleaseDate(LocalDate.parse(externalReleaseDate.trim()));
-                        } catch (Exception ignored) {
-                            created.setReleaseDate(null);
-                        }
-                    }
-                    return contentRepository.save(created);
-                });
+                .orElse(null);
+
+        if (content == null) {
+            content = new Content();
+            content.setTitle(title);
+            content.setType(type);
+            content.setCoverUrl(coverUrl);
+            content.setDescription(buildImportedDescription(externalDescription, externalMetric));
+            if (externalReleaseDate != null && !externalReleaseDate.isBlank()) {
+                try {
+                    content.setReleaseDate(LocalDate.parse(externalReleaseDate.trim()));
+                } catch (Exception ignored) {}
+            }
+            content = contentRepository.save(content);
+        } else {
+            // Si ya existe pero no tiene portada, la actualizamos
+            if ((content.getCoverUrl() == null || content.getCoverUrl().isBlank()) && coverUrl != null) {
+                content.setCoverUrl(coverUrl);
+                contentRepository.save(content);
+            }
+        }
 
         if (userContentRepository.existsByUserIdAndContentId(sessionUser.getId(), content.getId())) {
             redirectAttributes.addFlashAttribute("errorMessage", "Ese contenido ya esta en tu biblioteca");
@@ -418,12 +452,16 @@ public class SessionViewController {
             Integer importedPages = "libro".equals(type) ? 
                 (externalPages != null ? externalPages : parsePagesFromMetric(externalMetric)) : null;
             applyTypeSpecificData(entry, type, null, null, importedPages);
+            
             if ("serie".equals(type)) {
                 entry.setSeriesTotalEpisodes(externalEpisodes);
                 entry.setSeriesTotalSeasons(externalSeasons);
+                entry.setSeriesSeasonData(externalSeasonData);
             } else if ("disco".equals(type)) {
                 entry.setAlbumTotalTracks(externalTracks);
+                entry.setAlbumTrackList(externalTrackList);
             }
+            
             userContentRepository.save(entry);
             redirectAttributes.addFlashAttribute("successMessage", "Contenido importado y anadido a tu biblioteca");
         } catch (Exception ex) {
@@ -608,6 +646,16 @@ public class SessionViewController {
             return "redirect:/profile";
         }
 
+        // VALIDACIÓN DE LÍMITES AUTOMÁTICOS
+        if (entry.getSeriesTotalSeasons() != null && seasonNumber > entry.getSeriesTotalSeasons()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "La temporada " + seasonNumber + " no existe. Esta serie tiene " + entry.getSeriesTotalSeasons() + " temporadas.");
+            return "redirect:/profile";
+        }
+        if (entry.getSeriesTotalEpisodes() != null && episodeNumber > entry.getSeriesTotalEpisodes()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "El episodio " + episodeNumber + " no existe. Esta serie tiene " + entry.getSeriesTotalEpisodes() + " episodios en total.");
+            return "redirect:/profile";
+        }
+
         boolean watchedFlag = watched != null && watched;
         UserSeriesEpisodeProgress progress = userSeriesEpisodeProgressRepository
                 .findByUserContentIdAndSeasonNumberAndEpisodeNumber(entry.getId(), seasonNumber, episodeNumber)
@@ -645,6 +693,12 @@ public class SessionViewController {
 
         if (trackNumber == null || trackNumber < 1 || trackTitle == null || trackTitle.isBlank()) {
             redirectAttributes.addFlashAttribute("errorMessage", "Cancion invalida: revisa numero y titulo");
+            return "redirect:/profile";
+        }
+
+        // VALIDACIÓN DE LÍMITES AUTOMÁTICOS
+        if (entry.getAlbumTotalTracks() != null && trackNumber > entry.getAlbumTotalTracks()) {
+            redirectAttributes.addFlashAttribute("errorMessage", "La pista " + trackNumber + " no existe. Este disco tiene " + entry.getAlbumTotalTracks() + " canciones.");
             return "redirect:/profile";
         }
 

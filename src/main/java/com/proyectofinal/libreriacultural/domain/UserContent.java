@@ -59,16 +59,22 @@ public class UserContent {
     @Column(name = "album_total_tracks")
     private Integer albumTotalTracks;
 
+    @Column(name = "album_track_list", columnDefinition = "TEXT")
+    private String albumTrackList;
+
+    @Column(name = "series_season_data", columnDefinition = "TEXT")
+    private String seriesSeasonData;
+
     @Column(name = "added_date")
     private LocalDate addedDate;
 
-    @OneToMany(mappedBy = "userContent")
+    @OneToMany(mappedBy = "userContent", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
     private List<UserSeriesEpisodeProgress> episodeProgresses;
 
-    @OneToMany(mappedBy = "userContent")
+    @OneToMany(mappedBy = "userContent", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
     @JsonIgnore
@@ -97,6 +103,10 @@ public class UserContent {
     public void setSeriesTotalSeasons(Integer seriesTotalSeasons) { this.seriesTotalSeasons = seriesTotalSeasons; }
     public Integer getAlbumTotalTracks() { return albumTotalTracks; }
     public void setAlbumTotalTracks(Integer albumTotalTracks) { this.albumTotalTracks = albumTotalTracks; }
+    public String getAlbumTrackList() { return albumTrackList; }
+    public void setAlbumTrackList(String albumTrackList) { this.albumTrackList = albumTrackList; }
+    public String getSeriesSeasonData() { return seriesSeasonData; }
+    public void setSeriesSeasonData(String seriesSeasonData) { this.seriesSeasonData = seriesSeasonData; }
     public List<UserSeriesEpisodeProgress> getEpisodeProgresses() { return episodeProgresses; }
     public void setEpisodeProgresses(List<UserSeriesEpisodeProgress> episodeProgresses) { this.episodeProgresses = episodeProgresses; }
     public List<UserSongProgress> getSongProgresses() { return songProgresses; }

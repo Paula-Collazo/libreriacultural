@@ -68,6 +68,7 @@
                     <input type="hidden" name="externalReleaseDate" th:value="${movie['releaseDate'] != null ? movie['releaseDate'].toString() : ''}">
                     <input type="hidden" name="externalEpisodes" th:value="${movie['totalEpisodes']}">
                     <input type="hidden" name="externalSeasons" th:value="${movie['totalSeasons']}">
+                    <input type="hidden" name="externalSeasonData" th:value="${movie['seasonData']}">
                     <button type="submit">Añadir a mi perfil</button>
                 </form>
             </div>

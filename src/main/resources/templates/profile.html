@@ -88,6 +88,7 @@
                 <table>
                     <thead>
                     <tr>
+                        <th>Portada</th>
                         <th>Titulo</th>
                         <th>Fecha</th>
                         <th>Estado</th>
@@ -97,9 +98,13 @@
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(movieEntries)}">
-                        <td colspan="5" class="muted">Aun no tienes peliculas.</td>
+                        <td colspan="6" class="muted">Aun no tienes peliculas.</td>
                     </tr>
                     <tr th:each="item : ${movieEntries}">
+                        <td>
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                            <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
+                        </td>
                         <td th:text="${item.content.title}">Titulo</td>
                         <td th:text="${item.addedDate != null ? item.addedDate : '-'}">Fecha</td>
                         <td>
@@ -136,6 +141,7 @@
                 <table>
                     <thead>
                     <tr>
+                        <th>Portada</th>
                         <th>Titulo</th>
                         <th>Estado</th>
                         <th>Progreso</th>
@@ -145,9 +151,13 @@
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(bookEntries)}">
-                        <td colspan="5" class="muted">Aun no tienes libros.</td>
+                        <td colspan="6" class="muted">Aun no tienes libros.</td>
                     </tr>
                     <tr th:each="item : ${bookEntries}">
+                        <td>
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                            <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
+                        </td>
                         <td th:text="${item.content.title}">Titulo</td>
                         <td th:text="${item.status}">leyendo</td>
                         <td>
@@ -185,6 +195,7 @@
                 <table>
                     <thead>
                     <tr>
+                        <th>Portada</th>
                         <th>Serie</th>
                         <th>Estado general</th>
                         <th>Episodios marcados</th>
@@ -194,9 +205,13 @@
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(seriesEntries)}">
-                        <td colspan="5" class="muted">Aun no tienes series.</td>
+                        <td colspan="6" class="muted">Aun no tienes series.</td>
                     </tr>
                     <tr th:each="item : ${seriesEntries}">
+                        <td>
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                            <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
+                        </td>
                         <td th:text="${item.content.title}">Serie</td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
@@ -219,10 +234,25 @@
                         </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/episodes(id=${item.id})}" class="row-form">
-                                <input type="number" min="1" name="seasonNumber" placeholder="Temporada" required>
-                                <input type="number" min="1" name="episodeNumber" placeholder="Episodio" required>
+                                <th:block th:if="${!#strings.isEmpty(item.seriesSeasonData) and item.seriesTotalSeasons != null and item.seriesTotalSeasons > 0}">
+                                    <select name="seasonNumber" th:id="'seasonSelect-' + ${item.id}" 
+                                            th:data-season-data="${item.seriesSeasonData}"
+                                            th:data-entry-id="${item.id}"
+                                            onchange="updateEpisodes(this)" 
+                                            required style="width: 70px; flex: 0 0 auto;">
+                                        <option value="">Temp</option>
+                                        <option th:each="i : ${#numbers.sequence(1, item.seriesTotalSeasons)}" th:value="${i}" th:text="${i}"></option>
+                                    </select>
+                                    <select name="episodeNumber" th:id="'episodeSelect-' + ${item.id}" required style="width: 85px; flex: 0 0 auto;">
+                                        <option value="">Episodio</option>
+                                    </select>
+                                </th:block>
+                                <th:block th:if="${#strings.isEmpty(item.seriesSeasonData) or item.seriesTotalSeasons == null or item.seriesTotalSeasons <= 0}">
+                                    <input type="number" min="1" th:max="${item.seriesTotalSeasons != null ? item.seriesTotalSeasons : 1}" name="seasonNumber" placeholder="Temp" style="width: 60px; flex: 0 0 auto;" required>
+                                    <input type="number" min="1" th:max="${item.seriesTotalEpisodes != null ? item.seriesTotalEpisodes : 1}" name="episodeNumber" placeholder="Ep" style="width: 60px; flex: 0 0 auto;" required>
+                                </th:block>
                                 <label><input type="checkbox" name="watched" value="true"> Visto</label>
-                                <button type="submit" class="mini">Guardar episodio</button>
+                                <button type="submit" class="mini">Guardar</button>
                             </form>
                         </td>
                         <td>
@@ -245,6 +275,7 @@
                 <table>
                     <thead>
                     <tr>
+                        <th>Portada</th>
                         <th>Disco</th>
                         <th>Estado general</th>
                         <th>Canciones</th>
@@ -254,9 +285,13 @@
                     </thead>
                     <tbody>
                     <tr th:if="${#lists.isEmpty(discEntries)}">
-                        <td colspan="5" class="muted">Aun no tienes discos.</td>
+                        <td colspan="6" class="muted">Aun no tienes discos.</td>
                     </tr>
                     <tr th:each="item : ${discEntries}">
+                        <td>
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                            <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
+                        </td>
                         <td th:text="${item.content.title}">Disco</td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
@@ -279,10 +314,22 @@
                         </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/songs(id=${item.id})}" class="row-form">
-                                <input type="number" min="1" name="trackNumber" placeholder="Pista" required>
-                                <input type="text" name="trackTitle" placeholder="Titulo de cancion" required>
+                                <th:block th:if="${item.albumTrackList != null}">
+                                    <select onchange="const p=this.value.split(':'); this.form.trackNumber.value=p[0]; this.form.trackTitle.value=p.slice(1).join(':');" required style="flex: 2; min-width: 150px;">
+                                        <option value="">-- Seleccionar canción --</option>
+                                        <option th:each="track : ${#strings.arraySplit(item.albumTrackList, '|')}" 
+                                                th:value="${track}" 
+                                                th:text="${'#' + track.replace(':', ' - ')}"></option>
+                                    </select>
+                                    <input type="hidden" name="trackNumber">
+                                    <input type="hidden" name="trackTitle">
+                                </th:block>
+                                <th:block th:if="${item.albumTrackList == null}">
+                                    <input type="number" min="1" name="trackNumber" placeholder="Pista" required>
+                                    <input type="text" name="trackTitle" placeholder="Titulo de cancion" required>
+                                </th:block>
                                 <label><input type="checkbox" name="listened" value="true"> Escuchada</label>
-                                <button type="submit" class="mini">Guardar cancion</button>
+                                <button type="submit" class="mini">Guardar</button>
                             </form>
                         </td>
                         <td>
@@ -297,5 +344,29 @@
         </section>
     </main>
     <script defer th:src="@{/js/theme.js}"></script>
+    <script>
+        function updateEpisodes(selectElement) {
+            const entryId = selectElement.getAttribute('data-entry-id');
+            const seasonDataStr = selectElement.getAttribute('data-season-data');
+            const seasonNum = selectElement.value;
+            
+            const epSelect = document.getElementById('episodeSelect-' + entryId);
+            epSelect.innerHTML = '<option value="">Episodio</option>';
+            
+            if (!seasonNum || !seasonDataStr) return;
+            
+            const episodeCounts = seasonDataStr.split('|');
+            const count = parseInt(episodeCounts[parseInt(seasonNum) - 1]);
+            
+            if (count) {
+                for (let i = 1; i <= count; i++) {
+                    const opt = document.createElement('option');
+                    opt.value = i;
+                    opt.textContent = i;
+                    epSelect.appendChild(opt);
+                }
+            }
+        }
+    </script>
 </body>
 </html>

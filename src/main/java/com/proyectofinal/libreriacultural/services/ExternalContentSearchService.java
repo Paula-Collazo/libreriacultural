@@ -424,13 +424,28 @@ public class ExternalContentSearchService {
             result.put("description", asString(body.get("overview")));
             result.put("tagline", asString(body.get("tagline")));
             String poster = asString(body.get("poster_path"));
-            result.put("coverUrl", poster.isEmpty() ? "" : "https://image.tmdb.org/t/p/w500" + poster);
+            result.put("coverUrl", poster.isBlank() ? null : "https://image.tmdb.org/t/p/w500" + poster);
             result.put("releaseDate", parseDate(asString(body.get(tmdbType.equals("movie") ? "release_date" : "first_air_date"))));
             result.put("externalId", id);
             result.put("type", type);
             if ("tv".equals(tmdbType)) {
-                result.put("totalSeasons", body.get("number_of_seasons"));
-                result.put("totalEpisodes", body.get("number_of_episodes"));
+                Object seasonsObj = body.get("number_of_seasons");
+                Object episodes = body.get("number_of_episodes");
+                Integer sCount = seasonsObj instanceof Number ? ((Number)seasonsObj).intValue() : 0;
+                Integer eCount = episodes instanceof Number ? ((Number)episodes).intValue() : 0;
+                result.put("totalSeasons", sCount);
+                result.put("totalEpisodes", eCount);
+                result.put("seriesMetadata", sCount + " temporadas, " + eCount + " episodios");
+
+                // Capturamos el detalle de episodios por temporada
+                List<Map<String, Object>> seasons = (List<Map<String, Object>>) body.get("seasons");
+                if (seasons != null) {
+                    String seasonData = seasons.stream()
+                        .filter(s -> ((Number)s.get("season_number")).intValue() > 0) // Ignoramos temporada 0 (especiales) si quieres
+                        .map(s -> asString(s.get("episode_count")))
+                        .collect(Collectors.joining("|"));
+                    result.put("seasonData", seasonData);
+                }
             }
             Map<String, Object> credits = (Map<String, Object>) body.get("credits");
             if (credits != null) {
@@ -478,23 +493,30 @@ public class ExternalContentSearchService {
                 .header("Authorization", "Bearer " + token).retrieve().body(Map.class);
             result.put("title", asString(body.get("name")));
             List<Map<String, Object>> images = (List<Map<String, Object>>) body.get("images");
-            result.put("coverUrl", (images != null && !images.isEmpty()) ? asString(images.get(0).get("url")) : "");
+            result.put("coverUrl", (images != null && !images.isEmpty()) ? asString(images.get(0).get("url")) : null);
             List<Map<String, Object>> artists = (List<Map<String, Object>>) body.get("artists");
             result.put("artist", (artists != null && !artists.isEmpty()) ? asString(artists.get(0).get("name")) : "");
             result.put("externalId", id);
             result.put("type", "disco");
             result.put("releaseDate", parseDate(asString(body.get("release_date"))));
-            result.put("totalTracks", body.get("total_tracks"));
+            Object totalTracks = body.get("total_tracks");
+            result.put("totalTracks", totalTracks instanceof Number ? ((Number)totalTracks).intValue() : 0);
             Map<String, Object> tracksObj = (Map<String, Object>) body.get("tracks");
             if (tracksObj != null) {
                 List<Map<String, Object>> items = (List<Map<String, Object>>) tracksObj.get("items");
                 if (items != null) {
-                    result.put("tracks", items.stream().map(t -> {
+                    List<ExternalTrack> trackList = items.stream().map(t -> {
                         int num = t.get("track_number") != null ? ((Number)t.get("track_number")).intValue() : 0;
                         String name = asString(t.get("name"));
                         long durMs = t.get("duration_ms") != null ? ((Number)t.get("duration_ms")).longValue() : 0;
                         return new ExternalTrack(num, name, formatTrackDuration(durMs));
-                    }).collect(Collectors.toList()));
+                    }).collect(Collectors.toList());
+                    result.put("tracks", trackList);
+                    // Pre-formateamos la lista para el campo oculto
+                    String joined = trackList.stream()
+                        .map(t -> t.getNumber() + ":" + t.getTitle())
+                        .collect(Collectors.joining("|"));
+                    result.put("trackListString", joined);
                 }
             }
         } catch (Exception e) {

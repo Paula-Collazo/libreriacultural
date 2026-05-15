@@ -53,12 +53,13 @@
                     Pistas: <span th:text="${album.totalTracks}">0</span>
                 </p>
                 
-                <form method="post" th:action="@{/profile/import-api}" class="add-form">
-                    <input type="hidden" name="externalTitle" th:value="${album.title}">
+                <form method="post" th:action="@{/profile/import-api}" class="add-form" th:if="${album['title'] != null}">
+                    <input type="hidden" name="externalTitle" th:value="${album['title']}">
                     <input type="hidden" name="externalType" value="disco">
-                    <input type="hidden" name="externalCoverUrl" th:value="${album.coverUrl}">
-                    <input type="hidden" name="externalReleaseDate" th:value="${album.releaseDate != null ? album.releaseDate.toString() : ''}">
-                    <input type="hidden" name="externalTracks" th:value="${album.totalTracks}">
+                    <input type="hidden" name="externalCoverUrl" th:value="${album['coverUrl']}">
+                    <input type="hidden" name="externalReleaseDate" th:value="${album['releaseDate'] != null ? album['releaseDate'].toString() : ''}">
+                    <input type="hidden" name="externalTracks" th:value="${album['totalTracks']}">
+                    <input type="hidden" name="externalTrackList" th:value="${album['trackListString']}">
                     <button type="submit">Añadir a mi perfil</button>
                 </form>
             </div>
