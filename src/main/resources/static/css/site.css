@@ -226,10 +226,35 @@ h1 {
 }
 
 .login-form,
-.add-form,
-.row-form {
+.add-form {
     display: grid;
     gap: 0.55rem;
+}
+
+.row-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.row-form > * {
+    flex: 1;
+    min-width: 80px;
+}
+
+.row-form > label {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.row-form input[type="checkbox"] {
+    width: auto;
+    min-height: auto;
+    margin: 0;
 }
 
 label {
@@ -416,6 +441,45 @@ button.mini.danger {
 
 .table-wrap {
     overflow-x: auto;
+    border-radius: 12px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+}
+
+th, td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px dashed var(--line);
+}
+
+th {
+    font-size: 0.85rem;
+    color: var(--muted);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-bottom: 0.75rem;
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+td {
+    vertical-align: middle;
+    transition: background 0.2s ease;
+}
+
+tbody tr:hover td {
+    background: rgba(0, 0, 0, 0.015);
+}
+
+[data-mode="dark"] tbody tr:hover td {
+    background: rgba(255, 255, 255, 0.03);
 }
 
 .media-header {

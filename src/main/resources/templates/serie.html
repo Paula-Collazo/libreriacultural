@@ -51,6 +51,9 @@
                 <p class="muted" th:if="${movie['releaseDate'] != null and !#strings.isEmpty(movie['releaseDate'])}">
                     Lanzamiento: <span th:text="${movie['releaseDate']}">2024</span>
                 </p>
+                <p class="muted" th:if="${movie['totalEpisodes'] != null}">
+                    Temporadas: <span th:text="${movie['totalSeasons']}">0</span> | Episodios: <span th:text="${movie['totalEpisodes']}">0</span>
+                </p>
                 
                 <!-- Enlace manual al director para evitar el error de SpringHrefTagProcessor -->
                 <p class="muted" th:if="${movie['directorName'] != null and !#strings.isEmpty(movie['directorName'])}">
@@ -63,6 +66,8 @@
                     <input type="hidden" name="externalCoverUrl" th:value="${movie['coverUrl']}">
                     <input type="hidden" name="externalDescription" th:value="${movie['description']}">
                     <input type="hidden" name="externalReleaseDate" th:value="${movie['releaseDate'] != null ? movie['releaseDate'].toString() : ''}">
+                    <input type="hidden" name="externalEpisodes" th:value="${movie['totalEpisodes']}">
+                    <input type="hidden" name="externalSeasons" th:value="${movie['totalSeasons']}">
                     <button type="submit">Añadir a mi perfil</button>
                 </form>
             </div>

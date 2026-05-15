@@ -49,6 +49,9 @@
                 <p class="muted" th:if="${movie.releaseDate != null}">
                     Lanzamiento: <span th:text="${movie.releaseDate}">2024</span>
                 </p>
+                <p class="muted" th:if="${movie.totalPages != null}">
+                    Páginas: <span th:text="${movie.totalPages}">0</span>
+                </p>
                 <!-- Uso th:utext para interpretar etiquetas HTML como <p> o <br> que vienen de Google Books -->
                 <div class="muted description-box" th:utext="${movie.description}">Descripcion</div>
                 
@@ -58,6 +61,7 @@
                     <input type="hidden" name="externalCoverUrl" th:value="${movie.coverUrl}">
                     <input type="hidden" name="externalDescription" th:value="${movie.description}">
                     <input type="hidden" name="externalReleaseDate" th:value="${movie.releaseDate != null ? movie.releaseDate.toString() : ''}">
+                    <input type="hidden" name="externalPages" th:value="${movie['totalPages']}">
                     <button type="submit">Añadir a mi perfil</button>
                 </form>
             </div>

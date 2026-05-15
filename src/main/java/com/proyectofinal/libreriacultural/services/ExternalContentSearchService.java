@@ -428,6 +428,10 @@ public class ExternalContentSearchService {
             result.put("releaseDate", parseDate(asString(body.get(tmdbType.equals("movie") ? "release_date" : "first_air_date"))));
             result.put("externalId", id);
             result.put("type", type);
+            if ("tv".equals(tmdbType)) {
+                result.put("totalSeasons", body.get("number_of_seasons"));
+                result.put("totalEpisodes", body.get("number_of_episodes"));
+            }
             Map<String, Object> credits = (Map<String, Object>) body.get("credits");
             if (credits != null) {
                 List<Map<String, Object>> cast = (List<Map<String, Object>>) credits.get("cast");
@@ -480,6 +484,7 @@ public class ExternalContentSearchService {
             result.put("externalId", id);
             result.put("type", "disco");
             result.put("releaseDate", parseDate(asString(body.get("release_date"))));
+            result.put("totalTracks", body.get("total_tracks"));
             Map<String, Object> tracksObj = (Map<String, Object>) body.get("tracks");
             if (tracksObj != null) {
                 List<Map<String, Object>> items = (List<Map<String, Object>>) tracksObj.get("items");
@@ -628,6 +633,24 @@ public class ExternalContentSearchService {
             result.put("releaseDate", null);
             result.put("externalId", id);
             result.put("type", "libro");
+
+            try {
+                String editionsUrl = UriComponentsBuilder.fromUriString("https://openlibrary.org" + workId + "/editions.json")
+                    .queryParam("limit", 10).build(true).toUriString();
+                Map editionsBody = restClient.get().uri(editionsUrl).retrieve().body(Map.class);
+                if (editionsBody != null) {
+                    List<Map<String, Object>> entries = (List<Map<String, Object>>) editionsBody.get("entries");
+                    if (entries != null) {
+                        for (Map<String, Object> entry : entries) {
+                            Object pagesObj = entry.get("number_of_pages");
+                            if (pagesObj instanceof Number) {
+                                result.put("totalPages", ((Number) pagesObj).intValue());
+                                break;
+                            }
+                        }
+                    }
+                }
+            } catch (Exception ignored) {}
         } catch (Exception e) {
             System.err.println("[ERROR] OpenLibrary Details: " + e.getMessage());
         }

@@ -213,6 +213,9 @@
                                 <li th:each="ep : ${episodesByEntry[item.id]}"
                                     th:text="${'T' + ep.seasonNumber + 'E' + ep.episodeNumber + ' - ' + (ep.watched ? 'visto' : 'no visto')}"></li>
                             </ul>
+                            <div class="muted" style="margin-top: 0.5rem; font-size: 0.85rem;" th:if="${item.seriesTotalEpisodes != null}">
+                                Total de la serie: <span th:text="${item.seriesTotalSeasons}"></span> temporadas, <span th:text="${item.seriesTotalEpisodes}"></span> episodios.
+                            </div>
                         </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/episodes(id=${item.id})}" class="row-form">
@@ -270,6 +273,9 @@
                                 <li th:each="song : ${songsByEntry[item.id]}"
                                     th:text="${'#' + song.trackNumber + ' ' + song.trackTitle + ' - ' + (song.listened ? 'escuchada' : 'pendiente')}"></li>
                             </ul>
+                            <div class="muted" style="margin-top: 0.5rem; font-size: 0.85rem;" th:if="${item.albumTotalTracks != null}">
+                                Total del disco: <span th:text="${item.albumTotalTracks}"></span> pistas.
+                            </div>
                         </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/songs(id=${item.id})}" class="row-form">

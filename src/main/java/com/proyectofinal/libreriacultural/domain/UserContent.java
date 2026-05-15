@@ -50,6 +50,15 @@ public class UserContent {
     @Column(name = "book_total_pages")
     private Integer bookTotalPages;
 
+    @Column(name = "series_total_episodes")
+    private Integer seriesTotalEpisodes;
+
+    @Column(name = "series_total_seasons")
+    private Integer seriesTotalSeasons;
+
+    @Column(name = "album_total_tracks")
+    private Integer albumTotalTracks;
+
     @Column(name = "added_date")
     private LocalDate addedDate;
 
@@ -82,6 +91,12 @@ public class UserContent {
     public void setBookTotalPages(Integer bookTotalPages) { this.bookTotalPages = bookTotalPages; }
     public LocalDate getAddedDate() { return addedDate; }
     public void setAddedDate(LocalDate addedDate) { this.addedDate = addedDate; }
+    public Integer getSeriesTotalEpisodes() { return seriesTotalEpisodes; }
+    public void setSeriesTotalEpisodes(Integer seriesTotalEpisodes) { this.seriesTotalEpisodes = seriesTotalEpisodes; }
+    public Integer getSeriesTotalSeasons() { return seriesTotalSeasons; }
+    public void setSeriesTotalSeasons(Integer seriesTotalSeasons) { this.seriesTotalSeasons = seriesTotalSeasons; }
+    public Integer getAlbumTotalTracks() { return albumTotalTracks; }
+    public void setAlbumTotalTracks(Integer albumTotalTracks) { this.albumTotalTracks = albumTotalTracks; }
     public List<UserSeriesEpisodeProgress> getEpisodeProgresses() { return episodeProgresses; }
     public void setEpisodeProgresses(List<UserSeriesEpisodeProgress> episodeProgresses) { this.episodeProgresses = episodeProgresses; }
     public List<UserSongProgress> getSongProgresses() { return songProgresses; }

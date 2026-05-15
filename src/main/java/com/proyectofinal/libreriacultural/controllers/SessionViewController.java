@@ -363,6 +363,10 @@ public class SessionViewController {
             @RequestParam(required = false) String externalReleaseDate,
             RedirectAttributes redirectAttributes,
             @RequestParam(required = false) String externalMetric,
+            @RequestParam(required = false) Integer externalEpisodes,
+            @RequestParam(required = false) Integer externalSeasons,
+            @RequestParam(required = false) Integer externalTracks,
+            @RequestParam(required = false) Integer externalPages,
             @RequestParam(required = false) String returnTo,
             HttpSession session) {
         String redirectPath = resolveReturnPath(returnTo);
@@ -411,8 +415,15 @@ public class SessionViewController {
         entry.setAddedDate(LocalDate.now());
 
         try {
-            Integer importedPages = "libro".equals(type) ? parsePagesFromMetric(externalMetric) : null;
+            Integer importedPages = "libro".equals(type) ? 
+                (externalPages != null ? externalPages : parsePagesFromMetric(externalMetric)) : null;
             applyTypeSpecificData(entry, type, null, null, importedPages);
+            if ("serie".equals(type)) {
+                entry.setSeriesTotalEpisodes(externalEpisodes);
+                entry.setSeriesTotalSeasons(externalSeasons);
+            } else if ("disco".equals(type)) {
+                entry.setAlbumTotalTracks(externalTracks);
+            }
             userContentRepository.save(entry);
             redirectAttributes.addFlashAttribute("successMessage", "Contenido importado y anadido a tu biblioteca");
         } catch (Exception ex) {

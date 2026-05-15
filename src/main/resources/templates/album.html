@@ -49,12 +49,16 @@
                 <p class="muted">
                     Artista: <a class="artist-link" th:href="@{/explore/disco(q=${album.artist})}" th:text="${album.artist}">Artista</a>
                 </p>
+                <p class="muted" th:if="${album.totalTracks != null}">
+                    Pistas: <span th:text="${album.totalTracks}">0</span>
+                </p>
                 
                 <form method="post" th:action="@{/profile/import-api}" class="add-form">
                     <input type="hidden" name="externalTitle" th:value="${album.title}">
                     <input type="hidden" name="externalType" value="disco">
                     <input type="hidden" name="externalCoverUrl" th:value="${album.coverUrl}">
                     <input type="hidden" name="externalReleaseDate" th:value="${album.releaseDate != null ? album.releaseDate.toString() : ''}">
+                    <input type="hidden" name="externalTracks" th:value="${album.totalTracks}">
                     <button type="submit">Añadir a mi perfil</button>
                 </form>
             </div>
