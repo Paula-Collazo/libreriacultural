@@ -639,6 +639,101 @@ tbody tr:hover td {
     grid-column: span 1;
 }
 
+/* Animations */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+    animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Hero Section */
+.hero {
+    padding: 6rem 2rem;
+    text-align: center;
+    background: radial-gradient(circle at top right, rgba(255, 182, 193, 0.2), transparent 40%),
+                radial-gradient(circle at bottom left, rgba(173, 216, 230, 0.2), transparent 40%);
+    border-radius: 40px;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.hero h1 {
+    font-size: 4.5rem;
+    line-height: 1;
+    margin-bottom: 1.5rem;
+    background: linear-gradient(135deg, var(--text), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.hero p {
+    font-size: 1.25rem;
+    max-width: 600px;
+    margin: 0 auto 2rem;
+}
+
+/* Toast Notifications */
+#toast-container {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+}
+
+.toast {
+    background: var(--card);
+    color: var(--text);
+    padding: 1rem 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    border: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    animation: slideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    min-width: 280px;
+}
+
+@keyframes slideIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+.toast.success { border-left: 4px solid #5f9b6e; }
+.toast.error { border-left: 4px solid #b64e42; }
+
+/* Filter Buttons */
+.filter-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    justify-content: flex-end;
+}
+
+.filter-btn {
+    background: var(--card);
+    border: 1px solid var(--line);
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+}
+
 .api-results {
     margin-top: 0.9rem;
     display: grid;
