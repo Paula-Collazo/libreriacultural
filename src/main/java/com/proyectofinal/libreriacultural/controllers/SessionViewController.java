@@ -51,13 +51,15 @@ public class SessionViewController {
     private final UserSongProgressRepository userSongProgressRepository;
     private final ExternalContentSearchService externalContentSearchService;
     private final UserAccountService userAccountService;
+    private final com.proyectofinal.libreriacultural.Repositories.CustomListRepository customListRepository;
 
     public SessionViewController(UserContentRepository userContentRepository, UserRepository userRepository,
             ContentRepository contentRepository,
             UserSeriesEpisodeProgressRepository userSeriesEpisodeProgressRepository,
             UserSongProgressRepository userSongProgressRepository,
             ExternalContentSearchService externalContentSearchService,
-            UserAccountService userAccountService) {
+            UserAccountService userAccountService,
+            com.proyectofinal.libreriacultural.Repositories.CustomListRepository customListRepository) {
         this.userContentRepository = userContentRepository;
         this.userRepository = userRepository;
         this.contentRepository = contentRepository;
@@ -65,6 +67,7 @@ public class SessionViewController {
         this.userSongProgressRepository = userSongProgressRepository;
         this.externalContentSearchService = externalContentSearchService;
         this.userAccountService = userAccountService;
+        this.customListRepository = customListRepository;
     }
 
     @GetMapping("/")
@@ -77,6 +80,12 @@ public class SessionViewController {
         List<Content> featured = contentRepository.findAll().stream().limit(8).toList();
         model.addAttribute("featured", featured);
         return "index";
+    }
+
+    @GetMapping("/login")
+    public String loginPage(HttpSession session) {
+        if (getSessionUser(session) != null) return "redirect:/profile";
+        return "redirect:/";
     }
 
     @PostMapping("/login")
@@ -110,6 +119,7 @@ public class SessionViewController {
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String artistId,
             @RequestParam(required = false) String author,
+            @RequestParam(required = false) Long targetListId,
             Model model,
             HttpSession session) {
         User sessionUser = getSessionUser(session);
@@ -170,6 +180,10 @@ public class SessionViewController {
         model.addAttribute("typeLabel", displayTypeName(normalizedType));
         model.addAttribute("searchQuery", query);
         model.addAttribute("apiResults", results);
+        if (sessionUser != null) {
+            model.addAttribute("customLists", customListRepository.findByUser(sessionUser));
+        }
+        model.addAttribute("targetListId", targetListId);
         return "explore";
     }
 
@@ -352,6 +366,7 @@ public class SessionViewController {
         model.addAttribute("apiQuery", apiQuery == null ? "" : apiQuery);
         model.addAttribute("apiResults", apiResults);
         model.addAttribute("activeType", "profile");
+        model.addAttribute("customLists", customListRepository.findByUser(sessionUser));
 
         return "profile";
     }
@@ -371,6 +386,8 @@ public class SessionViewController {
             @RequestParam(required = false) String externalSeasonData,
             @RequestParam(required = false) Integer externalPages,
             @RequestParam(required = false) String returnTo,
+            @RequestParam(required = false, defaultValue = "false") Boolean isFavorite,
+            @RequestParam(required = false) Long listId,
             HttpSession session) {
         String redirectPath = resolveReturnPath(returnTo);
         User sessionUser = getSessionUser(session);
@@ -462,10 +479,22 @@ public class SessionViewController {
                 entry.setAlbumTrackList(externalTrackList);
             }
             
-            userContentRepository.save(entry);
-            redirectAttributes.addFlashAttribute("successMessage", "Contenido importado y anadido a tu biblioteca");
+            entry.setFavorite(isFavorite != null && isFavorite);
+            UserContent saved = userContentRepository.save(entry);
+
+            // Añadir a la lista si se especificó
+            if (listId != null) {
+                customListRepository.findById(listId).ifPresent(list -> {
+                    if (list.getUser().getId().equals(sessionUser.getId())) {
+                        list.getItems().add(saved);
+                        customListRepository.save(list);
+                    }
+                });
+            }
+
+            redirectAttributes.addFlashAttribute("successMessage", "Contenido importado y añadido a tu biblioteca");
         } catch (Exception ex) {
-            redirectAttributes.addFlashAttribute("errorMessage", "No se pudo importar el contenido seleccionado");
+            redirectAttributes.addFlashAttribute("errorMessage", "No se pudo importar el contenido seleccionado: " + ex.getMessage());
         }
 
         return "redirect:" + redirectPath;
@@ -514,6 +543,77 @@ public class SessionViewController {
             redirectAttributes.addFlashAttribute("errorMessage", "Ese contenido ya esta en tu biblioteca");
         }
 
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/lists/create")
+    public String createList(@RequestParam String name, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) return "redirect:/";
+
+        com.proyectofinal.libreriacultural.domain.CustomList newList = new com.proyectofinal.libreriacultural.domain.CustomList();
+        newList.setName(name);
+        newList.setUser(user);
+        customListRepository.save(newList);
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/lists/{id}/delete")
+    public String deleteList(@PathVariable Long id, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) return "redirect:/";
+
+        customListRepository.findById(id).ifPresent(list -> {
+            if (list.getUser().getId().equals(user.getId())) {
+                customListRepository.delete(list);
+            }
+        });
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/lists/{id}/add")
+    public String addItemToList(@PathVariable Long id, @RequestParam Long userContentId, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) return "redirect:/";
+
+        customListRepository.findById(id).ifPresent(list -> {
+            if (list.getUser().getId().equals(user.getId())) {
+                userContentRepository.findById(userContentId).ifPresent(entry -> {
+                    if (entry.getUser().getId().equals(user.getId()) && !list.getItems().contains(entry)) {
+                        list.getItems().add(entry);
+                        customListRepository.save(list);
+                    }
+                });
+            }
+        });
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/lists/{listId}/remove/{itemId}")
+    public String removeItemFromList(@PathVariable Long listId, @PathVariable Long itemId, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) return "redirect:/";
+
+        customListRepository.findById(listId).ifPresent(list -> {
+            if (list.getUser().getId().equals(user.getId())) {
+                list.getItems().removeIf(item -> item.getId().equals(itemId));
+                customListRepository.save(list);
+            }
+        });
+        return "redirect:/profile";
+    }
+
+    @PostMapping("/profile/{entryId}/favorite")
+    public String toggleFavorite(@PathVariable Long entryId, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) return "redirect:/";
+
+        userContentRepository.findById(entryId).ifPresent(entry -> {
+            if (entry.getUser().getId().equals(user.getId())) {
+                entry.setFavorite(!entry.getFavorite());
+                userContentRepository.save(entry);
+            }
+        });
         return "redirect:/profile";
     }
 
@@ -743,12 +843,17 @@ public class SessionViewController {
         return userRepository.findById((Long) sessionUserId).orElse(null);
     }
 
-    private Map<String, Long> loadStats(Long userId) {
-        Map<String, Long> stats = new LinkedHashMap<>();
+    private Map<String, Object> loadStats(Long userId) {
+        Map<String, Object> stats = new LinkedHashMap<>();
         stats.put("visto", userContentRepository.countByUserIdAndStatus(userId, "visto"));
-        stats.put("no_visto", userContentRepository.countByUserIdAndStatus(userId, "no_visto"));
-        stats.put("leyendo", userContentRepository.countByUserIdAndStatus(userId, "leyendo"));
-        stats.put("leido", userContentRepository.countByUserIdAndStatus(userId, "leido"));
+        stats.put("en_progreso", userContentRepository.countByUserIdAndStatus(userId, "en_progreso"));
+        stats.put("totalPages", userContentRepository.sumTotalPagesByUserId(userId));
+        stats.put("totalEpisodes", userSeriesEpisodeProgressRepository.countTotalWatchedEpisodesByUserId(userId));
+        
+        // Items recientes (últimos 30 días)
+        java.time.LocalDate thirtyDaysAgo = java.time.LocalDate.now().minusDays(30);
+        stats.put("recentItems", userContentRepository.countRecentItems(userId, thirtyDaysAgo));
+        
         return stats;
     }
 

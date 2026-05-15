@@ -65,6 +65,9 @@ public class UserContent {
     @Column(name = "series_season_data", columnDefinition = "TEXT")
     private String seriesSeasonData;
 
+    @Column(name = "favorite")
+    private Boolean favorite = false;
+
     @Column(name = "added_date")
     private LocalDate addedDate;
 
@@ -80,7 +83,7 @@ public class UserContent {
     @JsonIgnore
     private List<UserSongProgress> songProgresses;
 
-    // Getters y Setters manuales
+    // Getters y Setters manuales para asegurar compatibilidad
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public User getUser() { return user; }
@@ -107,6 +110,8 @@ public class UserContent {
     public void setAlbumTrackList(String albumTrackList) { this.albumTrackList = albumTrackList; }
     public String getSeriesSeasonData() { return seriesSeasonData; }
     public void setSeriesSeasonData(String seriesSeasonData) { this.seriesSeasonData = seriesSeasonData; }
+    public Boolean getFavorite() { return favorite == null ? false : favorite; }
+    public void setFavorite(Boolean favorite) { this.favorite = favorite; }
     public List<UserSeriesEpisodeProgress> getEpisodeProgresses() { return episodeProgresses; }
     public void setEpisodeProgresses(List<UserSeriesEpisodeProgress> episodeProgresses) { this.episodeProgresses = episodeProgresses; }
     public List<UserSongProgress> getSongProgresses() { return songProgresses; }

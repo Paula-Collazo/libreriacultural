@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunidad - The Cultured Department</title>
+    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="grain"></div>
+
+    <header class="topbar">
+        <a class="brand" href="/profile" style="display:flex; align-items:center; gap:0.5rem;">
+            <img th:src="@{/img/logo.png}" alt="TCD Logo" style="height: 24px;">
+            <span th:text="${'@' + user.username}"></span>
+        </a>
+        <div class="topbar-actions">
+            <nav class="main-nav" style="display: flex; gap: 1.5rem; margin-right: 2rem;">
+                <a th:href="@{/profile}" class="nav-link">Mi Biblioteca</a>
+                <a th:href="@{/explore/pelicula}" class="nav-link">Explorar</a>
+                <a th:href="@{/comunidad/friends}" class="nav-link active" style="color: var(--accent); font-weight: 700;">Comunidad</a>
+            </nav>
+            <form method="post" th:action="@{/logout}">
+                <button type="submit" class="ghost-btn">Cerrar sesion</button>
+            </form>
+        </div>
+    </header>
+
+    <main class="profile-wrap">
+        <section class="profile-head card">
+            <div>
+                <p class="kicker">Social / Red Cultural</p>
+                <h1>Tu Comunidad</h1>
+                <p class="muted">Conecta con otros entusiastas y comparte tus gustos.</p>
+            </div>
+            <div class="summary-pill">
+                <span>Amigos</span>
+                <strong th:text="${#lists.size(friends)}">0</strong>
+            </div>
+        </section>
+
+        <section class="flash card" th:if="${successMessage != null}">
+            <p class="ok" th:text="${successMessage}"></p>
+        </section>
+        <section class="flash card" th:if="${errorMessage != null}">
+            <p class="error" th:text="${errorMessage}"></p>
+        </section>
+
+        <div class="social-grid" style="display: grid; grid-template-columns: 320px 1fr; gap: 2.5rem; margin-top: 2rem;">
+            <!-- SIDEBAR -->
+            <aside class="social-sidebar" style="display: flex; flex-direction: column; gap: 1.5rem;">
+                <section class="card" style="padding: 2rem; border-radius: 28px;">
+                    <h3 style="font-family: 'Space Grotesk', sans-serif; margin-bottom: 1.5rem; font-size: 1.3rem;">Añadir Amigo</h3>
+                    <form th:action="@{/comunidad/add}" method="post" style="display: flex; flex-direction: column; gap: 0.8rem;">
+                        <input type="text" name="username" placeholder="Nombre de usuario..." required 
+                               style="background: rgba(0,0,0,0.03); border-radius: 12px; padding: 0.8rem;">
+                        <button type="submit" style="border-radius: 12px;">Enviar solicitud</button>
+                    </form>
+                </section>
+
+                <section class="card" th:if="${not #lists.isEmpty(pendingRequests)}" style="padding: 2rem; border-radius: 28px;">
+                    <h3 style="font-family: 'Space Grotesk', sans-serif; margin-bottom: 1.2rem; font-size: 1.1rem; color: var(--accent);">Solicitudes Pendientes</h3>
+                    <div th:each="req : ${pendingRequests}" class="req-item" 
+                         style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px dashed var(--line);">
+                        <div style="display: flex; align-items: center; gap: 0.8rem;">
+                            <div style="width: 32px; height: 32px; background: var(--accent-2); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-size: 0.8rem; font-weight: 700;">
+                                <span th:text="${#strings.substring(req.requester.username,0,1).toUpperCase()}"></span>
+                            </div>
+                            <span th:text="${'@' + req.requester.username}" style="font-weight: 600; font-size: 0.9rem;"></span>
+                        </div>
+                        <form th:action="@{/comunidad/accept/{id}(id=${req.id})}" method="post">
+                            <button type="submit" class="mini" style="min-height: 28px; padding: 0 12px;">Aceptar</button>
+                        </form>
+                    </div>
+                </section>
+            </aside>
+
+            <!-- FRIENDS LIST -->
+            <section class="card" style="padding: 2.5rem; border-radius: 32px;">
+                <h2 style="font-family: 'Space Grotesk', sans-serif; margin-bottom: 2rem;">Mis Amigos</h2>
+                
+                <div th:if="${#lists.isEmpty(friends)}" class="empty-friends" 
+                     style="text-align: center; padding: 4rem 2rem; border: 2px dashed var(--line); border-radius: 24px;">
+                    <div style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;">🤝</div>
+                    <p class="muted">Aún no tienes amigos en tu red.<br>¡Busca a alguien para empezar!</p>
+                </div>
+
+                <div class="friends-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.5rem;">
+                    <div th:each="f : ${friends}" class="friend-card" 
+                         style="background: var(--card); border: 1px solid var(--line); border-radius: 24px; padding: 1.8rem; text-align: center; transition: all 0.3s ease;">
+                        <div class="avatar" style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-radius: 50%; margin: 0 auto 1.2rem; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 2rem; box-shadow: 0 8px 20px rgba(0,0,0,0.1);">
+                            <span th:text="${f.requester.id == user.id ? #strings.substring(f.receiver.username,0,1).toUpperCase() : #strings.substring(f.requester.username,0,1).toUpperCase()}"></span>
+                        </div>
+                        <h4 th:text="${f.requester.id == user.id ? f.receiver.username : f.requester.username}" 
+                            style="font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; margin-bottom: 0.3rem;"></h4>
+                        <p class="muted" style="font-size: 0.8rem; margin-bottom: 1rem;">Colega cultural</p>
+                        <div style="height: 1px; background: var(--line); margin: 1rem 0;"></div>
+                        <p class="muted" style="font-size: 0.75rem;">Desde <span th:text="${#temporals.format(f.createdAt, 'MMM yyyy')}"></span></p>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script defer th:src="@{/js/theme.js}"></script>
+</body>
+</html>

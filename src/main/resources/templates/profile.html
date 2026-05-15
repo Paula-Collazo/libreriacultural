@@ -51,6 +51,25 @@
             </div>
         </section>
 
+        <div class="profile-header-actions">
+            <a th:href="@{/comunidad/friends}" class="mini-link" style="background: var(--accent); color: white; border: none;">Comunidad / Amigos</a>
+        </div>
+
+        <div class="stats-summary">
+            <div class="stat-card">
+                <span class="stat-value" th:text="${stats.totalPages != null ? stats.totalPages : 0}">0</span>
+                <span class="stat-label">Páginas leídas</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" th:text="${stats.totalEpisodes}">0</span>
+                <span class="stat-label">Episodios vistos</span>
+            </div>
+            <div class="stat-card">
+                <span class="stat-value" th:text="${stats.recentItems}">0</span>
+                <span class="stat-label">Novedades (30d)</span>
+            </div>
+        </div>
+
         <section class="flash card" th:if="${successMessage != null}">
             <p class="ok" th:text="${successMessage}"></p>
         </section>
@@ -105,7 +124,14 @@
                             <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td th:text="${item.content.title}">Titulo</td>
+                        <td class="title-cell">
+                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                </button>
+                            </form>
+                            <span th:text="${item.content.title}">Titulo</span>
+                        </td>
                         <td th:text="${item.addedDate != null ? item.addedDate : '-'}">Fecha</td>
                         <td>
                             <span class="status-chip"
@@ -158,7 +184,14 @@
                             <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td th:text="${item.content.title}">Titulo</td>
+                        <td class="title-cell">
+                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                </button>
+                            </form>
+                            <span th:text="${item.content.title}">Titulo</span>
+                        </td>
                         <td th:text="${item.status}">leyendo</td>
                         <td>
                             <div class="book-progress-label"
@@ -212,7 +245,14 @@
                             <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td th:text="${item.content.title}">Serie</td>
+                        <td class="title-cell">
+                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                </button>
+                            </form>
+                            <span th:text="${item.content.title}">Serie</span>
+                        </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
                                 <select name="status">
@@ -248,8 +288,8 @@
                                     </select>
                                 </th:block>
                                 <th:block th:if="${#strings.isEmpty(item.seriesSeasonData) or item.seriesTotalSeasons == null or item.seriesTotalSeasons <= 0}">
-                                    <input type="number" min="1" th:max="${item.seriesTotalSeasons != null ? item.seriesTotalSeasons : 1}" name="seasonNumber" placeholder="Temp" style="width: 60px; flex: 0 0 auto;" required>
-                                    <input type="number" min="1" th:max="${item.seriesTotalEpisodes != null ? item.seriesTotalEpisodes : 1}" name="episodeNumber" placeholder="Ep" style="width: 60px; flex: 0 0 auto;" required>
+                                    <input type="number" min="1" name="seasonNumber" placeholder="Temp" style="width: 60px; flex: 0 0 auto;" required>
+                                    <input type="number" min="1" name="episodeNumber" placeholder="Ep" style="width: 60px; flex: 0 0 auto;" required>
                                 </th:block>
                                 <label><input type="checkbox" name="watched" value="true"> Visto</label>
                                 <button type="submit" class="mini">Guardar</button>
@@ -292,7 +332,14 @@
                             <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td th:text="${item.content.title}">Disco</td>
+                        <td class="title-cell">
+                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
+                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                </button>
+                            </form>
+                            <span th:text="${item.content.title}">Disco</span>
+                        </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
                                 <select name="status">
@@ -340,6 +387,61 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+        </section>
+
+        <!-- SECCION DE LISTAS -->
+        <section class="card">
+            <div class="media-header">
+                <h2>Mis Listas Personalizadas</h2>
+            </div>
+            <div class="lists-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <!-- Crear nueva lista -->
+                <div class="list-card create-list" style="border: 2px dashed var(--line); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <form th:action="@{/profile/lists/create}" method="post" style="width: 100%;">
+                        <input type="text" name="name" placeholder="Nombre de la lista (ej: Terror)" required style="margin-bottom: 0.5rem; width: 100%;">
+                        <button type="submit" style="width: 100%;">+ Crear Nueva Lista</button>
+                    </form>
+                </div>
+
+                <!-- Listas existentes -->
+                <div th:each="list : ${customLists}" class="list-card">
+                    <div class="list-header">
+                        <h3 th:text="${list.name}">Nombre de la lista</h3>
+                        <p class="muted" th:text="${#lists.size(list.items) + ' elementos'}">0 elementos</p>
+                    </div>
+                    
+                    <ul class="compact-list" style="margin-top: 1rem; max-height: 150px; overflow-y: auto;">
+                        <li th:each="item : ${list.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line);">
+                            <span th:text="${item.content.title}"></span>
+                            <form th:action="@{/profile/lists/{listId}/remove/{itemId}(listId=${list.id}, itemId=${item.id})}" method="post" style="margin:0;">
+                                <button type="submit" class="mini danger" style="padding: 2px 8px; min-height: 24px;">×</button>
+                            </form>
+                        </li>
+                    </ul>
+
+                    <div class="list-actions" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
+                        <!-- BUSCADOR GLOBAL PARA ESTA LISTA -->
+                        <div class="list-search-box" style="background: rgba(0,0,0,0.02); padding: 1rem; border-radius: 16px; border: 1px dashed var(--line);">
+                            <p style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent);">BUSCAR EN INTERNET Y AÑADIR</p>
+                            <form th:action="@{/explore/pelicula}" method="get" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                <input type="hidden" name="targetListId" th:value="${list.id}">
+                                <select name="type" onchange="this.form.action='/explore/' + this.value" style="flex: 1; min-width: 80px; min-height: 32px; font-size: 0.8rem;">
+                                    <option value="pelicula">Pelis</option>
+                                    <option value="serie">Series</option>
+                                    <option value="libro">Libros</option>
+                                    <option value="disco">Discos</option>
+                                </select>
+                                <input type="text" name="q" placeholder="Buscar algo nuevo..." required style="flex: 2; min-height: 32px; font-size: 0.8rem;">
+                                <button type="submit" class="mini" style="min-height: 32px; padding: 0 10px;">🔍</button>
+                            </form>
+                        </div>
+
+                        <form th:action="@{/profile/lists/{id}/delete(id=${list.id})}" method="post">
+                            <button type="submit" class="mini danger" style="width: 100%; opacity: 0.7;">Borrar Lista Completa</button>
+                        </form>
+                    </div>
+                </div>
             </div>
         </section>
     </main>
