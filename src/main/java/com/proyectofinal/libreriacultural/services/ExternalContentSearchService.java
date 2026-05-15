@@ -529,7 +529,7 @@ public class ExternalContentSearchService {
     private List<ExternalContentItem> searchOpenLibrary(String query) {
         List<ExternalContentItem> items = new ArrayList<>();
         try {
-            String url = buildOpenLibrarySearchUrl("q", query);
+            java.net.URI url = buildOpenLibrarySearchUrl("q", query);
             Map body = restClient.get().uri(url).retrieve().body(Map.class);
             if (body == null) return items;
             List<Map<String, Object>> docs = (List<Map<String, Object>>) body.get("docs");
@@ -564,7 +564,7 @@ public class ExternalContentSearchService {
         }
         List<ExternalContentItem> items = new ArrayList<>();
         try {
-            String url = buildOpenLibrarySearchUrl("author", author);
+            java.net.URI url = buildOpenLibrarySearchUrl("author", author);
             Map body = restClient.get().uri(url).retrieve().body(Map.class);
             if (body == null) return items;
             List<Map<String, Object>> docs = (List<Map<String, Object>>) body.get("docs");
@@ -755,13 +755,13 @@ public class ExternalContentSearchService {
         }
         return asString(firstSentence);
     }
-    private String buildOpenLibrarySearchUrl(String param, String value) {
+    private java.net.URI buildOpenLibrarySearchUrl(String param, String value) {
         return UriComponentsBuilder.fromUriString("https://openlibrary.org/search.json")
             .queryParam(param, value)
             .queryParam("limit", 8)
             .build()
             .encode()
-            .toUriString();
+            .toUri();
     }
     private String resolveOpenLibraryAuthor(Object authorsObj) {
         if (!(authorsObj instanceof List)) {
