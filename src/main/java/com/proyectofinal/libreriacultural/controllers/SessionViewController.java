@@ -113,9 +113,6 @@ public class SessionViewController {
             Model model,
             HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) {
-            return "redirect:/";
-        }
 
         String normalizedType;
         try {
@@ -179,7 +176,6 @@ public class SessionViewController {
     @GetMapping("/explore/disco/{id}")
     public String exploreAlbumDetail(@PathVariable String id, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) return "redirect:/";
 
         try {
             Map<String, Object> details = externalContentSearchService.getDetails("Spotify", id, "musica");
@@ -206,7 +202,6 @@ public class SessionViewController {
     @GetMapping("/explore/pelicula/{id}")
     public String exploreMovieDetail(@PathVariable String id, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) return "redirect:/";
 
         try {
             Map<String, Object> movie = externalContentSearchService.getDetails("TMDb", id, "pelicula");
@@ -226,7 +221,6 @@ public class SessionViewController {
     @GetMapping("/explore/actor/{name}")
     public String exploreActorDetail(@PathVariable String name, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) return "redirect:/";
         try {
             Map<String, Object> actor = externalContentSearchService.getActorDetails(name);
             model.addAttribute("user", sessionUser);
@@ -243,7 +237,6 @@ public class SessionViewController {
     @GetMapping("/explore/serie/{id}")
     public String exploreSerieDetail(@PathVariable String id, Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) return "redirect:/";
 
         try {
             Map<String, Object> serie = externalContentSearchService.getDetails("TMDb", id, "serie");
@@ -265,7 +258,6 @@ public class SessionViewController {
             @RequestParam(required = false) String author,
             Model model, HttpSession session) {
         User sessionUser = getSessionUser(session);
-        if (sessionUser == null) return "redirect:/";
 
         try {
             Map<String, Object> book = externalContentSearchService.getDetails("GoogleBooks", id, "libro");

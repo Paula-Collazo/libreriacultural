@@ -33,11 +33,19 @@
         applyMode(current);
     };
 
-    /* Cuando la página termina de cargar, sincroniza los botones. */
-    document.addEventListener('DOMContentLoaded', function () {
+    /* Sincroniza los botones cuando el DOM este listo. */
+    function initButtons() {
         applyMode(current);
         document.querySelectorAll('[data-mode-toggle]').forEach(function (btn) {
+            // Remove existing listener to avoid duplicates just in case
+            btn.removeEventListener('click', window.toggleMode);
             btn.addEventListener('click', window.toggleMode);
         });
-    });
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initButtons);
+    } else {
+        initButtons();
+    }
 })();
