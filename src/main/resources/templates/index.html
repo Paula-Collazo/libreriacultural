@@ -1,81 +1,559 @@
 <!DOCTYPE html>
-<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<html lang="es" xmlns:th="http://www.thymeleaf.org" data-mode="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Libreria Cultural</title>
-    <link rel="stylesheet" th:href="@{/css/site.css}">
+    <title>The Cultured Department</title>
+    <meta name="description" content="Rastrea tus películas, series, libros y música. Tu archivo cultural personal.">
+    <!-- Aplica el modo ANTES de renderizar para evitar parpadeo -->
+    <script>
+        (function(){
+            var m=localStorage.getItem('tcd_mode');
+            if(!m){m=window.matchMedia&&window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';}
+            document.documentElement.setAttribute('data-mode',m);
+        })();
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+    <style>
+        /* ══════════════════════════════════════════
+           TOKENS — modo oscuro (por defecto)
+        ══════════════════════════════════════════ */
+        :root,
+        [data-mode="dark"] {
+            --bg:         #111009;
+            --bg-soft:    #1a1712;
+            --surface:    #211f18;
+            --border:     #332f24;
+            --border-soft:#2a271e;
+            --text:       #edeadf;
+            --text-2:     #9e9882;
+            --text-3:     #5c5843;
+            --accent:     #c8773a;
+            --accent-h:   #d98944;
+            --accent-text:#111009;
+            --input-bg:   #181610;
+            --tag-bg:     #2a2720;
+            --tag-text:   #9e9882;
+            --error-bg:   rgba(180,60,60,.12);
+            --error-bdr:  #8b3a3a;
+            --error-text: #e07070;
+            --ok-bg:      rgba(60,130,80,.1);
+            --ok-bdr:     #3a7a50;
+            --ok-text:    #72b88a;
+        }
+
+        /* ══════════════════════════════════════════
+           TOKENS — modo claro
+        ══════════════════════════════════════════ */
+        [data-mode="light"] {
+            --bg:         #f9f6f0;
+            --bg-soft:    #f0ece3;
+            --surface:    #ffffff;
+            --border:     #ddd6c8;
+            --border-soft:#e8e2d8;
+            --text:       #1e1a12;
+            --text-2:     #6b6048;
+            --text-3:     #b0a590;
+            --accent:     #b8601a;
+            --accent-h:   #cc7022;
+            --accent-text:#ffffff;
+            --input-bg:   #faf8f3;
+            --tag-bg:     #eee9e0;
+            --tag-text:   #7a6e58;
+            --error-bg:   rgba(180,60,60,.07);
+            --error-bdr:  #b05050;
+            --error-text: #a03030;
+            --ok-bg:      rgba(50,110,70,.07);
+            --ok-bdr:     #3d7a55;
+            --ok-text:    #2d6040;
+        }
+
+        /* ══════════════════════════════════════════
+           BASE
+        ══════════════════════════════════════════ */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { color-scheme: dark light; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text-2);
+            min-height: 100vh;
+            transition: background .25s, color .25s;
+        }
+
+        a { color: inherit; text-decoration: none; }
+
+        /* ══════════════════════════════════════════
+           HEADER
+        ══════════════════════════════════════════ */
+        .site-header {
+            position: sticky;
+            top: 0;
+            z-index: 20;
+            background: var(--bg);
+            border-bottom: 1px solid var(--border);
+            padding: 0 1.5rem;
+            height: 54px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: background .25s, border-color .25s;
+        }
+
+        .logo {
+            font-family: 'DM Serif Display', serif;
+            font-style: italic;
+            font-size: 1.2rem;
+            color: var(--text);
+            letter-spacing: .01em;
+        }
+
+        .logo-dot { color: var(--accent); }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            gap: 1.4rem;
+        }
+
+        .nav-link {
+            font-size: .78rem;
+            font-weight: 600;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--text-2);
+            transition: color .15s;
+        }
+        .nav-link:hover { color: var(--text); }
+
+        .btn-accent {
+            font-size: .78rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--accent-text);
+            background: var(--accent);
+            border-radius: 4px;
+            padding: .38rem .95rem;
+            transition: background .15s;
+        }
+        .btn-accent:hover { background: var(--accent-h); }
+
+        /* Mode toggle button */
+        .mode-toggle {
+            background: none;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-2);
+            cursor: pointer;
+            font-size: 1rem;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: unset;
+            padding: 0;
+            transition: border-color .15s, color .15s, background .25s;
+        }
+        .mode-toggle:hover { border-color: var(--accent); color: var(--accent); }
+
+        /* ══════════════════════════════════════════
+           HERO
+        ══════════════════════════════════════════ */
+        .hero {
+            background: var(--bg-soft);
+            border-bottom: 1px solid var(--border);
+            padding: 5rem 1.5rem;
+            text-align: center;
+            transition: background .25s, border-color .25s;
+        }
+
+        .hero-inner {
+            max-width: 580px;
+            margin-inline: auto;
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .hero-eyebrow {
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+
+        .hero h1 {
+            font-family: 'DM Serif Display', serif;
+            font-size: clamp(2.1rem, 5.5vw, 3.5rem);
+            line-height: 1.08;
+            color: var(--text);
+        }
+
+        .hero h1 em { font-style: italic; color: var(--accent); }
+
+        .hero p {
+            font-size: 1rem;
+            color: var(--text-2);
+            line-height: 1.7;
+        }
+
+        .hero-actions {
+            display: flex;
+            gap: .75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-main {
+            display: inline-block;
+            font-size: .88rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--accent-text);
+            background: var(--accent);
+            border-radius: 4px;
+            padding: .68rem 1.6rem;
+            transition: background .15s;
+        }
+        .cta-main:hover { background: var(--accent-h); }
+
+        .cta-ghost {
+            display: inline-block;
+            font-size: .88rem;
+            font-weight: 600;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--text-2);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: .68rem 1.6rem;
+            transition: border-color .15s, color .15s;
+        }
+        .cta-ghost:hover { border-color: var(--text-2); color: var(--text); }
+
+        /* ══════════════════════════════════════════
+           CATEGORY STRIP
+        ══════════════════════════════════════════ */
+        .cats {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 0;
+            border-bottom: 1px solid var(--border);
+            transition: border-color .25s;
+        }
+
+        .cat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: .35rem;
+            padding: 1.4rem 2.5rem;
+            border-right: 1px solid var(--border);
+            transition: background .15s, border-color .25s;
+        }
+
+        .cat:last-child { border-right: none; }
+        .cat:hover { background: var(--bg-soft); }
+
+        .cat-icon {
+            font-size: 1.3rem;
+            filter: grayscale(.3);
+        }
+
+        .cat-label {
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .09em;
+            text-transform: uppercase;
+            color: var(--text-3);
+        }
+
+        /* ══════════════════════════════════════════
+           LOGIN FORM
+        ══════════════════════════════════════════ */
+        .login-wrap {
+            max-width: 400px;
+            margin: 3.5rem auto 4rem;
+            padding: 0 1.5rem;
+        }
+
+        .login-wrap h2 {
+            font-family: 'DM Serif Display', serif;
+            font-size: 1.45rem;
+            color: var(--text);
+            margin-bottom: .3rem;
+        }
+
+        .login-sub {
+            font-size: .84rem;
+            color: var(--text-3);
+            margin-bottom: 1.8rem;
+        }
+
+        .login-sub a {
+            color: var(--accent);
+            font-weight: 600;
+            transition: color .15s;
+        }
+        .login-sub a:hover { color: var(--accent-h); }
+
+        /* Banners */
+        .banner {
+            padding: .65rem .9rem;
+            border-radius: 4px;
+            font-size: .84rem;
+            font-weight: 600;
+            margin-bottom: 1.3rem;
+            border-left: 3px solid;
+        }
+
+        .banner-error {
+            background: var(--error-bg);
+            border-color: var(--error-bdr);
+            color: var(--error-text);
+        }
+
+        .banner-ok {
+            background: var(--ok-bg);
+            border-color: var(--ok-bdr);
+            color: var(--ok-text);
+        }
+
+        /* Fields */
+        .field {
+            display: grid;
+            gap: .4rem;
+            margin-bottom: 1rem;
+        }
+
+        .field label {
+            font-size: .72rem;
+            font-weight: 700;
+            letter-spacing: .09em;
+            text-transform: uppercase;
+            color: var(--text-3);
+            transition: color .25s;
+        }
+
+        .field input {
+            background: var(--input-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text);
+            font-family: 'Inter', sans-serif;
+            font-size: .93rem;
+            padding: .67rem .9rem;
+            width: 100%;
+            min-height: unset;
+            transition: border-color .2s, background .25s, color .25s;
+            outline: none;
+        }
+
+        .field input::placeholder { color: var(--text-3); }
+        .field input:focus { border-color: var(--accent); }
+
+        .btn-submit {
+            display: block;
+            width: 100%;
+            padding: .72rem 1rem;
+            font-family: 'Inter', sans-serif;
+            font-size: .88rem;
+            font-weight: 700;
+            letter-spacing: .06em;
+            text-transform: uppercase;
+            color: var(--accent-text);
+            background: var(--accent);
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            min-height: unset;
+            margin-top: .4rem;
+            transition: background .15s;
+        }
+        .btn-submit:hover { background: var(--accent-h); }
+
+        .form-footer {
+            margin-top: 1.1rem;
+            font-size: .82rem;
+            color: var(--text-3);
+            text-align: center;
+        }
+
+        .form-footer a {
+            color: var(--text-2);
+            font-weight: 600;
+            transition: color .15s;
+        }
+        .form-footer a:hover { color: var(--text); }
+
+        /* ══════════════════════════════════════════
+           FEATURED
+        ══════════════════════════════════════════ */
+        .featured {
+            max-width: 1080px;
+            margin: 0 auto 4rem;
+            padding: 0 1.5rem;
+        }
+
+        .section-title {
+            font-size: .68rem;
+            font-weight: 700;
+            letter-spacing: .11em;
+            text-transform: uppercase;
+            color: var(--text-3);
+            padding-bottom: .6rem;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 1.1rem;
+        }
+
+        .poster-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+            gap: .6rem;
+        }
+
+        .poster-card {
+            background: var(--surface);
+            border: 1px solid var(--border-soft);
+            border-radius: 5px;
+            padding: .8rem;
+            transition: border-color .15s, background .25s;
+        }
+        .poster-card:hover { border-color: var(--accent); }
+
+        .poster-card h4 {
+            font-size: .87rem;
+            font-weight: 600;
+            color: var(--text);
+            line-height: 1.3;
+            margin-bottom: .28rem;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .poster-card .tag {
+            font-size: .67rem;
+            font-weight: 700;
+            letter-spacing: .07em;
+            text-transform: uppercase;
+            color: var(--text-3);
+        }
+
+        /* ══════════════════════════════════════════
+           FOOTER
+        ══════════════════════════════════════════ */
+        .site-footer {
+            border-top: 1px solid var(--border);
+            padding: 1.4rem;
+            text-align: center;
+            font-size: .76rem;
+            color: var(--text-3);
+        }
+
+        /* ══════════════════════════════════════════
+           RESPONSIVE
+        ══════════════════════════════════════════ */
+        @media (max-width: 640px) {
+            .site-header { padding: 0 1rem; }
+            .header-nav  { gap: .7rem; }
+            .hero        { padding: 3.5rem 1rem; }
+            .cats        { gap: 0; }
+            .cat         { padding: 1.1rem 1.4rem; }
+            .nav-link    { display: none; }
+        }
+    </style>
 </head>
 <body>
-    <div class="grain"></div>
-    <header class="topbar">
-        <a class="brand" href="/">Libreria Cultural</a>
-        <div class="topbar-actions">
-            <div class="theme-switch">
-                <label for="themePicker">Tema</label>
-                <select id="themePicker" data-theme-select>
-                    <option value="rosa">Rosa Pastel</option>
-                    <option value="azul">Azul Pastel</option>
-                    <option value="menta">Menta Pastel</option>
-                    <option value="durazno">Durazno Pastel</option>
-                </select>
-            </div>
-            <a class="ghost-link" href="/ui/library">Vista tecnica</a>
+
+<!-- HEADER -->
+<header class="site-header">
+    <a class="logo" href="/">The Cultured<span class="logo-dot"> ·</span> Dept</a>
+    <nav class="header-nav">
+        <a class="nav-link" href="/explore/pelicula">Films</a>
+        <a class="nav-link" href="/explore/serie">Series</a>
+        <a class="nav-link" href="/explore/libro">Books</a>
+        <a class="nav-link" href="/explore/disco">Music</a>
+        <button class="mode-toggle" data-mode-toggle aria-label="Cambiar modo">☀</button>
+        <a class="btn-accent" href="/register">Regístrate</a>
+    </nav>
+</header>
+
+<!-- HERO -->
+<section class="hero">
+    <div class="hero-inner">
+        <p class="hero-eyebrow">Tu archivo cultural personal</p>
+        <h1>Sigue todo lo que<br>ves, lees y <em>escuchas.</em></h1>
+        <p>
+            Películas, series, libros, música.<br>
+            Sin ruido. Solo tú y tu cultura.
+        </p>
+        <div class="hero-actions">
+            <a class="cta-main" href="/register">Regístrate gratis</a>
+            <a class="cta-ghost" href="#login">Ya tengo cuenta</a>
         </div>
-    </header>
+    </div>
+</section>
 
-    <main class="landing-wrap">
-        <section class="hero-block">
-            <p class="kicker">Track. Discover. Remember.</p>
-            <h1>Tu diario cultural con alma de cine.</h1>
-            <p class="lead">
-                Guarda series, peliculas, libros o podcast. Marca estados, revisa estadisticas y convierte tus gustos
-                en un perfil personal.
-            </p>
-            <div class="chips">
-                <span>Pendiente</span>
-                <span>En progreso</span>
-                <span>Visto</span>
-                <span>Abandonado</span>
-            </div>
-        </section>
+<!-- CATEGORÍAS -->
+<div class="cats">
+    <div class="cat"><span class="cat-icon">🎬</span><span class="cat-label">Películas</span></div>
+    <div class="cat"><span class="cat-icon">📺</span><span class="cat-label">Series</span></div>
+    <div class="cat"><span class="cat-icon">📖</span><span class="cat-label">Libros</span></div>
+    <div class="cat"><span class="cat-icon">🎵</span><span class="cat-label">Música</span></div>
+</div>
 
-        <section class="login-card">
-            <h2>Inicia sesion</h2>
-            <p class="muted">Usa el usuario que ya tienes en la base de datos.</p>
+<!-- LOGIN -->
+<div class="login-wrap" id="login">
+    <h2>Inicia sesión</h2>
+    <p class="login-sub">¿No tienes cuenta? <a href="/register">Regístrate</a></p>
 
-            <p class="error" th:if="${errorMessage != null}" th:text="${errorMessage}"></p>
+    <div class="banner banner-error" th:if="${errorMessage != null}" th:text="${errorMessage}"></div>
+    <div class="banner banner-ok"    th:if="${successMessage != null}" th:text="${successMessage}"></div>
 
-            <form method="post" th:action="@{/login}" class="login-form">
-                <label for="username">Usuario</label>
-                <input id="username" name="username" type="text" placeholder="paula" required>
-
-                <label for="password">Contrasena</label>
-                <input id="password" name="password" type="password" placeholder="1234" required>
-
-                <button type="submit">Entrar a mi perfil</button>
-            </form>
-        </section>
-    </main>
-
-    <section class="featured-section">
-        <div class="featured-head">
-            <h3>Ahora en la biblioteca</h3>
-            <p>Contenido destacado del catalogo actual.</p>
+    <form method="post" th:action="@{/login}" id="login-form">
+        <div class="field">
+            <label for="username">Usuario</label>
+            <input id="username" name="username" type="text"
+                   placeholder="tu_usuario" autocomplete="username" required>
         </div>
-
-        <div class="poster-grid">
-            <article class="poster-card" th:each="item : ${featured}">
-                <div class="poster-glow"></div>
-                <h4 th:text="${item.title}">Titulo</h4>
-                <p th:text="${item.type != null ? item.type : 'sin tipo'}">tipo</p>
-            </article>
-            <article class="poster-card empty" th:if="${#lists.isEmpty(featured)}">
-                <h4>Aun no hay contenido</h4>
-                <p>Agrega contenido desde la API o la vista tecnica.</p>
-            </article>
+        <div class="field">
+            <label for="password">Contraseña</label>
+            <input id="password" name="password" type="password"
+                   placeholder="••••••••" autocomplete="current-password" required>
         </div>
-    </section>
-    <script defer th:src="@{/js/theme.js}"></script>
+        <button type="submit" class="btn-submit" id="login-submit">Entrar</button>
+    </form>
+
+    <p class="form-footer">
+        ¿Sin cuenta? <a href="/register">Crea la tuya</a>
+    </p>
+</div>
+
+<!-- DESTACADOS -->
+<section class="featured" th:if="${featured != null and not #lists.isEmpty(featured)}">
+    <p class="section-title">En la biblioteca</p>
+    <div class="poster-grid">
+        <article class="poster-card" th:each="item : ${featured}">
+            <h4 th:text="${item.title}">Título</h4>
+            <span class="tag" th:text="${item.type != null ? item.type : '—'}">tipo</span>
+        </article>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="site-footer">
+    The Cultured Department &mdash; Tu archivo cultural
+</footer>
+
+<script th:src="@{/js/theme.js}"></script>
 </body>
 </html>

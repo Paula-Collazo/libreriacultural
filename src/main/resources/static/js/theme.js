@@ -1,35 +1,43 @@
+/**
+ * theme.js — The Cultured Department
+ * Gestiona el modo claro/oscuro con persistencia en localStorage.
+ * Se aplica antes del primer render para evitar parpadeo (FOUC).
+ */
 (function () {
-    const storageKey = "lc_theme";
-    const defaultTheme = "rosa";
-    const allowedThemes = new Set(["rosa", "azul", "menta", "durazno"]);
-    const legacyThemeMap = {
-        otono: "durazno",
-        verano: "rosa",
-        salvia: "menta"
-    };
+    const KEY = 'tcd_mode';
 
-    const root = document.documentElement;
-    const selector = document.querySelector("[data-theme-select]");
-
-    function applyTheme(theme) {
-        const selectedTheme = allowedThemes.has(theme) ? theme : defaultTheme;
-        root.setAttribute("data-theme", selectedTheme);
-        return selectedTheme;
-    }
-
-    const rawSavedTheme = localStorage.getItem(storageKey) || defaultTheme;
-    const normalizedTheme = legacyThemeMap[rawSavedTheme] || rawSavedTheme;
-    const activeTheme = applyTheme(normalizedTheme);
-    if (activeTheme !== rawSavedTheme) {
-        localStorage.setItem(storageKey, activeTheme);
-    }
-
-    if (selector) {
-        selector.value = activeTheme;
-        selector.addEventListener("change", function (event) {
-            const newTheme = event.target.value;
-            const appliedTheme = applyTheme(newTheme);
-            localStorage.setItem(storageKey, appliedTheme);
+    /** Aplica el modo al <html> y sincroniza todos los botones toggle. */
+    function applyMode(mode) {
+        document.documentElement.setAttribute('data-mode', mode);
+        document.querySelectorAll('[data-mode-toggle]').forEach(function (btn) {
+            btn.setAttribute('aria-label', mode === 'dark' ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+            btn.textContent = mode === 'dark' ? '☀' : '☾';
         });
     }
+
+    /** Lee el modo guardado (o detecta preferencia del sistema). */
+    function savedMode() {
+        var stored = localStorage.getItem(KEY);
+        if (stored === 'dark' || stored === 'light') return stored;
+        return window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches
+            ? 'dark' : 'light';
+    }
+
+    var current = savedMode();
+    applyMode(current);
+
+    /** Toggle llamado desde el botón en cada página. */
+    window.toggleMode = function () {
+        current = current === 'dark' ? 'light' : 'dark';
+        localStorage.setItem(KEY, current);
+        applyMode(current);
+    };
+
+    /* Cuando la página termina de cargar, sincroniza los botones. */
+    document.addEventListener('DOMContentLoaded', function () {
+        applyMode(current);
+        document.querySelectorAll('[data-mode-toggle]').forEach(function (btn) {
+            btn.addEventListener('click', window.toggleMode);
+        });
+    });
 })();

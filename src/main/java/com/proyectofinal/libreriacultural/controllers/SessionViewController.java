@@ -32,6 +32,7 @@ import com.proyectofinal.libreriacultural.domain.UserSongProgress;
 import com.proyectofinal.libreriacultural.services.ExternalAlbumDetails;
 import com.proyectofinal.libreriacultural.services.ExternalContentItem;
 import com.proyectofinal.libreriacultural.services.ExternalContentSearchService;
+import com.proyectofinal.libreriacultural.services.UserAccountService;
 
 import jakarta.servlet.http.HttpSession;
 
@@ -49,18 +50,21 @@ public class SessionViewController {
     private final UserSeriesEpisodeProgressRepository userSeriesEpisodeProgressRepository;
     private final UserSongProgressRepository userSongProgressRepository;
     private final ExternalContentSearchService externalContentSearchService;
+    private final UserAccountService userAccountService;
 
     public SessionViewController(UserContentRepository userContentRepository, UserRepository userRepository,
             ContentRepository contentRepository,
             UserSeriesEpisodeProgressRepository userSeriesEpisodeProgressRepository,
             UserSongProgressRepository userSongProgressRepository,
-            ExternalContentSearchService externalContentSearchService) {
+            ExternalContentSearchService externalContentSearchService,
+            UserAccountService userAccountService) {
         this.userContentRepository = userContentRepository;
         this.userRepository = userRepository;
         this.contentRepository = contentRepository;
         this.userSeriesEpisodeProgressRepository = userSeriesEpisodeProgressRepository;
         this.userSongProgressRepository = userSongProgressRepository;
         this.externalContentSearchService = externalContentSearchService;
+        this.userAccountService = userAccountService;
     }
 
     @GetMapping("/")
@@ -78,11 +82,11 @@ public class SessionViewController {
     @PostMapping("/login")
     public String login(@RequestParam String username, @RequestParam String password,
             RedirectAttributes redirectAttributes, HttpSession session) {
-        String normalizedUsername = username == null ? "" : username.trim();
-        User user = userRepository.findByUsername(normalizedUsername).orElse(null);
+        // Delegamos la verificación en UserAccountService (usa BCrypt)
+        User user = userAccountService.authenticate(username, password);
 
-        if (user == null || user.getPassword() == null || !user.getPassword().equals(password)) {
-            redirectAttributes.addFlashAttribute("errorMessage", "Usuario o contrasena incorrectos");
+        if (user == null) {
+            redirectAttributes.addFlashAttribute("errorMessage", "Usuario o contraseña incorrectos");
             return "redirect:/";
         }
 
