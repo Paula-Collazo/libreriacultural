@@ -69,7 +69,7 @@ public class ExternalContentSearchService {
             if (t.equals("pelicula") || t.equals("movie")) return searchTmdb(query, "movie");
             if (t.equals("serie") || t.equals("tv")) return searchTmdb(query, "tv");
             if (t.equals("musica") || t.equals("disco") || t.equals("album")) return searchSpotify(query);
-            if (t.equals("libro") || t.equals("book")) return searchGoogleBooks(query);
+            if (t.equals("libro") || t.equals("book")) return searchBooks(query);
         } catch (Exception e) {
             System.err.println("[ERROR] Search general: " + e.getMessage());
         }
@@ -373,75 +373,15 @@ public class ExternalContentSearchService {
         return new ExternalContentItem("Spotify", asString(res.get("id")), asString(res.get("name")), "disco", "Álbum de " + artist, releaseDate, cover, null, artist, artistId, null, null);
     }
 
-    public List<ExternalContentItem> searchGoogleBooks(String query) {
-        List<ExternalContentItem> items = new ArrayList<>();
-        try {
-            String normalizedQuery = query == null ? "" : query.trim();
-            boolean authorQuery = normalizedQuery.toLowerCase(Locale.ROOT).startsWith("inauthor:");
-            String authorValue = authorQuery ? normalizedQuery.substring("inauthor:".length()).trim() : "";
-            if (!isGoogleBooksAvailable()) {
-                return authorQuery ? searchOpenLibraryByAuthor(authorValue) : searchOpenLibrary(normalizedQuery);
-            }
-            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("https://www.googleapis.com/books/v1/volumes")
-                .queryParam("q", normalizedQuery)
-                .queryParam("maxResults", 20);
-            String url = applyGoogleBooksKey(builder).build().toUriString();
-            Map body = restClient.get().uri(url).retrieve().body(Map.class);
-            if (body == null) return authorQuery ? searchOpenLibraryByAuthor(authorValue) : searchOpenLibrary(normalizedQuery);
-            List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("items");
-            if (results != null && !results.isEmpty()) {
-                for (Map<String, Object> res : results) {
-                    Map<String, Object> info = (Map<String, Object>) res.get("volumeInfo");
-                    List<String> authors = (List<String>) info.get("authors");
-                    Map<String, Object> imgs = (Map<String, Object>) info.get("imageLinks");
-                    String cover = (imgs != null) ? asString(imgs.get("thumbnail")).replace("http://", "https://") : "";
-                    items.add(new ExternalContentItem("GoogleBooks", asString(res.get("id")), asString(info.get("title")), "libro", asString(info.get("description")), parseDate(asString(info.get("publishedDate"))), cover, null, (authors != null && !authors.isEmpty()) ? authors.get(0) : "", null, null, null));
-                }
-                return items;
-            }
-        } catch (Exception e) {
-            markGoogleBooksRateLimited(e);
-            System.err.println("[ERROR] GoogleBooks Search: " + e.getMessage());
-        }
+    public List<ExternalContentItem> searchBooks(String query) {
         String normalizedQuery = query == null ? "" : query.trim();
         boolean authorQuery = normalizedQuery.toLowerCase(Locale.ROOT).startsWith("inauthor:");
         String authorValue = authorQuery ? normalizedQuery.substring("inauthor:".length()).trim() : "";
-        return items.isEmpty()
-                ? (authorQuery ? searchOpenLibraryByAuthor(authorValue) : searchOpenLibrary(normalizedQuery))
-                : items;
+        return authorQuery ? searchBooksByAuthor(authorValue) : searchOpenLibrary(normalizedQuery);
     }
 
     public List<ExternalContentItem> getWeeklyTrendingBooks() {
-        List<ExternalContentItem> items = new ArrayList<>();
-        try {
-            if (!isGoogleBooksAvailable()) {
-                return searchOpenLibrary("bestseller");
-            }
-            UriComponentsBuilder builder = UriComponentsBuilder.fromUriString("https://www.googleapis.com/books/v1/volumes")
-                .queryParam("q", "bestsellers")
-                .queryParam("orderBy", "newest")
-                .queryParam("maxResults", 8);
-            String url = applyGoogleBooksKey(builder).build().toUriString();
-            Map body = restClient.get().uri(url).retrieve().body(Map.class);
-            if (body == null) return searchOpenLibrary("bestseller");
-            List<Map<String, Object>> results = (List<Map<String, Object>>) body.get("items");
-            if (results != null && !results.isEmpty()) {
-                for (Map<String, Object> res : results) {
-                    Map<String, Object> info = (Map<String, Object>) res.get("volumeInfo");
-                    List<String> authors = (List<String>) info.get("authors");
-                    Map<String, Object> imgs = (Map<String, Object>) info.get("imageLinks");
-                    String cover = (imgs != null) ? asString(imgs.get("thumbnail")).replace("http://", "https://") : "";
-                    items.add(new ExternalContentItem("GoogleBooks", asString(res.get("id")), asString(info.get("title")), "libro",
-                        asString(info.get("description")), parseDate(asString(info.get("publishedDate"))), cover, null,
-                        (authors != null && !authors.isEmpty()) ? authors.get(0) : "", null, null, null));
-                }
-                return items;
-            }
-        } catch (Exception e) {
-            markGoogleBooksRateLimited(e);
-            System.err.println("[ERROR] GoogleBooks Trending: " + e.getMessage());
-        }
-        return items.isEmpty() ? searchOpenLibrary("bestseller") : items;
+        return searchOpenLibrary("bestseller");
     }
 
     public List<ExternalContentItem> searchArtistAlbums(String artistId) {
@@ -461,7 +401,7 @@ public class ExternalContentSearchService {
         try {
             if ("Spotify".equalsIgnoreCase(source)) return getSpotifyDetails(externalId);
             if ("TMDb".equalsIgnoreCase(source)) return getTmdbDetails(externalId, type);
-            if ("GoogleBooks".equalsIgnoreCase(source)) {
+            if ("GoogleBooks".equalsIgnoreCase(source) || "OpenLibrary".equalsIgnoreCase(source)) {
                 if (externalId != null && externalId.startsWith("OL")) {
                     return getOpenLibraryDetails(externalId);
                 }
@@ -618,7 +558,7 @@ public class ExternalContentSearchService {
         return items;
     }
 
-    private List<ExternalContentItem> searchOpenLibraryByAuthor(String author) {
+    public List<ExternalContentItem> searchBooksByAuthor(String author) {
         if (author == null || author.isBlank()) {
             return List.of();
         }

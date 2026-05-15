@@ -260,7 +260,7 @@ public class SessionViewController {
         User sessionUser = getSessionUser(session);
 
         try {
-            Map<String, Object> book = externalContentSearchService.getDetails("GoogleBooks", id, "libro");
+            Map<String, Object> book = externalContentSearchService.getDetails("OpenLibrary", id, "libro");
             if (book == null || book.isEmpty()) return "redirect:/explore/libro";
             
             if ((book.get("author") == null || String.valueOf(book.get("author")).isBlank())
@@ -273,8 +273,7 @@ public class SessionViewController {
             
             String authorName = (String) book.get("author");
             if (authorName != null && !authorName.isBlank()) {
-                String authorQuery = "inauthor:" + authorName.trim();
-                model.addAttribute("relatedBooks", externalContentSearchService.searchGoogleBooks(authorQuery).stream().limit(6).collect(Collectors.toList()));
+                model.addAttribute("relatedBooks", externalContentSearchService.searchBooksByAuthor(authorName.trim()).stream().limit(6).collect(Collectors.toList()));
             }
             
             model.addAttribute("activeType", "libro");
