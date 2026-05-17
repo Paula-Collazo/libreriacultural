@@ -5,6 +5,412 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mi Perfil - Libreria Cultural</title>
     <link rel="stylesheet" th:href="@{/css/site.css}">
+    <style th:inline="css">
+        /* --- ESTILOS DE CABECERA Y DASHBOARD PREMIUM --- */
+        .profile-hero {
+            display: grid;
+            grid-template-columns: auto 1fr auto;
+            align-items: center;
+            gap: 2rem;
+            background: linear-gradient(135deg, rgba(33, 31, 24, 0.75), rgba(26, 23, 18, 0.95));
+            border: 1px solid var(--line);
+            border-radius: 24px;
+            padding: 2.2rem;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            margin-bottom: 1.5rem;
+            backdrop-filter: blur(12px);
+        }
+
+        [data-mode="light"] .profile-hero {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.85), rgba(240, 236, 227, 0.65));
+        }
+
+        .profile-hero::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(200, 119, 58, 0.12) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .avatar-container {
+            position: relative;
+            width: 84px;
+            height: 84px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), var(--btn-main-to));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 8px 24px rgba(200, 119, 58, 0.25);
+            border: 3px solid var(--card);
+        }
+
+        .avatar-text {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #ffffff !important;
+            text-transform: uppercase;
+        }
+
+        .profile-info {
+            display: flex;
+            flex-direction: column;
+            gap: 0.35rem;
+        }
+
+        .profile-username-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .profile-username {
+            margin: 0;
+            font-size: clamp(1.8rem, 3.5vw, 2.4rem) !important;
+            font-weight: 800 !important;
+            font-family: "Space Grotesk", sans-serif !important;
+            letter-spacing: -0.02em;
+            line-height: 1.1;
+        }
+
+        .badge-premium {
+            background: linear-gradient(90deg, #ffd700, #ffa500);
+            color: #000 !important;
+            padding: 0.25rem 0.65rem;
+            border-radius: 99px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            box-shadow: 0 4px 10px rgba(255, 215, 0, 0.2);
+        }
+
+        .profile-email {
+            margin: 0;
+            color: var(--muted);
+            font-size: 0.95rem;
+        }
+
+        .profile-stats-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .summary-pill-premium {
+            background: rgba(200, 119, 58, 0.08);
+            border: 1px solid rgba(200, 119, 58, 0.18);
+            border-radius: 20px;
+            padding: 1.1rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            transition: all 0.3s ease;
+        }
+
+        .summary-pill-premium:hover {
+            transform: scale(1.03);
+            border-color: var(--accent);
+            background: rgba(200, 119, 58, 0.12);
+        }
+
+        .summary-pill-premium span {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--accent);
+            font-weight: 700;
+            display: block;
+        }
+
+        .summary-pill-premium strong {
+            font-size: 2.5rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-top: 0.25rem;
+            font-family: "Space Grotesk", sans-serif;
+        }
+
+        /* --- SEGMENTED TABS NAVIGATION --- */
+        .type-nav.compact-nav {
+            background: rgba(26, 23, 18, 0.5) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 99px !important;
+            padding: 0.45rem !important;
+            display: flex !important;
+            gap: 0.3rem !important;
+            align-items: center !important;
+            margin-bottom: 1.5rem !important;
+            backdrop-filter: blur(8px);
+        }
+
+        [data-mode="light"] .type-nav.compact-nav {
+            background: rgba(240, 236, 227, 0.65) !important;
+        }
+
+        .type-nav a {
+            border: none !important;
+            background: transparent !important;
+            padding: 0.6rem 1.4rem !important;
+            border-radius: 99px !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            font-size: 0.9rem !important;
+            color: var(--muted) !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 0.45rem !important;
+            text-decoration: none !important;
+        }
+
+        .type-nav a:hover {
+            color: var(--text) !important;
+            background: rgba(255, 255, 255, 0.05) !important;
+        }
+
+        [data-mode="light"] .type-nav a:hover {
+            background: rgba(0, 0, 0, 0.04) !important;
+        }
+
+        .type-nav a.active {
+            background: linear-gradient(135deg, var(--accent), var(--btn-main-to)) !important;
+            color: #ffffff !important;
+            box-shadow: 0 4px 15px rgba(200, 119, 58, 0.25) !important;
+            font-weight: 700 !important;
+        }
+
+        /* --- STATS CARDS --- */
+        .stats-summary {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr) !important;
+            gap: 1.25rem !important;
+            margin-bottom: 2rem !important;
+        }
+
+        .stat-card {
+            background: var(--card) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 20px !important;
+            padding: 1.4rem 1.6rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 0.4rem !important;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: var(--shadow) !important;
+        }
+
+        .stat-card::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent) !important;
+            box-shadow: 0 12px 30px rgba(200, 119, 58, 0.1) !important;
+        }
+
+        .stat-card:hover::after {
+            opacity: 1;
+        }
+
+        .stat-value {
+            font-family: "Space Grotesk", sans-serif !important;
+            font-size: 2.3rem !important;
+            font-weight: 800 !important;
+            color: var(--text) !important;
+            line-height: 1.1 !important;
+        }
+
+        .stat-label {
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--muted) !important;
+            display: flex;
+            align-items: center;
+            gap: 0.45rem;
+        }
+
+        /* --- COMMUNITY BUTTON --- */
+        .profile-header-actions {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 1.5rem;
+        }
+
+        .btn-premium-community {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent), var(--btn-main-to));
+            color: #ffffff !important;
+            padding: 0.7rem 1.4rem;
+            border-radius: 99px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(200, 119, 58, 0.2);
+            border: none;
+            cursor: pointer;
+            font-size: 0.9rem;
+        }
+
+        .btn-premium-community:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(200, 119, 58, 0.3);
+            filter: brightness(1.06);
+        }
+
+        .btn-premium-community:active {
+            transform: translateY(0);
+        }
+
+        /* --- TOPBAR GLASSMORPHISM --- */
+        .topbar {
+            backdrop-filter: blur(12px) !important;
+            background: rgba(17, 16, 9, 0.8) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+            padding: 0.75rem 2rem !important;
+        }
+
+        [data-mode="light"] .topbar {
+            background: rgba(249, 246, 240, 0.82) !important;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.04) !important;
+        }
+
+        .brand {
+            font-size: 1.15rem;
+            font-weight: 700;
+            transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .brand:hover {
+            transform: scale(1.03);
+        }
+
+        .brand span {
+            background: linear-gradient(135deg, var(--text), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+        }
+
+        .theme-switch {
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid var(--line) !important;
+            padding: 0.25rem 0.75rem !important;
+            border-radius: 99px !important;
+            gap: 0.5rem !important;
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+
+        [data-mode="light"] .theme-switch {
+            background: rgba(0, 0, 0, 0.02) !important;
+        }
+
+        .theme-switch label {
+            font-size: 0.75rem !important;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 800;
+            color: var(--muted) !important;
+        }
+
+        .theme-switch select {
+            background: transparent !important;
+            border: none !important;
+            min-height: 28px !important;
+            padding: 0 !important;
+            min-width: 110px !important;
+            font-size: 0.85rem !important;
+            font-weight: 700 !important;
+            color: var(--text) !important;
+            cursor: pointer !important;
+            outline: none !important;
+        }
+
+        .theme-switch select option {
+            background: var(--card) !important;
+            color: var(--text) !important;
+        }
+
+        .ghost-btn {
+            border-radius: 99px !important;
+            font-size: 0.85rem !important;
+            font-weight: 700 !important;
+            padding: 0.5rem 1.2rem !important;
+            transition: all 0.3s ease !important;
+            background: transparent !important;
+            border: 1px solid var(--line) !important;
+            color: var(--muted) !important;
+        }
+
+        .ghost-btn:hover {
+            border-color: var(--danger) !important;
+            color: var(--danger) !important;
+            background: rgba(224, 112, 112, 0.05) !important;
+            transform: translateY(-1px);
+        }
+
+        /* --- RESPONSIVE MEDIA QUERIES --- */
+        @media (max-width: 768px) {
+            .profile-hero {
+                grid-template-columns: 1fr !important;
+                text-align: center !important;
+                gap: 1.5rem !important;
+                padding: 1.8rem !important;
+            }
+            .avatar-container {
+                margin: 0 auto !important;
+            }
+            .profile-username-row {
+                justify-content: center !important;
+            }
+            .profile-stats-right {
+                justify-content: center !important;
+                width: 100% !important;
+            }
+            .summary-pill-premium {
+                align-items: center !important;
+                width: 100% !important;
+            }
+            .stats-summary {
+                grid-template-columns: 1fr !important;
+            }
+            .type-nav.compact-nav {
+                border-radius: 20px !important;
+                flex-direction: column !important;
+                width: 100% !important;
+                padding: 0.8rem !important;
+            }
+            .type-nav a {
+                width: 100% !important;
+                justify-content: center !important;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="grain"></div>
@@ -31,30 +437,53 @@
     </header>
 
     <main class="profile-wrap">
-        <section class="type-nav card compact-nav">
-            <a th:href="@{/profile}" th:classappend="${activeType == 'profile'} ? ' active' : ''">Mi perfil</a>
-            <a th:href="@{/explore/pelicula}" th:classappend="${activeType == 'pelicula'} ? ' active' : ''">Peliculas</a>
-            <a th:href="@{/explore/serie}" th:classappend="${activeType == 'serie'} ? ' active' : ''">Series</a>
-            <a th:href="@{/explore/libro}" th:classappend="${activeType == 'libro'} ? ' active' : ''">Libros</a>
-            <a th:href="@{/explore/disco}" th:classappend="${activeType == 'disco'} ? ' active' : ''">Discos</a>
+        <!-- Navegación de pestañas premium -->
+        <section class="type-nav compact-nav">
+            <a th:href="@{/profile}" th:classappend="${activeType == 'profile'} ? ' active' : ''">
+                Mi perfil
+            </a>
+            <a th:href="@{/explore/pelicula}" th:classappend="${activeType == 'pelicula'} ? ' active' : ''">
+                Películas
+            </a>
+            <a th:href="@{/explore/serie}" th:classappend="${activeType == 'serie'} ? ' active' : ''">
+                Series
+            </a>
+            <a th:href="@{/explore/libro}" th:classappend="${activeType == 'libro'} ? ' active' : ''">
+                Libros
+            </a>
+            <a th:href="@{/explore/disco}" th:classappend="${activeType == 'disco'} ? ' active' : ''">
+                Discos
+            </a>
         </section>
 
-        <section class="profile-head card">
-            <div>
-                <p class="kicker">Perfil activo</p>
-                <h1 th:text="${user.username}">usuario</h1>
-                <p class="muted" th:text="${user.email}">correo</p>
+        <!-- Cabecera de perfil Hero Premium -->
+        <section class="profile-hero">
+            <div class="avatar-container">
+                <span class="avatar-text" th:text="${#strings.substring(user.username, 0, 1)}">U</span>
             </div>
-            <div class="summary-pill">
-                <span>Total en biblioteca</span>
-                <strong th:text="${totalCount}">0</strong>
+            <div class="profile-info">
+                <div class="profile-username-row">
+                    <h1 class="profile-username" th:text="${user.username}">usuario</h1>
+                    <span class="badge-premium">Miembro Cultural</span>
+                </div>
+                <p class="profile-email" th:text="${user.email}">correo</p>
+            </div>
+            <div class="profile-stats-right">
+                <div class="summary-pill-premium">
+                    <span>Total en Biblioteca</span>
+                    <strong th:text="${totalCount}">0</strong>
+                </div>
             </div>
         </section>
 
+        <!-- Acciones del perfil -->
         <div class="profile-header-actions">
-            <a th:href="@{/comunidad/friends}" class="mini-link" style="background: var(--accent); color: white; border: none;">Comunidad / Amigos</a>
+            <a th:href="@{/comunidad/friends}" class="btn-premium-community">
+                Comunidad & Amigos
+            </a>
         </div>
 
+        <!-- Tarjetas de estadísticas premium -->
         <div class="stats-summary">
             <div class="stat-card">
                 <span class="stat-value" th:text="${stats.totalPages != null ? stats.totalPages : 0}">0</span>
@@ -82,16 +511,6 @@
             <div class="stats-grid">
                 <article class="stat-item" th:each="entry : ${typeStats}">
                     <span th:text="${entry.key}">tipo</span>
-                    <strong th:text="${entry.value}">0</strong>
-                </article>
-            </div>
-        </section>
-
-        <section class="card">
-            <h2>Radar de progreso</h2>
-            <div class="stats-grid">
-                <article class="stat-item" th:each="entry : ${stats}">
-                    <span th:text="${entry.key}">estado</span>
                     <strong th:text="${entry.value}">0</strong>
                 </article>
             </div>
