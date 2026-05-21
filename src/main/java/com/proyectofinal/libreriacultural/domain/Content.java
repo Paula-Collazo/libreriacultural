@@ -32,6 +32,9 @@ public class Content {
     @Column(length = 20)
     private String type;
 
+    @Column(name = "external_id", length = 100)
+    private String externalId;
+
     @Column(name = "release_date")
     private LocalDate releaseDate;
 
@@ -54,6 +57,8 @@ public class Content {
     public void setTitle(String title) { this.title = title; }
     public String getType() { return type; }
     public void setType(String type) { this.type = type; }
+    public String getExternalId() { return externalId; }
+    public void setExternalId(String externalId) { this.externalId = externalId; }
     public LocalDate getReleaseDate() { return releaseDate; }
     public void setReleaseDate(LocalDate releaseDate) { this.releaseDate = releaseDate; }
     public String getDescription() { return description; }

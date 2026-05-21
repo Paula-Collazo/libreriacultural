@@ -7,10 +7,31 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.Arrays;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(Arrays.asList(
+            "http://localhost:5173", "http://localhost:5174",
+            "http://127.0.0.1:5173", "http://127.0.0.1:5174"
+        ));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+        configuration.setAllowedHeaders(Arrays.asList("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(Arrays.asList("Set-Cookie"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 
     /**
      * Exponemos el BCryptPasswordEncoder como bean para poder inyectarlo
@@ -23,29 +44,16 @@ public class SecurityConfig {
 
     /**
      * Configuración principal de la security chain.
-     * - Deshabilitamos el CSRF solo para simplificar el proyecto académico
-     *   (los formularios Thymeleaf ya incluyen el token si se activa).
-     * - Rutas públicas: landing ("/"), registro ("/register"), recursos estáticos.
-     * - El resto requiere autenticación gestionada manualmente por sesión HTTP
-     *   (no usamos el formLogin de Spring Security para no cambiar la lógica
-     *   de sesión existente en SessionViewController).
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-            // Deshabilitamos el login/logout automático de Spring Security
-            // para conservar la lógica de sesión ya implementada en los controladores.
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
             .formLogin(form -> form.disable())
             .logout(logout -> logout.disable())
-
-            // CSRF: lo dejamos desactivado para no romper los formularios existentes
-            // (en producción real se debe activar y añadir th:action en cada form).
-            .csrf(csrf -> csrf.disable())
-
             .authorizeHttpRequests(auth -> auth
-                // Rutas totalmente públicas
-                .requestMatchers("/", "/register", "/login", "/css/**", "/js/**", "/images/**", "/actuator/**").permitAll()
-                // Cualquier otra petición necesita sesión (controlada por SessionViewController)
+                .requestMatchers("/api/**", "/", "/register", "/login", "/css/**", "/js/**", "/images/**").permitAll()
                 .anyRequest().permitAll()
             );
 

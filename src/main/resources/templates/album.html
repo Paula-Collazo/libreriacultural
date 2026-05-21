@@ -18,7 +18,7 @@
         <div class="topbar-actions" style="display:flex; align-items:center; gap:1rem;">
             <button class="ghost-btn" style="padding:0.4rem; min-height:unset; font-size:1rem;" data-mode-toggle aria-label="Cambiar modo">☀</button>
             <a class="ghost-link" href="/profile" th:if="${user != null}">Mi perfil</a>
-            <form method="post" th:action="@{/logout}" th:if="${user != null}" style="margin:0;">
+            <form method="post" th:action="@{/logout}" th:if="${user != null}" style="margin:0;" onsubmit="return confirm('¿Estás seguro de que deseas cerrar sesión?');">
                 <button type="submit" class="ghost-btn">Cerrar sesion</button>
             </form>
             <a class="ghost-link" href="/" th:if="${user == null}">Iniciar sesión</a>
@@ -43,14 +43,13 @@
             <div>
                 <p class="kicker">Disco</p>
                 <h1 th:text="${album.title}">Titulo</h1>
-                <p class="muted" th:if="${album.releaseDate != null}">
-                    Lanzamiento: <span th:text="${album.releaseDate.toString().length() >= 4 ? album.releaseDate.toString().substring(0,4) : album.releaseDate}">2024</span>
-                </p>
                 <p class="muted">
-                    Artista: <a class="artist-link" th:href="@{/explore/disco(q=${album.artist})}" th:text="${album.artist}">Artista</a>
+                    <a class="artist-link" th:href="@{/explore/disco(q=${album.artist})}" th:text="${album.artist}">Artista</a>
+                    <span th:if="${album.releaseDate != null}" th:text="${' • ' + (album.releaseDate.toString().length() >= 4 ? album.releaseDate.toString().substring(0,4) : album.releaseDate)}"></span>
                 </p>
-                <p class="muted" th:if="${album.totalTracks != null}">
-                    Pistas: <span th:text="${album.totalTracks}">0</span>
+                
+                <p class="muted" th:if="${album.totalTracks != null}" style="font-size: 0.9rem;">
+                    <span th:text="${album.totalTracks + ' canciones'}">0</span>
                 </p>
                 
                 <form method="post" th:action="@{/profile/import-api}" class="add-form" th:if="${album['title'] != null}">

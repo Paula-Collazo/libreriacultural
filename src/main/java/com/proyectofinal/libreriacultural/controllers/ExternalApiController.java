@@ -33,4 +33,14 @@ public class ExternalApiController {
                     "Error consultando API externa. Intentalo de nuevo.");
         }
     }
+
+    @GetMapping("/trending/movies")
+    public List<ExternalContentItem> trendingMovies() {
+        return externalContentSearchService.getWeeklyTrendingMovies();
+    }
+
+    @GetMapping("/trending/series")
+    public List<ExternalContentItem> trendingSeries() {
+        return externalContentSearchService.getWeeklyTrendingSeries();
+    }
 }

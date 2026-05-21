@@ -316,45 +316,7 @@
             font-weight: 800;
         }
 
-        .theme-switch {
-            background: rgba(255, 255, 255, 0.03) !important;
-            border: 1px solid var(--line) !important;
-            padding: 0.25rem 0.75rem !important;
-            border-radius: 99px !important;
-            gap: 0.5rem !important;
-            display: inline-flex !important;
-            align-items: center !important;
-        }
 
-        [data-mode="light"] .theme-switch {
-            background: rgba(0, 0, 0, 0.02) !important;
-        }
-
-        .theme-switch label {
-            font-size: 0.75rem !important;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            font-weight: 800;
-            color: var(--muted) !important;
-        }
-
-        .theme-switch select {
-            background: transparent !important;
-            border: none !important;
-            min-height: 28px !important;
-            padding: 0 !important;
-            min-width: 110px !important;
-            font-size: 0.85rem !important;
-            font-weight: 700 !important;
-            color: var(--text) !important;
-            cursor: pointer !important;
-            outline: none !important;
-        }
-
-        .theme-switch select option {
-            background: var(--card) !important;
-            color: var(--text) !important;
-        }
 
         .ghost-btn {
             border-radius: 99px !important;
@@ -368,10 +330,329 @@
         }
 
         .ghost-btn:hover {
-            border-color: var(--danger) !important;
-            color: var(--danger) !important;
-            background: rgba(224, 112, 112, 0.05) !important;
+            border-color: var(--accent) !important;
+            color: var(--accent) !important;
+            background: rgba(200, 119, 58, 0.05) !important;
             transform: translateY(-1px);
+        }
+
+        .btn-logout-premium {
+            background: transparent !important;
+            border: 1px solid var(--danger) !important;
+            color: var(--danger) !important;
+            font-size: 0.82rem !important;
+            font-weight: 700 !important;
+            padding: 0.45rem 1.8rem !important;
+            min-width: 140px !important;
+            text-align: center !important;
+            white-space: nowrap !important;
+            border-radius: 14px !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            cursor: pointer !important;
+            width: auto !important;
+            min-height: unset !important;
+            font-family: "Manrope", sans-serif !important;
+        }
+
+        .btn-logout-premium:hover {
+            background: rgba(200, 119, 58, 0.08) !important;
+            border-color: var(--accent) !important;
+            color: var(--accent) !important;
+            box-shadow: 0 4px 12px rgba(200, 119, 58, 0.12);
+            transform: translateY(-1px);
+        }
+
+        .btn-logout-premium:active {
+            transform: translateY(0);
+        }
+
+        /* --- ESTILOS DE LISTAS PERSONALIZADAS PREMIUM --- */
+        .lists-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)) !important;
+            gap: 1.8rem !important;
+            margin-top: 1.8rem !important;
+        }
+
+        .list-card {
+            background: var(--card) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 24px !important;
+            padding: 1.8rem !important;
+            display: flex !important;
+            flex-direction: column !important;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+            box-shadow: var(--shadow) !important;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .list-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent) !important;
+            box-shadow: 0 12px 35px rgba(200, 119, 58, 0.08) !important;
+        }
+
+        .list-card.create-list {
+            border: 2px dashed rgba(200, 119, 58, 0.28) !important;
+            background: rgba(200, 119, 58, 0.02) !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            min-height: 280px;
+        }
+
+        .list-card.create-list:hover {
+            border: 2px dashed var(--accent) !important;
+            background: rgba(200, 119, 58, 0.05) !important;
+            box-shadow: 0 12px 35px rgba(200, 119, 58, 0.12) !important;
+        }
+
+        .list-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--line);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .list-title {
+            margin: 0;
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 1.4rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text), var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.01em;
+        }
+
+        .list-count-badge {
+            background: rgba(200, 119, 58, 0.08);
+            border: 1px solid rgba(200, 119, 58, 0.2);
+            color: var(--accent);
+            padding: 0.25rem 0.75rem;
+            border-radius: 99px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+
+        .list-items-wrapper {
+            margin-top: 0.5rem;
+            max-height: 180px;
+            overflow-y: auto;
+            padding-right: 0.35rem;
+        }
+
+        /* Custom scrollbar for glassy lists */
+        .list-items-wrapper::-webkit-scrollbar {
+            width: 4px;
+        }
+        .list-items-wrapper::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.02);
+        }
+        .list-items-wrapper::-webkit-scrollbar-thumb {
+            background: var(--line);
+            border-radius: 99px;
+        }
+
+        .list-item-premium {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.65rem 0.85rem !important;
+            border-radius: 12px !important;
+            margin-bottom: 0.55rem !important;
+            background: rgba(255, 255, 255, 0.03) !important;
+            border: 1px solid var(--line) !important;
+            border-left: 3px solid var(--accent) !important;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+        }
+
+        [data-mode="light"] .list-item-premium {
+            background: rgba(255, 255, 255, 0.8) !important;
+            border: 1px solid var(--line) !important;
+            border-left: 3px solid var(--accent) !important;
+        }
+
+        .list-item-premium:hover {
+            background: rgba(255, 255, 255, 0.06) !important;
+            border-color: var(--accent) !important;
+            transform: translateX(4px);
+        }
+
+        [data-mode="light"] .list-item-premium:hover {
+            background: rgba(0, 0, 0, 0.02) !important;
+            border-color: var(--accent) !important;
+        }
+
+        .list-item-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            max-width: 180px;
+        }
+
+        .btn-remove-item {
+            background: rgba(224, 112, 112, 0.06) !important;
+            border: 1px solid rgba(224, 112, 112, 0.15) !important;
+            color: var(--danger) !important;
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 50% !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            font-size: 0.8rem !important;
+            transition: all 0.2s ease !important;
+            padding: 0 !important;
+            min-height: unset !important;
+        }
+
+        .btn-remove-item:hover {
+            background: var(--danger) !important;
+            color: #ffffff !important;
+            border-color: var(--danger) !important;
+            transform: scale(1.1);
+        }
+
+        .list-search-inline {
+            background: transparent !important;
+            border: none !important;
+            padding: 0 !important;
+            margin-top: 1rem !important;
+            margin-bottom: 0.5rem !important;
+            transition: none !important;
+        }
+
+        .list-search-form {
+            display: flex !important;
+            gap: 0.4rem !important;
+            flex-wrap: wrap !important;
+        }
+
+        .list-search-select {
+            background: var(--card) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 10px !important;
+            padding: 0.4rem 0.6rem !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            color: var(--text) !important;
+            cursor: pointer !important;
+            outline: none !important;
+            flex: 1 !important;
+            min-width: 80px !important;
+        }
+
+        .list-search-select option {
+            background: var(--card);
+            color: var(--text);
+        }
+
+        .list-search-input {
+            background: var(--card) !important;
+            border: 1px solid var(--line) !important;
+            border-radius: 10px !important;
+            padding: 0.4rem 0.8rem !important;
+            font-size: 0.8rem !important;
+            color: var(--text) !important;
+            outline: none !important;
+            flex: 2 !important;
+            min-width: 140px !important;
+            transition: border-color 0.25s ease !important;
+        }
+
+        .list-search-input:focus {
+            border-color: var(--accent) !important;
+        }
+
+        .btn-search-list {
+            background: linear-gradient(135deg, var(--accent), var(--btn-main-to)) !important;
+            border: none !important;
+            color: #ffffff !important;
+            border-radius: 10px !important;
+            width: 34px !important;
+            height: 34px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            cursor: pointer !important;
+            transition: all 0.25s ease !important;
+            padding: 0 !important;
+            font-size: 0.9rem !important;
+        }
+
+        .btn-search-list:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 10px rgba(200, 119, 58, 0.25);
+        }
+
+        .btn-delete-list-premium {
+            background: rgba(224, 112, 112, 0.05) !important;
+            border: 1px solid rgba(224, 112, 112, 0.15) !important;
+            color: var(--danger) !important;
+            font-size: 0.8rem !important;
+            font-weight: 700 !important;
+            padding: 0.6rem 1rem !important;
+            border-radius: 12px !important;
+            width: 100% !important;
+            cursor: pointer !important;
+            transition: all 0.25s ease !important;
+            text-align: center !important;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-delete-list-premium:hover {
+            background: var(--danger) !important;
+            color: #ffffff !important;
+            border-color: var(--danger) !important;
+            box-shadow: 0 4px 12px rgba(224, 112, 112, 0.15);
+        }
+
+        /* --- CHIPS DE ESTADO PREMIUM --- */
+        .status-chip {
+            white-space: nowrap !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            min-width: 85px !important;
+            padding: 0.35rem 0.75rem !important;
+            font-size: 0.75rem !important;
+            font-weight: 800 !important;
+            border-radius: 12px !important;
+            text-align: center !important;
+        }
+        .chip-seen {
+            background: rgba(78, 132, 85, 0.12) !important;
+            color: #5cb85c !important;
+            border: 1px solid rgba(78, 132, 85, 0.3) !important;
+        }
+
+        .chip-unseen {
+            background: rgba(224, 112, 112, 0.08) !important;
+            color: var(--danger) !important;
+            border: 1px solid rgba(224, 112, 112, 0.25) !important;
+        }
+
+        .chip-progress {
+            background: rgba(200, 119, 58, 0.12) !important;
+            color: var(--accent) !important;
+            border: 1px solid rgba(200, 119, 58, 0.35) !important;
+        }
+
+        .chip-abandoned {
+            background: rgba(158, 152, 130, 0.12) !important;
+            color: var(--muted) !important;
+            border: 1px solid rgba(158, 152, 130, 0.3) !important;
         }
 
         /* --- RESPONSIVE MEDIA QUERIES --- */
@@ -420,18 +701,10 @@
             <img th:src="@{/img/logo.png}" alt="TCD Logo" style="height: 24px;">
             <span th:text="${'@' + user.username}"></span>
         </a>
-        <div class="topbar-actions">
-            <div class="theme-switch">
-                <label for="themePicker">Tema</label>
-                <select id="themePicker" data-theme-select>
-                    <option value="rosa">Rosa Pastel</option>
-                    <option value="azul">Azul Pastel</option>
-                    <option value="menta">Menta Pastel</option>
-                    <option value="durazno">Durazno Pastel</option>
-                </select>
-            </div>
-            <form method="post" th:action="@{/logout}">
-                <button type="submit" class="ghost-btn">Cerrar sesion</button>
+        <div class="topbar-actions" style="display:flex; align-items:center; gap:1rem;">
+            <button class="ghost-btn" style="padding:0.4rem; min-height:unset; font-size:1rem;" data-mode-toggle aria-label="Cambiar modo">☀</button>
+            <form method="post" th:action="@{/logout}" style="margin:0;" onsubmit="return confirm('¿Estás seguro de que deseas cerrar sesión?');">
+                <button type="submit" class="btn-logout-premium">Cerrar sesion</button>
             </form>
         </div>
     </header>
@@ -539,29 +812,32 @@
                         <td colspan="6" class="muted">Aun no tienes peliculas.</td>
                     </tr>
                     <tr th:each="item : ${movieEntries}">
-                        <td>
-                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                        <td style="vertical-align: middle; text-align: center; width: 60px;">
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 42px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.12); display: block; margin: 0 auto;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td class="title-cell">
-                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
-                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
-                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
-                                </button>
-                            </form>
-                            <span th:text="${item.content.title}">Titulo</span>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; min-height: 60px;">
+                                <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline; margin:0; flex-shrink:0;">
+                                    <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                        <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                    </button>
+                                </form>
+                                <span th:text="${item.content.title}" style="font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; display: inline-block;" th:title="${item.content.title}">Titulo</span>
+                            </div>
                         </td>
                         <td th:text="${item.addedDate != null ? item.addedDate : '-'}">Fecha</td>
                         <td>
                             <span class="status-chip"
-                                  th:classappend="${item.status == 'visto'} ? 'chip-seen' : 'chip-unseen'"
-                                  th:text="${item.status}">estado</span>
+                                  th:classappend="${item.status == 'visto' ? 'chip-seen' : (item.status == 'en_progreso' ? 'chip-progress' : (item.status == 'abandonado' ? 'chip-abandoned' : 'chip-unseen'))}"
+                                  th:text="${item.status == 'visto' ? 'Visto' : (item.status == 'en_progreso' ? 'En progreso' : (item.status == 'abandonado' ? 'Abandonado' : 'No visto'))}">estado</span>
                         </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/movie-status(id=${item.id})}" class="row-form">
                                 <select name="movieStatus">
                                     <option th:each="status : ${movieStatusOptions}" th:value="${status}"
-                                            th:selected="${status == item.status}" th:text="${status}"></option>
+                                            th:selected="${status == item.status}" 
+                                            th:text="${status == 'visto' ? 'Visto' : (status == 'en_progreso' ? 'En progreso' : (status == 'abandonado' ? 'Abandonado' : 'No visto'))}"></option>
                                 </select>
                                 <button type="submit" class="mini">Actualizar</button>
                             </form>
@@ -599,19 +875,25 @@
                         <td colspan="6" class="muted">Aun no tienes libros.</td>
                     </tr>
                     <tr th:each="item : ${bookEntries}">
-                        <td>
-                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                        <td style="vertical-align: middle; text-align: center; width: 60px;">
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 42px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.12); display: block; margin: 0 auto;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td class="title-cell">
-                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
-                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
-                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
-                                </button>
-                            </form>
-                            <span th:text="${item.content.title}">Titulo</span>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; min-height: 60px;">
+                                <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline; margin:0; flex-shrink:0;">
+                                    <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                        <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                    </button>
+                                </form>
+                                <span th:text="${item.content.title}" style="font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; display: inline-block;" th:title="${item.content.title}">Titulo</span>
+                            </div>
                         </td>
-                        <td th:text="${item.status}">leyendo</td>
+                        <td>
+                            <span class="status-chip"
+                                  th:classappend="${item.status == 'visto' ? 'chip-seen' : (item.status == 'en_progreso' ? 'chip-progress' : (item.status == 'abandonado' ? 'chip-abandoned' : 'chip-unseen'))}"
+                                  th:text="${item.status == 'visto' ? 'Visto' : (item.status == 'en_progreso' ? 'En progreso' : (item.status == 'abandonado' ? 'Abandonado' : 'No visto'))}">estado</span>
+                        </td>
                         <td>
                             <div class="book-progress-label"
                                  th:text="${(item.bookCurrentPage != null ? item.bookCurrentPage : 0) + ' / ' + (item.bookTotalPages != null ? item.bookTotalPages : 0)}">0 / 0</div>
@@ -660,23 +942,26 @@
                         <td colspan="6" class="muted">Aun no tienes series.</td>
                     </tr>
                     <tr th:each="item : ${seriesEntries}">
-                        <td>
-                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                        <td style="vertical-align: middle; text-align: center; width: 60px;">
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 42px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.12); display: block; margin: 0 auto;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td class="title-cell">
-                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
-                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
-                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
-                                </button>
-                            </form>
-                            <span th:text="${item.content.title}">Serie</span>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; min-height: 60px;">
+                                <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline; margin:0; flex-shrink:0;">
+                                    <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                        <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                    </button>
+                                </form>
+                                <span th:text="${item.content.title}" style="font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; display: inline-block;" th:title="${item.content.title}">Serie</span>
+                            </div>
                         </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
                                 <select name="status">
                                     <option th:each="status : ${generalStatusOptions}" th:value="${status}"
-                                            th:selected="${status == item.status}" th:text="${status}"></option>
+                                            th:selected="${status == item.status}" 
+                                            th:text="${status == 'visto' ? 'Visto' : (status == 'en_progreso' ? 'En progreso' : (status == 'abandonado' ? 'Abandonado' : 'No visto'))}"></option>
                                 </select>
                                 <button type="submit" class="mini">Actualizar</button>
                             </form>
@@ -747,23 +1032,26 @@
                         <td colspan="6" class="muted">Aun no tienes discos.</td>
                     </tr>
                     <tr th:each="item : ${discEntries}">
-                        <td>
-                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 50px; border-radius: 4px;">
+                        <td style="vertical-align: middle; text-align: center; width: 60px;">
+                            <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" th:src="${item.content.coverUrl}" style="width: 42px; height: 60px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.12); display: block; margin: 0 auto;">
                             <span th:if="${#strings.isEmpty(item.content.coverUrl)}" class="muted">?</span>
                         </td>
-                        <td class="title-cell">
-                            <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline;">
-                                <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
-                                    <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
-                                </button>
-                            </form>
-                            <span th:text="${item.content.title}">Disco</span>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 0.5rem; min-height: 60px;">
+                                <form th:action="@{/profile/{id}/favorite(id=${item.id})}" method="post" style="display:inline; margin:0; flex-shrink:0;">
+                                    <button type="submit" class="heart-btn" th:style="${item.favorite ? 'color: #ff4d4d;' : 'color: #ccc;'}">
+                                        <span th:text="${item.favorite ? '❤' : '♡'}">♡</span>
+                                    </button>
+                                </form>
+                                <span th:text="${item.content.title}" style="font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 140px; display: inline-block;" th:title="${item.content.title}">Disco</span>
+                            </div>
                         </td>
                         <td>
                             <form method="post" th:action="@{/profile/{id}/status(id=${item.id})}" class="row-form">
                                 <select name="status">
                                     <option th:each="status : ${generalStatusOptions}" th:value="${status}"
-                                            th:selected="${status == item.status}" th:text="${status}"></option>
+                                            th:selected="${status == item.status}" 
+                                            th:text="${status == 'visto' ? 'Visto' : (status == 'en_progreso' ? 'En progreso' : (status == 'abandonado' ? 'Abandonado' : 'No visto'))}"></option>
                                 </select>
                                 <button type="submit" class="mini">Actualizar</button>
                             </form>
@@ -810,54 +1098,68 @@
         </section>
 
         <!-- SECCION DE LISTAS -->
-        <section class="card">
+        <section class="card" style="border-radius: 24px; padding: 2rem;">
             <div class="media-header">
                 <h2>Mis Listas Personalizadas</h2>
             </div>
-            <div class="lists-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="lists-container">
                 <!-- Crear nueva lista -->
-                <div class="list-card create-list" style="border: 2px dashed var(--line); border-radius: 20px; padding: 1.5rem; display: flex; flex-direction: column; align-items: center; justify-content: center;">
-                    <form th:action="@{/profile/lists/create}" method="post" style="width: 100%;">
-                        <input type="text" name="name" placeholder="Nombre de la lista (ej: Terror)" required style="margin-bottom: 0.5rem; width: 100%;">
-                        <button type="submit" style="width: 100%;">+ Crear Nueva Lista</button>
+                <div class="list-card create-list">
+                    <form th:action="@{/profile/lists/create}" method="post" style="width: 100%; display: flex; flex-direction: column; gap: 0.85rem; align-items: center; justify-content: center;">
+                        <p style="font-family: 'Space Grotesk', sans-serif; font-size: 1.15rem; font-weight: 700; color: var(--muted); margin: 0 0 0.25rem 0;">¿Nueva Lista?</p>
+                        <input type="text" name="name" placeholder="Nombre de la lista (ej: Terror)" required style="width: 100%; border: 1px solid var(--line); border-radius: 12px; padding: 0.6rem 1rem; outline: none; background: var(--card); color: var(--text); font-size: 0.9rem; text-align: center; transition: border-color 0.25s ease;" onfocus="this.style.borderColor='var(--accent)';" onblur="this.style.borderColor='var(--line)';">
+                        <button type="submit" class="btn-premium-community" style="width: 100%; justify-content: center; font-size: 0.85rem; padding: 0.6rem 1.2rem; min-height: unset;">Crear Nueva Lista</button>
                     </form>
                 </div>
 
                 <!-- Listas existentes -->
                 <div th:each="list : ${customLists}" class="list-card">
                     <div class="list-header">
-                        <h3 th:text="${list.name}">Nombre de la lista</h3>
-                        <p class="muted" th:text="${#lists.size(list.items) + ' elementos'}">0 elementos</p>
+                        <h3 class="list-title" th:text="${list.name}">Nombre de la lista</h3>
+                        <span class="list-count-badge" th:text="${#lists.size(list.items) + ' elementos'}">0 elementos</span>
                     </div>
                     
-                    <ul class="compact-list" style="margin-top: 1rem; max-height: 150px; overflow-y: auto;">
-                        <li th:each="item : ${list.items}" style="display: flex; justify-content: space-between; align-items: center; padding: 4px 0; border-bottom: 1px solid var(--line);">
-                            <span th:text="${item.content.title}"></span>
-                            <form th:action="@{/profile/lists/{listId}/remove/{itemId}(listId=${list.id}, itemId=${item.id})}" method="post" style="margin:0;">
-                                <button type="submit" class="mini danger" style="padding: 2px 8px; min-height: 24px;">×</button>
+                    <div class="list-items-wrapper" style="margin-bottom: 1.5rem;">
+                        <div th:if="${#lists.isEmpty(list.items)}" class="muted" style="text-align: center; font-size: 0.85rem; padding: 1.5rem 0;">
+                            Aún no hay elementos en esta lista.
+                        </div>
+                        <div th:each="item : ${list.items}" class="list-item-premium">
+                            <div style="display: flex; align-items: center; gap: 0.75rem; overflow: hidden; flex: 1;">
+                                <!-- Portada de la peli / libro / disco -->
+                                <img th:if="${!#strings.isEmpty(item.content.coverUrl)}" 
+                                     th:src="${item.content.coverUrl}" 
+                                     alt="Portada" 
+                                     style="width: 32px; height: 32px; object-fit: cover; border-radius: 8px; box-shadow: 0 2px 6px rgba(0,0,0,0.15); border: 1px solid rgba(255,255,255,0.08); flex-shrink: 0;">
+                                <div th:if="${#strings.isEmpty(item.content.coverUrl)}" 
+                                     style="width: 32px; height: 32px; border-radius: 8px; background: rgba(200, 119, 58, 0.1); border: 1px dashed rgba(200, 119, 58, 0.3); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: var(--accent); flex-shrink: 0;">
+                                    ?
+                                </div>
+                                <span class="list-item-title" th:text="${item.content.title}">Elemento</span>
+                            </div>
+                            <form th:action="@{/profile/lists/{listId}/remove/{itemId}(listId=${list.id}, itemId=${item.id})}" method="post" style="margin:0; display: flex; align-items: center; flex-shrink: 0;">
+                                <button type="submit" class="btn-remove-item">×</button>
                             </form>
-                        </li>
-                    </ul>
+                        </div>
+                    </div>
 
-                    <div class="list-actions" style="margin-top: 1.5rem; display: flex; flex-direction: column; gap: 1rem;">
-                        <!-- BUSCADOR GLOBAL PARA ESTA LISTA -->
-                        <div class="list-search-box" style="background: rgba(0,0,0,0.02); padding: 1rem; border-radius: 16px; border: 1px dashed var(--line);">
-                            <p style="font-size: 0.75rem; font-weight: 700; margin-bottom: 0.5rem; color: var(--accent);">BUSCAR EN INTERNET Y AÑADIR</p>
-                            <form th:action="@{/explore/pelicula}" method="get" style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <div style="margin-top: auto; display: flex; flex-direction: column; gap: 0.85rem;">
+                        <!-- BUSCADOR GLOBAL PARA ESTA LISTA (LUPA ALINEADA) -->
+                        <div class="list-search-inline">
+                            <form th:action="@{/explore/pelicula}" method="get" style="display: flex; gap: 0.4rem; align-items: center; width: 100%;">
                                 <input type="hidden" name="targetListId" th:value="${list.id}">
-                                <select name="type" onchange="this.form.action='/explore/' + this.value" style="flex: 1; min-width: 80px; min-height: 32px; font-size: 0.8rem;">
+                                <select name="type" onchange="this.form.action='/explore/' + this.value" class="list-search-select" style="height: 38px; padding: 0 0.5rem; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 0.8rem; font-weight: 700; outline: none; cursor: pointer; flex-shrink: 0; min-width: 75px;">
                                     <option value="pelicula">Pelis</option>
                                     <option value="serie">Series</option>
                                     <option value="libro">Libros</option>
                                     <option value="disco">Discos</option>
                                 </select>
-                                <input type="text" name="q" placeholder="Buscar algo nuevo..." required style="flex: 2; min-height: 32px; font-size: 0.8rem;">
-                                <button type="submit" class="mini" style="min-height: 32px; padding: 0 10px;">🔍</button>
+                                <input type="text" name="q" placeholder="Buscar y añadir..." required class="list-search-input" style="height: 38px; flex: 1; padding: 0 0.8rem; border-radius: 10px; border: 1px solid var(--line); background: var(--card); color: var(--text); font-size: 0.8rem; outline: none; transition: border-color 0.25s ease;" onfocus="this.style.borderColor='var(--accent)';" onblur="this.style.borderColor='var(--line)';">
+                                <button type="submit" class="btn-search-list" style="height: 38px; width: 38px; border-radius: 10px; border: none; background: linear-gradient(135deg, var(--accent), var(--btn-main-to)); color: #fff; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.25s ease; flex-shrink: 0; padding: 0;" onmouseover="this.style.transform='scale(1.05)';" onmouseout="this.style.transform='scale(1)';">🔍</button>
                             </form>
                         </div>
 
-                        <form th:action="@{/profile/lists/{id}/delete(id=${list.id})}" method="post">
-                            <button type="submit" class="mini danger" style="width: 100%; opacity: 0.7;">Borrar Lista Completa</button>
+                        <form th:action="@{/profile/lists/{id}/delete(id=${list.id})}" method="post" style="margin: 0; width: 100%;">
+                            <button type="submit" class="btn-delete-list-premium">Borrar Lista Completa</button>
                         </form>
                     </div>
                 </div>

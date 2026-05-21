@@ -23,7 +23,7 @@
                 <a th:href="@{/explore/pelicula}" class="nav-link">Explorar</a>
                 <a th:href="@{/comunidad/friends}" class="nav-link active" style="color: var(--accent); font-weight: 700;">Comunidad</a>
             </nav>
-            <form method="post" th:action="@{/logout}">
+            <form method="post" th:action="@{/logout}" onsubmit="return confirm('¿Estás seguro de que deseas cerrar sesión?');">
                 <button type="submit" class="ghost-btn">Cerrar sesion</button>
             </form>
         </div>

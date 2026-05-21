@@ -18,7 +18,7 @@
         <div class="topbar-actions" style="display:flex; align-items:center; gap:1rem;">
             <button class="ghost-btn" style="padding:0.4rem; min-height:unset; font-size:1rem;" data-mode-toggle aria-label="Cambiar modo">☀</button>
             <a class="ghost-link" href="/profile" th:if="${user != null}">Mi perfil</a>
-            <form method="post" th:action="@{/logout}" th:if="${user != null}" style="margin:0;">
+            <form method="post" th:action="@{/logout}" th:if="${user != null}" style="margin:0;" onsubmit="return confirm('¿Estás seguro de que deseas cerrar sesión?');">
                 <button type="submit" class="ghost-btn">Cerrar sesion</button>
             </form>
             <a class="ghost-link" href="/" th:if="${user == null}">Iniciar sesión</a>
@@ -43,19 +43,18 @@
             </div>
             <div>
                 <p class="kicker" th:text="${movie['type'] == 'serie' ? 'Serie' : 'Pelicula'}">Contenido</p>
-                <h1 th:text="${movie['title'] != null ? movie['title'] : 'Sin titulo'}" style="margin-bottom: 0.2rem;">Titulo</h1>
+                <h1 th:text="${movie['title'] != null ? movie['title'] : 'Sin titulo'}">Titulo</h1>
+                
+                <p class="muted">
+                    <span th:if="${movie['directorName'] != null and !#strings.isEmpty(movie['directorName'])}">
+                        <a class="artist-link" th:href="|/explore/actor/${movie['directorName']}|" th:text="${movie['directorName']}">Director</a>
+                    </span>
+                    <span th:if="${movie['releaseDate'] != null}" th:text="${' • ' + (movie['releaseDate'].toString().length() >= 4 ? movie['releaseDate'].toString().substring(0,4) : movie['releaseDate'])}"></span>
+                </p>
+
                 <p class="muted" th:if="${movie['tagline'] != null and !#strings.isEmpty(movie['tagline'])}" 
-                   style="font-style: italic; font-size: 1.2rem; margin-bottom: 1.5rem; opacity: 0.8;" 
+                   style="font-style: italic; font-size: 1.1rem; margin: 1rem 0; opacity: 0.8;" 
                    th:text="${'«' + movie['tagline'] + '»'}">Lema de la pelicula</p>
-                
-                <p class="muted" th:if="${movie['releaseDate'] != null and !#strings.isEmpty(movie['releaseDate'])}">
-                    Lanzamiento: <span th:text="${movie['releaseDate']}">2024</span>
-                </p>
-                
-                <!-- Enlace manual al director para evitar el error de SpringHrefTagProcessor -->
-                <p class="muted" th:if="${movie['directorName'] != null and !#strings.isEmpty(movie['directorName'])}">
-                    Director: <a class="artist-link" th:href="|/explore/actor/${movie['directorName']}|" th:text="${movie['directorName']}">Director</a>
-                </p>
                 
                 <form method="post" th:action="@{/profile/import-api}" class="add-form" th:if="${movie['title'] != null}">
                     <input type="hidden" name="externalTitle" th:value="${movie['title']}">

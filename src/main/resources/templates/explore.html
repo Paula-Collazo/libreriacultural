@@ -17,7 +17,7 @@
         <div class="topbar-actions" style="display:flex; align-items:center; gap:1rem;">
             <button class="ghost-btn" style="padding:0.4rem; min-height:unset; font-size:1rem;" data-mode-toggle aria-label="Cambiar modo">☀</button>
             <a class="ghost-link" href="/profile" th:if="${user != null}">Mi perfil</a>
-            <form method="post" th:action="@{/logout}" th:if="${user != null}" style="margin:0;">
+            <form method="post" th:action="@{/logout}" th:if="${user != null}" style="margin:0;" onsubmit="return confirm('¿Estás seguro de que deseas cerrar sesión?');">
                 <button type="submit" class="ghost-btn">Cerrar sesion</button>
             </form>
             <a class="ghost-link" href="/" th:if="${user == null}">Iniciar sesión</a>
@@ -36,11 +36,11 @@
 
         <section class="card explore-head">
             <h1 th:text="${artistFilter != null ? 'Discos de ' + artistFilter : typeLabel}">Peliculas</h1>
-            <p class="muted">Busca por titulo y anade directamente a tu perfil.</p>
+            <p class="muted" th:if="${searchQuery == null or searchQuery.isBlank()}">Tendencias esta semana</p>
+            <p class="muted" th:if="${searchQuery != null and !searchQuery.isBlank()}" th:text="${'Resultados para: ' + searchQuery}"></p>
 
             <form method="get" th:action="@{/explore/{type}(type=${activeType})}" class="api-search-form">
-                <label for="q">Buscar</label>
-                <input id="q" name="q" type="text" th:value="${searchQuery}" placeholder="Ejemplo: Interstellar, Dark, Sapiens, Beatles" required>
+                <input id="q" name="q" type="text" th:value="${searchQuery}" th:placeholder="${'Buscar ' + typeLabel + '...'}" autocomplete="off">
                 <button type="submit">Buscar</button>
             </form>
         </section>
@@ -72,27 +72,24 @@
                     <h3>
                         <a th:href="@{/explore/{type}/{id}(type=${activeType}, id=${#strings.replace(item.externalId, '/works/', '')}, author=${activeType == 'libro' ? item.artistName : null})}" style="text-decoration:none; color:inherit;" th:text="${item.title}">Titulo</a>
                     </h3>
-                    <p class="muted" th:if="${activeType != 'pelicula'}" th:text="${item.source}">Fuente</p>
+                    
                     <p class="muted" th:if="${activeType == 'pelicula' and item.directorName != null and !#strings.isEmpty(item.directorName)}">
-                        Director:
                         <a class="artist-link" target="_blank" rel="noopener"
                            th:href="${'https://es.wikipedia.org/wiki/Special:Search?search=' + #strings.replace(item.directorName, ' ', '+')}"
                            th:text="${item.directorName}">Director</a>
                     </p>
+                    
                     <p class="muted" th:if="${activeType == 'disco' and item.artistName != null and !#strings.isEmpty(item.artistName)}">
-                        Artista:
                         <a class="artist-link" th:if="${item.artistId != null and !#strings.isEmpty(item.artistId)}" th:href="@{/explore/disco(artistId=${item.artistId})}" th:text="${item.artistName}">Artista</a>
                         <a class="artist-link" th:if="${item.artistId == null or #strings.isEmpty(item.artistId)}" th:href="@{/explore/disco(q=${item.artistName})}" th:text="${item.artistName}">Artista</a>
                     </p>
+                    
                     <p class="muted" th:if="${activeType == 'libro' and item.artistName != null and !#strings.isEmpty(item.artistName)}">
-                        Autor:
                         <a class="artist-link" th:href="@{/explore/libro(author=${item.artistName})}" th:text="${item.artistName}">Autor</a>
                     </p>
-                          <p class="media-year" th:if="${item.releaseDate != null}" th:text="${'Año: ' + item.releaseDate.year}">Año</p>
-                          <p class="media-year" th:if="${item.releaseDate == null}">Año: s/f</p>
-                    <p class="media-metric" th:if="${item.metricLabel != null and !item.metricLabel.isBlank()}" style="font-weight: 500; opacity: 0.8;"
-                       th:text="${activeType == 'pelicula' ? 'Duracion: ' + item.metricLabel : item.metricLabel}">Metric</p>
-                    <p class="muted" th:if="${activeType != 'disco' and activeType != 'pelicula' and !#strings.isEmpty(item.description) and !(activeType == 'libro' and #strings.startsWith(#strings.toLowerCase(item.description), 'autor:'))}" th:text="${item.description}">Descripcion</p>
+
+                    <p class="media-year" th:if="${item.releaseDate != null}" th:text="${item.releaseDate.year}">Año</p>
+                    <p class="media-year" th:if="${item.releaseDate == null}">s/f</p>
                 </div>
 
                 <div class="media-actions">
