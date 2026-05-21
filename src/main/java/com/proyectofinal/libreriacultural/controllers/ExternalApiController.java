@@ -9,6 +9,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.util.Map;
+
 import com.proyectofinal.libreriacultural.services.ExternalContentItem;
 import com.proyectofinal.libreriacultural.services.ExternalContentSearchService;
 
@@ -42,5 +44,15 @@ public class ExternalApiController {
     @GetMapping("/trending/series")
     public List<ExternalContentItem> trendingSeries() {
         return externalContentSearchService.getWeeklyTrendingSeries();
+    }
+
+    @GetMapping("/details")
+    public Map<String, Object> getDetails(@RequestParam String source, @RequestParam String id, @RequestParam String type) {
+        return externalContentSearchService.getDetails(source, id, type);
+    }
+
+    @GetMapping("/actor")
+    public Map<String, Object> getActor(@RequestParam String name) {
+        return externalContentSearchService.getActorDetails(name);
     }
 }
