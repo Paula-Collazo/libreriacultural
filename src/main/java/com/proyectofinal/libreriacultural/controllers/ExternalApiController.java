@@ -46,6 +46,36 @@ public class ExternalApiController {
         return externalContentSearchService.getWeeklyTrendingSeries();
     }
 
+    @GetMapping("/trending/discs")
+    public List<ExternalContentItem> trendingDiscs() {
+        return externalContentSearchService.getWeeklyTrendingDiscs();
+    }
+
+    @GetMapping("/trending/books")
+    public List<ExternalContentItem> trendingBooks() {
+        return externalContentSearchService.getWeeklyTrendingBooks();
+    }
+
+    @GetMapping("/movies/genre")
+    public List<ExternalContentItem> moviesByGenre(@RequestParam String genre) {
+        return externalContentSearchService.getMoviesByGenre(genre);
+    }
+
+    @GetMapping("/series/genre")
+    public List<ExternalContentItem> seriesByGenre(@RequestParam String genre) {
+        return externalContentSearchService.getSeriesByGenre(genre);
+    }
+
+    @GetMapping("/discs/genre")
+    public List<ExternalContentItem> discsByGenre(@RequestParam String genre) {
+        return externalContentSearchService.getDiscsByGenre(genre);
+    }
+
+    @GetMapping("/books/genre")
+    public List<ExternalContentItem> booksByGenre(@RequestParam String genre) {
+        return externalContentSearchService.getBooksByGenre(genre);
+    }
+
     @GetMapping("/details")
     public Map<String, Object> getDetails(@RequestParam String source, @RequestParam String id, @RequestParam String type) {
         return externalContentSearchService.getDetails(source, id, type);

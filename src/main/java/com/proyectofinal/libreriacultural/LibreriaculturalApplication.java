@@ -20,21 +20,35 @@ public class LibreriaculturalApplication {
     @Bean
     CommandLineRunner init(UserRepository userRepo, ContentRepository contentRepo) {
         return args -> {
+            // Limpieza de duplicados si existen (para arreglar el error de "visto 53 resultados")
+            java.util.List<User> paulas = userRepo.findAll().stream()
+                .filter(u -> "paula".equals(u.getUsername()))
+                .collect(java.util.stream.Collectors.toList());
+            
+            if (paulas.size() > 1) {
+                System.out.println("Detectados " + paulas.size() + " usuarios 'paula'. Limpiando...");
+                for (int i = 1; i < paulas.size(); i++) {
+                    userRepo.delete(paulas.get(i));
+                }
+                System.out.println("Limpieza finalizada. Solo queda 1 'paula'.");
+            } else if (paulas.isEmpty()) {
+                User user = new User();
+                user.setUsername("paula");
+                user.setEmail("paula@test.com");
+                user.setPassword("1234");
+                userRepo.save(user);
+                System.out.println("Usuario 'paula' insertado.");
+            }
 
-            User user = new User();
-            user.setUsername("paula");
-            user.setEmail("paula@test.com");
-            user.setPassword("1234");
+            if (contentRepo.findAll().isEmpty()) {
+                Content content = new Content();
+                content.setTitle("Breaking Bad");
+                content.setType("serie");
+                contentRepo.save(content);
+                System.out.println("Contenido de prueba insertado.");
+            }
 
-            userRepo.save(user);
-
-            Content content = new Content();
-            content.setTitle("Breaking Bad");
-            content.setType("serie");
-
-            contentRepo.save(content);
-
-            System.out.println("Datos insertados correctamente");
+            System.out.println("Inicialización finalizada.");
         };
     }
 

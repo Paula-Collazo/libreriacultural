@@ -151,7 +151,17 @@ public class UserContentController {
         }
 
         userContent.setStatus(normalizeAndValidateGeneralStatus(request.status()));
+        
+        // Si el estado es visto/leído/completado, ponemos la fecha de hoy si no existe
+        if (isCompletedStatus(userContent.getStatus()) && userContent.getCompletionDate() == null) {
+            userContent.setCompletionDate(LocalDate.now());
+        }
+        
         return userContentRepository.save(userContent);
+    }
+
+    private boolean isCompletedStatus(String status) {
+        return "visto".equals(status) || "leido".equals(status) || "completado".equals(status);
     }
 
     @PutMapping("/{userContentId}/movie-status")
@@ -162,6 +172,10 @@ public class UserContentController {
         String normalizedMovieStatus = normalizeAndValidateMovieStatus(request.status());
         userContent.setMovieWatched("visto".equals(normalizedMovieStatus));
         userContent.setStatus(normalizedMovieStatus);
+        
+        if ("visto".equals(normalizedMovieStatus) && userContent.getCompletionDate() == null) {
+            userContent.setCompletionDate(LocalDate.now());
+        }
 
         return userContentRepository.save(userContent);
     }
@@ -180,9 +194,104 @@ public class UserContentController {
 
         userContent.setBookCurrentPage(currentPage);
         userContent.setBookTotalPages(totalPages);
-        userContent.setStatus(resolveBookStatus(currentPage, totalPages));
+        String status = resolveBookStatus(currentPage, totalPages);
+        userContent.setStatus(status);
+
+        if ("leido".equals(status) && userContent.getCompletionDate() == null) {
+            userContent.setCompletionDate(LocalDate.now());
+        }
 
         return userContentRepository.save(userContent);
+    }
+
+    @PutMapping("/{userContentId}/completion-date")
+    public UserContent updateCompletionDate(@PathVariable Long userContentId, @RequestBody Map<String, String> body) {
+        UserContent userContent = getUserContentById(userContentId);
+        String dateStr = body.get("completionDate");
+        if (dateStr == null || dateStr.isBlank()) {
+            userContent.setCompletionDate(null);
+        } else {
+            userContent.setCompletionDate(LocalDate.parse(dateStr));
+        }
+        return userContentRepository.save(userContent);
+    }
+
+    @PutMapping("/{userContentId}/top-rank")
+    public UserContent updateTopRank(@PathVariable Long userContentId, @RequestBody Map<String, Integer> body) {
+        UserContent userContent = getUserContentById(userContentId);
+        Integer rank = body.get("topRank");
+        
+        if (rank != null && (rank < 1 || rank > 4)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El rank debe estar entre 1 y 4");
+        }
+        
+        if (rank != null) {
+            String type = userContent.getContent().getType();
+            List<UserContent> others = userContentRepository.findByUserId(userContent.getUser().getId())
+                .stream()
+                .filter(uc -> type.equalsIgnoreCase(uc.getContent().getType()) && rank.equals(uc.getTopRank()))
+                .toList();
+            for (UserContent other : others) {
+                other.setTopRank(null);
+                userContentRepository.save(other);
+            }
+        }
+        
+        userContent.setTopRank(rank);
+        return userContentRepository.save(userContent);
+    }
+
+    @PutMapping("/{userContentId}/rating")
+    public UserContent updateRating(@PathVariable Long userContentId, @RequestBody Map<String, Object> body) {
+        UserContent userContent = getUserContentById(userContentId);
+        Object ratingObj = body.get("rating");
+        Double rating = null;
+        if (ratingObj instanceof Number) {
+            rating = ((Number) ratingObj).doubleValue();
+        }
+        
+        if (rating != null && (rating < 0.0 || rating > 5.0)) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "La puntuación debe estar entre 0 y 5");
+        }
+        
+        userContent.setRating(rating);
+        return userContentRepository.save(userContent);
+    }
+
+    @GetMapping("/user/{userId}/time-stats")
+    public Map<String, Object> getTimeStats(@PathVariable Long userId) {
+        List<UserContent> all = userContentRepository.findByUserId(userId);
+        LocalDate now = LocalDate.now();
+        LocalDate weekStart = now.minusDays(7);
+        LocalDate monthStart = now.minusMonths(1);
+        
+        long thisWeek = all.stream()
+            .filter(uc -> uc.getCompletionDate() != null && !uc.getCompletionDate().isBefore(weekStart))
+            .count();
+            
+        long thisMonth = all.stream()
+            .filter(uc -> uc.getCompletionDate() != null && !uc.getCompletionDate().isBefore(monthStart))
+            .count();
+
+        Map<String, Long> history = all.stream()
+            .filter(uc -> uc.getCompletionDate() != null)
+            .collect(java.util.stream.Collectors.groupingBy(
+                uc -> uc.getCompletionDate().toString(),
+                java.util.stream.Collectors.counting()
+            ));
+
+        return Map.of(
+            "thisWeek", thisWeek,
+            "thisMonth", thisMonth,
+            "history", history.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
+                .collect(java.util.stream.Collectors.toMap(
+                    Map.Entry::getKey, 
+                    Map.Entry::getValue,
+                    (e1, e2) -> e1, 
+                    java.util.LinkedHashMap::new
+                ))
+        );
     }
 
     @GetMapping("/{userContentId}/episodes")
@@ -369,6 +478,25 @@ public class UserContentController {
         }
 
         return normalized;
+    }
+
+    @PostMapping("/{id}/favorite")
+    public UserContent toggleFavorite(@PathVariable Long id) {
+        UserContent uc = userContentRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro no encontrado"));
+        uc.setFavorite(uc.getFavorite() == null ? true : !uc.getFavorite());
+        return userContentRepository.save(uc);
+    }
+
+    @PostMapping("/{id}/progress")
+    public UserContent updateProgress(@PathVariable Long id, @RequestBody Map<String, Integer> body) {
+        UserContent uc = userContentRepository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Registro no encontrado"));
+        
+        if (body.containsKey("currentPage")) uc.setBookCurrentPage(body.get("currentPage"));
+        if (body.containsKey("totalPages")) uc.setBookTotalPages(body.get("totalPages"));
+        
+        return userContentRepository.save(uc);
     }
 
     public record AddToLibraryRequest(Long userId, Long contentId, String movieStatus, Integer bookCurrentPage,

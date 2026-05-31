@@ -12,12 +12,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
 
-@Data
 @Entity
 @Table(name = "content")
 public class Content {
@@ -45,8 +41,6 @@ public class Content {
     private String coverUrl;
 
     @OneToMany(mappedBy = "content")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     @JsonIgnore
     private List<UserContent> userContents;
 

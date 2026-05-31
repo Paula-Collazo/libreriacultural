@@ -11,6 +11,10 @@ public interface UserContentRepository extends JpaRepository<UserContent, Long> 
 
 	List<UserContent> findByUserId(Long userId);
 
+	@Query("SELECT uc FROM UserContent uc WHERE uc.user.id = :userId AND UPPER(uc.content.type) = UPPER(:type)")
+	List<UserContent> findByUserIdAndContentTypeIgnoreCase(@org.springframework.data.repository.query.Param("userId") Long userId, 
+                                                          @org.springframework.data.repository.query.Param("type") String type);
+
 	List<UserContent> findByUserIdAndContentType(Long userId, String type);
 
 	List<UserContent> findByUserIdAndStatus(Long userId, String status);
@@ -18,6 +22,10 @@ public interface UserContentRepository extends JpaRepository<UserContent, Long> 
 	boolean existsByUserIdAndContentId(Long userId, Long contentId);
 
 	long countByUserId(Long userId);
+
+	@Query("SELECT COUNT(uc) FROM UserContent uc WHERE uc.user.id = :userId AND UPPER(uc.content.type) = UPPER(:type)")
+	long countByUserIdAndContentTypeIgnoreCase(@org.springframework.data.repository.query.Param("userId") Long userId, 
+                                               @org.springframework.data.repository.query.Param("type") String type);
 
 	long countByUserIdAndContentType(Long userId, String type);
 
@@ -29,4 +37,14 @@ public interface UserContentRepository extends JpaRepository<UserContent, Long> 
 	@Query("SELECT COUNT(uc) FROM UserContent uc WHERE uc.user.id = :userId AND uc.addedDate >= :startDate")
 	long countRecentItems(@org.springframework.data.repository.query.Param("userId") Long userId, 
                          @org.springframework.data.repository.query.Param("startDate") java.time.LocalDate startDate);
+
+	java.util.Optional<UserContent> findByUserIdAndContentExternalId(Long userId, String externalId);
+
+    @Query("SELECT uc.completionDate as date, COUNT(uc) as count " +
+           "FROM UserContent uc " +
+           "WHERE uc.user.id = :userId " +
+           "AND uc.completionDate IS NOT NULL " +
+           "GROUP BY uc.completionDate " +
+           "ORDER BY uc.completionDate ASC")
+    List<Object[]> getTimeStats(@org.springframework.data.repository.query.Param("userId") Long userId);
 }

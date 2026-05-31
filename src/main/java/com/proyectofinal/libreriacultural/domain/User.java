@@ -11,14 +11,11 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.Lob;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@Data
 @Entity
 @Table(name = "users")
 public class User {
@@ -45,12 +42,21 @@ public class User {
     }
 
     @OneToMany(mappedBy = "user")
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     @JsonIgnore
     private List<UserContent> userContents;
 
-    // Getters y Setters manuales para evitar errores de Lombok
+    @Lob
+    @Column(name = "profile_picture", columnDefinition = "LONGTEXT")
+    private String profilePicture;
+
+    @Lob
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
+
+    @Column(name = "favorite_genre", length = 100)
+    private String favoriteGenre;
+
+    // Getters y Setters manuales
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getUsername() { return username; }
@@ -63,4 +69,10 @@ public class User {
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public List<UserContent> getUserContents() { return userContents; }
     public void setUserContents(List<UserContent> userContents) { this.userContents = userContents; }
+    public String getProfilePicture() { return profilePicture; }
+    public void setProfilePicture(String profilePicture) { this.profilePicture = profilePicture; }
+    public String getBio() { return bio; }
+    public void setBio(String bio) { this.bio = bio; }
+    public String getFavoriteGenre() { return favoriteGenre; }
+    public void setFavoriteGenre(String favoriteGenre) { this.favoriteGenre = favoriteGenre; }
 }

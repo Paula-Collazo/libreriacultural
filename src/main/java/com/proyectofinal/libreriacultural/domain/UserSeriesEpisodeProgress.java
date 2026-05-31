@@ -9,9 +9,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.Data;
 
-@Data
 @Entity
 @Table(name = "user_series_episode_progress", uniqueConstraints = {
         @UniqueConstraint(name = "uk_series_episode_per_user_content", columnNames = { "user_content_id", "season_number",

@@ -14,8 +14,9 @@ const LoginPage = () => {
         setError(null);
         
         try {
-            const res = await fetch('http://127.0.0.1:8083/api/login', {
+            const res = await fetch('http://localhost:8083/api/login', {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(formData)
             });

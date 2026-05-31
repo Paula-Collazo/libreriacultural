@@ -15,11 +15,7 @@ import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
 
-@Data
 @Entity
 @Table(name = "user_content", uniqueConstraints = {
     @UniqueConstraint(name = "uk_user_content_user_content", columnNames = { "user_id", "content_id" })
@@ -71,15 +67,20 @@ public class UserContent {
     @Column(name = "added_date")
     private LocalDate addedDate;
 
+    @Column(name = "completion_date")
+    private LocalDate completionDate;
+
+    @Column(name = "top_rank")
+    private Integer topRank; // 1, 2, 3 o 4 para el Top 4
+
+    @Column(name = "rating")
+    private Double rating;
+
     @OneToMany(mappedBy = "userContent", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     @JsonIgnore
     private List<UserSeriesEpisodeProgress> episodeProgresses;
 
     @OneToMany(mappedBy = "userContent", cascade = jakarta.persistence.CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
-    @EqualsAndHashCode.Exclude
     @JsonIgnore
     private List<UserSongProgress> songProgresses;
 
@@ -112,6 +113,12 @@ public class UserContent {
     public void setSeriesSeasonData(String seriesSeasonData) { this.seriesSeasonData = seriesSeasonData; }
     public Boolean getFavorite() { return favorite == null ? false : favorite; }
     public void setFavorite(Boolean favorite) { this.favorite = favorite; }
+    public LocalDate getCompletionDate() { return completionDate; }
+    public void setCompletionDate(LocalDate completionDate) { this.completionDate = completionDate; }
+    public Integer getTopRank() { return topRank; }
+    public void setTopRank(Integer topRank) { this.topRank = topRank; }
+    public Double getRating() { return rating; }
+    public void setRating(Double rating) { this.rating = rating; }
     public List<UserSeriesEpisodeProgress> getEpisodeProgresses() { return episodeProgresses; }
     public void setEpisodeProgresses(List<UserSeriesEpisodeProgress> episodeProgresses) { this.episodeProgresses = episodeProgresses; }
     public List<UserSongProgress> getSongProgresses() { return songProgresses; }
