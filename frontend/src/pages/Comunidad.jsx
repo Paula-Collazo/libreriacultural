@@ -9,11 +9,59 @@ const Comunidad = () => {
     const [selectedMember, setSelectedMember] = useState(null);
     const [memberShelf, setMemberShelf] = useState([]);
     const [loadingShelf, setLoadingShelf] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
+
+    const handleSendRequest = (username) => {
+        setActionLoading(true);
+        fetch(`${API_BASE}/api/friends/request`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        })
+        .then(res => {
+            if (res.ok) {
+                setMembers(prev => prev.map(m => m.username === username ? { ...m, relationStatus: 'PENDING_SENT' } : m));
+                alert(`¡Solicitud enviada a ${username}!`);
+            } else {
+                res.text().then(text => alert(text || "Error al enviar la solicitud"));
+            }
+        })
+        .catch(err => {
+            console.error("Error sending request:", err);
+            alert("Error de conexión al enviar solicitud");
+        })
+        .finally(() => setActionLoading(false));
+    };
+
+    const handleAcceptRequest = (username) => {
+        setActionLoading(true);
+        fetch(`${API_BASE}/api/friends/accept`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        })
+        .then(res => {
+            if (res.ok) {
+                setMembers(prev => prev.map(m => m.username === username ? { ...m, relationStatus: 'ACCEPTED' } : m));
+                alert(`¡Ahora eres amigo de ${username}!`);
+            } else {
+                res.text().then(text => alert(text || "Error al aceptar la solicitud"));
+            }
+        })
+        .catch(err => {
+            console.error("Error accepting request:", err);
+            alert("Error de conexión al aceptar solicitud");
+        })
+        .finally(() => setActionLoading(false));
+    };
 
     useEffect(() => {
         fetch(`${API_BASE}/api/community/members`, { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
+                console.log('[Comunidad] Miembros recibidos:', data);
                 setMembers(data || []);
                 setLoading(false);
             })
@@ -25,7 +73,7 @@ const Comunidad = () => {
 
     const fetchMemberShelf = (memberId) => {
         setLoadingShelf(true);
-        fetch(`${API_BASE}/library/user/${memberId}`, { credentials: 'include' })
+        fetch(`${API_BASE}/api/library/user/${memberId}`, { credentials: 'include' })
             .then(res => res.json())
             .then(data => {
                 setMemberShelf(data || []);
@@ -35,6 +83,26 @@ const Comunidad = () => {
                 console.error("Error fetching member library:", err);
                 setLoadingShelf(false);
             });
+    };
+
+    const sendRequest = async (receiverId) => {
+        try {
+            const res = await fetch(`${API_BASE}/api/friends/request`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ receiverId })
+            });
+            if (res.ok) {
+                alert("¡Solicitud enviada correctamente!");
+            } else {
+                const msg = await res.text();
+                alert(msg);
+            }
+        } catch (err) {
+            console.error("Error sending request:", err);
+            alert("Error al enviar la solicitud");
+        }
     };
 
     const filteredMembers = members.filter(m => 
@@ -114,29 +182,37 @@ const Comunidad = () => {
                                 </div>
 
                                 {/* Bio */}
-                                <p className="text-xs text-[#8c8471] font-medium tracking-tight mb-8 line-clamp-3 leading-relaxed italic">
-                                    "{member.bio}"
-                                </p>
+                                <div className="h-24 mb-6">
+                                    <p className="text-xs text-[#8c8471] font-medium tracking-tight line-clamp-4 leading-relaxed italic">
+                                        {member.bio ? `"${member.bio}"` : '"Sin biografía aún."'}
+                                    </p>
+                                </div>
 
                                 {/* Showcase items */}
-                                {member.showcase && member.showcase.length > 0 && (
-                                    <div className="mb-8">
-                                        <p className="text-[8px] font-black text-[#8c8471]/60 uppercase tracking-widest mb-3">DESTACADOS EN SU ARCHIVO</p>
-                                        <div className="flex gap-3 overflow-x-auto pb-1">
-                                            {member.showcase.map((item, idx) => (
-                                                <div key={idx} className="w-12 h-16 rounded-xl overflow-hidden border border-[#ece7da] flex-shrink-0 bg-[#f4efdf] relative group/showcase-item" title={item.title}>
-                                                    {item.coverUrl ? (
-                                                        <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-[7px] font-black uppercase text-[#8c8471] text-center p-1">
-                                                            {item.type === 'PELICULA' ? 'PEL' : item.type === 'LIBRO' ? 'LIB' : item.type === 'SERIE' ? 'SER' : 'DIS'}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            ))}
+                                <div className="h-32 mb-8">
+                                    {member.showcase && member.showcase.length > 0 ? (
+                                        <>
+                                            <p className="text-[8px] font-black text-[#8c8471]/60 uppercase tracking-widest mb-3">DESTACADOS EN SU ARCHIVO</p>
+                                            <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar">
+                                                {member.showcase.map((item, idx) => (
+                                                    <div key={idx} className="w-16 h-20 rounded-xl overflow-hidden border border-[#ece7da] flex-shrink-0 bg-[#f4efdf] relative group/showcase-item shadow-sm" title={item.title}>
+                                                        {item.coverUrl ? (
+                                                            <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-[7px] font-black uppercase text-[#8c8471] text-center p-1">
+                                                                {item.type === 'PELICULA' ? 'PEL' : item.type === 'LIBRO' ? 'LIB' : item.type === 'SERIE' ? 'SER' : 'DIS'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="h-full flex items-center justify-center border border-dashed border-[#ece7da] rounded-2xl bg-[#fdfcf9] opacity-40 py-6">
+                                            <p className="text-[7px] font-black text-[#8c8471] uppercase tracking-widest">Sin destacados</p>
                                         </div>
-                                    </div>
-                                )}
+                                    )}
+                                </div>
                             </div>
 
                             {/* Stats & Actions */}
@@ -146,7 +222,7 @@ const Comunidad = () => {
                                         <span className="text-[7px] font-black text-[#8c8471] uppercase tracking-wider">INDEXADOS</span>
                                         <strong className="text-xl font-black text-[#2d2a26]">{member.totalCount}</strong>
                                     </div>
-                                    <div className="flex gap-3 text-[9px] font-black text-[#8c8471] items-center border-l border-[#ece7da]/60 pl-4 uppercase tracking-tighter">
+                                    <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[8px] font-black text-[#8c8471] border-l border-[#ece7da]/60 pl-4 uppercase tracking-tighter">
                                         <span>PEL: {member.stats.peliculas}</span>
                                         <span>SER: {member.stats.series}</span>
                                         <span>LIB: {member.stats.libros}</span>
@@ -154,15 +230,54 @@ const Comunidad = () => {
                                     </div>
                                 </div>
 
-                                <button 
-                                    onClick={() => {
-                                        setSelectedMember(member);
-                                        fetchMemberShelf(member.id);
-                                    }}
-                                    className="bg-[#2d2a26] text-white hover:bg-tcd-orange text-[9px] font-black uppercase tracking-widest px-5 py-3 rounded-full transition-all shadow-md group-hover:scale-105"
-                                >
-                                    Ver Estantería
-                                </button>
+                                <div className="flex gap-2">
+                                    {/* Mostrar botón si NO es uno mismo ni tiene ya relación activa */}
+                                    {!['SELF', 'PENDING_SENT', 'PENDING_RECEIVED', 'ACCEPTED'].includes(member.relationStatus) && (
+                                        <button 
+                                            onClick={() => handleSendRequest(member.username)}
+                                            disabled={actionLoading}
+                                            className="bg-[#c4621a] hover:bg-[#a05015] text-white text-[9px] font-black uppercase tracking-widest px-4 py-3 rounded-full transition-all shadow-md hover:scale-105 flex items-center gap-1.5"
+                                            title="Enviar Solicitud de Amistad"
+                                        >
+                                            <span>+ SEGUIR</span>
+                                        </button>
+                                    )}
+                                    {member.relationStatus === 'PENDING_SENT' && (
+                                        <button 
+                                            disabled
+                                            className="bg-[#8c8471]/30 text-[#8c8471] text-[9px] font-black uppercase tracking-widest px-4 py-3 rounded-full flex items-center gap-1.5 cursor-not-allowed"
+                                        >
+                                            <span>PENDIENTE</span>
+                                        </button>
+                                    )}
+                                    {member.relationStatus === 'PENDING_RECEIVED' && (
+                                        <button 
+                                            onClick={() => handleAcceptRequest(member.username)}
+                                            disabled={actionLoading}
+                                            className="bg-[#65a30d] hover:bg-[#4d7c0f] text-white text-[9px] font-black uppercase tracking-widest px-4 py-3 rounded-full transition-all shadow-md hover:scale-105 flex items-center gap-1.5"
+                                            title="Aceptar Solicitud de Amistad"
+                                        >
+                                            <span>ACEPTAR</span>
+                                        </button>
+                                    )}
+                                    {member.relationStatus === 'ACCEPTED' && (
+                                        <div 
+                                            className="bg-[#f0ece3] text-[#b8601a] border border-[#ece7da] text-[9px] font-black uppercase tracking-widest px-4 py-3 rounded-full flex items-center gap-1.5 shadow-sm"
+                                        >
+                                            <span className="text-pink-500 font-bold">♥</span>
+                                            <span>AMIGOS</span>
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={() => {
+                                            setSelectedMember(member);
+                                            fetchMemberShelf(member.id);
+                                        }}
+                                        className="bg-[#2d2a26] text-white hover:bg-tcd-orange text-[9px] font-black uppercase tracking-widest px-4 py-3 rounded-full transition-all shadow-md hover:scale-105"
+                                    >
+                                        Estantería
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
@@ -234,7 +349,7 @@ const Comunidad = () => {
 
                                             <div className="explore-grid">
                                                 {items.map(item => (
-                                                    <div key={item.id} className="group relative">
+                                                    <div key={item.id} className="explore-item group relative">
                                                         <div className="aspect-[2/3] bg-white rounded-2xl overflow-hidden shadow-sm border border-[#ece7da] relative">
                                                             {item.content.coverUrl ? (
                                                                 <img src={item.content.coverUrl} alt={item.content.title} className="w-full h-full object-cover" />
@@ -247,10 +362,14 @@ const Comunidad = () => {
                                                                 <div className="absolute top-2 right-2 bg-pink-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-xs shadow-md">♥</div>
                                                             )}
                                                         </div>
-                                                        <p className="text-[10px] font-black text-[#2d2a26] uppercase truncate tracking-tighter mt-3 leading-tight italic">{item.content.title}</p>
-                                                        <span className="bg-[#f0ece3] text-[#8c8471] text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded mt-1 inline-block border border-[#ece7da]/60">
-                                                            {item.status === 'PLANNING' ? 'PENDIENTE' : item.status === 'visto' || item.status === 'leido' || item.status === 'COMPLETED' ? 'COMPLETADO' : 'SIGUIENDO'}
-                                                        </span>
+                                                        <div className="min-h-[40px]">
+                                                            <p className="text-[10px] font-black text-[#2d2a26] uppercase truncate tracking-tighter mt-3 leading-tight italic" title={item.content.title}>
+                                                                {item.content.title}
+                                                            </p>
+                                                            <span className="bg-[#f0ece3] text-[#8c8471] text-[7px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded mt-1 inline-block border border-[#ece7da]/60">
+                                                                {item.status === 'PLANNING' ? 'PENDIENTE' : item.status === 'visto' || item.status === 'leido' || item.status === 'COMPLETED' ? 'COMPLETADO' : 'SIGUIENDO'}
+                                                            </span>
+                                                        </div>
                                                     </div>
                                                 ))}
                                             </div>

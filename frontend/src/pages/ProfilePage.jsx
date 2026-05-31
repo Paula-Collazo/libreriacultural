@@ -4,6 +4,7 @@ import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
     BarChart, Bar, Cell 
 } from 'recharts';
+import { Check, Clock, Calendar, Trash2, ChevronDown, CheckCircle } from 'lucide-react';
 
 const API_BASE = 'http://localhost:8083';
 
@@ -70,9 +71,15 @@ const HeartBtn = ({ itemId, initialFavorite, onUpdate }) => {
 };
 
 /* ─── Status Chip ─── */
-const StatusChip = ({ status }) => (
-    <span className={`status-chip ${chip(status)}`}>{label(status)}</span>
-);
+const StatusChip = ({ status }) => {
+    const isCompleted = ['visto', 'leido', 'COMPLETED', 'completado'].includes(status);
+    return (
+        <span className={`status-chip ${chip(status)}`}>
+            {isCompleted ? <Check className="w-2.5 h-2.5" /> : <Clock className="w-2.5 h-2.5" />}
+            {label(status)}
+        </span>
+    );
+};
 
 /* ─── Star Rating (5 estrellas con media estrella) ─── */
 const StarRating = ({ itemId, initialRating }) => {
@@ -140,45 +147,49 @@ const StarRating = ({ itemId, initialRating }) => {
 /* ─── Top Rank Selector ─── */
 const TopRankSelector = ({ itemId, currentRank, onUpdate }) => {
     return (
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-[#ece7da]/50">
-            <span className="text-[8px] font-black text-[#8c8471] uppercase tracking-widest mr-1">TOP</span>
-            {[1, 2, 3, 4].map(r => (
-                <button
-                    key={r}
-                    onClick={(e) => { e.stopPropagation(); onUpdate(itemId, r); }}
-                    className={`w-5 h-5 rounded-md text-[9px] font-black transition-all border ${
-                        currentRank === r 
-                            ? 'bg-tcd-orange text-white border-tcd-orange shadow-sm' 
-                            : 'bg-[#fcfaf5] text-[#8c8471] border-[#ece7da] hover:border-tcd-orange'
-                    }`}
-                >
-                    {r}
-                </button>
-            ))}
-            {currentRank && (
-                <button 
-                    onClick={(e) => { e.stopPropagation(); onUpdate(itemId, null); }} 
-                    className="text-[12px] text-red-400 hover:text-red-600 ml-1"
-                >
-                    ×
-                </button>
-            )}
+        <div className="flex items-center justify-between gap-1 mt-3 pt-3 border-t border-[#ece7da]/50">
+            <span className="text-[7px] font-black text-[#8c8471] uppercase tracking-[0.2em]">TOP 4</span>
+            <div className="flex gap-1">
+                {[1, 2, 3, 4].map(r => (
+                    <button
+                        key={r}
+                        onClick={(e) => { e.stopPropagation(); onUpdate(itemId, r); }}
+                        className={`w-5 h-5 rounded text-[9px] font-black transition-all border ${
+                            currentRank === r 
+                                ? 'bg-tcd-orange text-white border-tcd-orange shadow-sm' 
+                                : 'bg-[#fcfaf5] text-[#8c8471] border-[#ece7da] hover:border-tcd-orange'
+                        }`}
+                    >
+                        {r}
+                    </button>
+                ))}
+                {currentRank && (
+                    <button 
+                        onClick={(e) => { e.stopPropagation(); onUpdate(itemId, null); }} 
+                        className="w-5 h-5 flex items-center justify-center text-[14px] text-red-500/50 hover:text-red-600 transition-colors"
+                        title="Quitar del top"
+                    >
+                        ×
+                    </button>
+                )}
+            </div>
         </div>
     );
 };
 
 /* ─── Date Picker for Completion ─── */
 const CompletionDateInput = ({ item, onUpdate }) => {
-    const isCompleted = status => ['visto', 'leido', 'completado'].includes(status);
+    const isCompleted = status => ['visto', 'leido', 'completado', 'COMPLETED'].includes(status);
     if (!isCompleted(item.status)) return null;
 
     return (
-        <div className="mt-2 group/date">
+        <div className="flex items-center gap-2 mt-1 group/date">
+            <Calendar className="w-2.5 h-2.5 text-[#8c8471] opacity-70" />
             <input 
                 type="date" 
                 defaultValue={item.completionDate}
                 onChange={(e) => onUpdate(item.id, e.target.value)}
-                className="text-[9px] font-bold bg-transparent border-none text-[#8c8471] cursor-pointer hover:text-tcd-orange transition-colors uppercase tracking-widest focus:ring-0 p-0"
+                className="text-[10px] font-bold bg-transparent border-none text-[#5c554a] cursor-pointer hover:text-tcd-orange transition-colors focus:ring-0 p-0"
                 title="Fecha de finalización"
             />
         </div>
@@ -233,19 +244,21 @@ const MovieCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, 
             <div className="media-card-body">
                 <p className="media-card-title cursor-pointer hover:text-tcd-orange transition-colors" title={item.content.title} onClick={() => onOpenDetails && onOpenDetails(item.content)}>{item.content.title}</p>
                 <StarRating itemId={item.id} initialRating={item.rating} />
-                <div className="flex justify-between items-center">
+                <div className="flex justify-between items-center mt-2 gap-3">
                     <StatusChip status={item.status} />
                     <CompletionDateInput item={item} onUpdate={onUpdateDate} />
                 </div>
-                <div className="media-card-controls">
-                    <select value={sel} onChange={e => setSel(e.target.value)} className="mini-select">
+                <div className="media-card-controls gap-1">
+                    <select value={sel} onChange={e => setSel(e.target.value)} className="mini-select flex-1">
                         <option value="visto">Visto</option>
                         <option value="no_visto">No visto</option>
                     </select>
-                    <button onClick={handleUpdate} disabled={saving} className="mini-btn">
-                        {saving ? '...' : 'OK'}
+                    <button onClick={handleUpdate} disabled={saving} className="mini-btn" title="Guardar">
+                        {saving ? '...' : <Check className="w-3.5 h-3.5" />}
                     </button>
-                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">DEL</button>
+                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                 </div>
                 <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
             </div>
@@ -300,7 +313,7 @@ const BookCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, o
             <div className="media-card-body">
                 <p className="media-card-title cursor-pointer hover:text-tcd-orange transition-colors" title={item.content.title} onClick={() => onOpenDetails && onOpenDetails(item.content)}>{item.content.title}</p>
                 <StarRating itemId={item.id} initialRating={item.rating} />
-                <div className="flex justify-between items-center mb-1">
+                <div className="flex justify-between items-center mb-1 gap-3">
                     <StatusChip status={item.status} />
                     <CompletionDateInput item={item} onUpdate={onUpdateDate} />
                 </div>
@@ -311,18 +324,23 @@ const BookCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, o
                     <span className="progress-label">{currPage}/{totalPages}</span>
                 </div>
                 {editing ? (
-                    <div className="media-card-controls">
+                    <div className="media-card-controls gap-1">
                         <input type="number" min="0" value={currPage} onChange={e => setCurrPage(e.target.value)}
-                            className="mini-input" placeholder="Pág actual" />
+                            className="mini-input flex-1" placeholder="Pág" />
                         <input type="number" min="0" value={totalPages} onChange={e => setTotalPages(e.target.value)}
-                            className="mini-input" placeholder="Total" />
-                        <button onClick={handleSave} disabled={saving} className="mini-btn">{saving ? '...' : 'OK'}</button>
-                        <button onClick={() => setEditing(false)} className="mini-btn">X</button>
+                            className="mini-input flex-1" placeholder="Total" />
+                        <button onClick={handleSave} disabled={saving} className="mini-btn" title="Guardar">
+                            {saving ? '...' : <Check className="w-3.5 h-3.5" />}
+                        </button>
                     </div>
                 ) : (
-                    <div className="media-card-controls">
-                        <button onClick={() => setEditing(true)} className="mini-btn edit-btn">Editar progreso</button>
-                        <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">DEL</button>
+                    <div className="media-card-controls gap-1">
+                        <button onClick={() => setEditing(true)} className="mini-btn flex-1" title="Editar progreso">
+                            <span className="text-[10px]">EDITAR PROGRESO</span>
+                        </button>
+                        <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
                     </div>
                 )}
                 <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
@@ -390,7 +408,7 @@ const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate,
             <div className="media-card-body">
                 <p className="media-card-title cursor-pointer hover:text-tcd-orange transition-colors" title={item.content.title} onClick={() => onOpenDetails && onOpenDetails(item.content)}>{item.content.title}</p>
                 <StarRating itemId={item.id} initialRating={item.rating} />
-                <div className="flex justify-between items-center mb-1">
+                <div className="flex justify-between items-center mb-1 gap-3">
                     <StatusChip status={item.status} />
                     <CompletionDateInput item={item} onUpdate={onUpdateDate} />
                 </div>
@@ -406,26 +424,31 @@ const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate,
                         ))}
                     </div>
                 )}
-                <div className="media-card-controls flex-wrap">
-                    <select value={genStatus} onChange={e => setGenStatus(e.target.value)} className="mini-select">
+                <div className="media-card-controls gap-1">
+                    <select value={genStatus} onChange={e => setGenStatus(e.target.value)} className="mini-select flex-1">
                         <option value="pendiente">Pendiente</option>
                         <option value="en_progreso">En progreso</option>
                         <option value="abandonado">Abandonado</option>
                     </select>
-                    <button onClick={handleStatusUpdate} disabled={saving} className="mini-btn">{saving ? '...' : 'OK'}</button>
+                    <button onClick={handleStatusUpdate} disabled={saving} className="mini-btn" title="Guardar">
+                        {saving ? '...' : <Check className="w-3.5 h-3.5" />}
+                    </button>
+                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
                 </div>
-                <div className="media-card-controls flex-wrap mt-2">
+                <div className="media-card-controls flex-wrap mt-2 gap-1">
                     <div className="flex gap-1 w-full mb-1">
                         {episodeCounts.length > 0 && item.seriesTotalSeasons > 0 ? (
                             <>
-                                <select value={season} onChange={e => { setSeason(e.target.value); setEpisode(''); }} className="mini-select">
-                                    <option value="">Temp</option>
+                                <select value={season} onChange={e => { setSeason(e.target.value); setEpisode(''); }} className="mini-select flex-1">
+                                    <option value="">T.</option>
                                     {Array.from({ length: item.seriesTotalSeasons }, (_, i) => i + 1).map(n => (
                                         <option key={n} value={n}>{n}</option>
                                     ))}
                                 </select>
-                                <select value={episode} onChange={e => setEpisode(e.target.value)} className="mini-select" disabled={!season}>
-                                    <option value="">Ep</option>
+                                <select value={episode} onChange={e => setEpisode(e.target.value)} className="mini-select flex-1" disabled={!season}>
+                                    <option value="">E.</option>
                                     {season && epsForSeason > 0 && Array.from({ length: epsForSeason }, (_, i) => i + 1).map(n => (
                                         <option key={n} value={n}>{n}</option>
                                     ))}
@@ -433,16 +456,18 @@ const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate,
                             </>
                         ) : (
                             <>
-                                <input type="number" min="1" placeholder="Temp" value={season} onChange={e => setSeason(e.target.value)} className="mini-input" style={{width:'50%'}} />
-                                <input type="number" min="1" placeholder="Ep" value={episode} onChange={e => setEpisode(e.target.value)} className="mini-input" style={{width:'50%'}} />
+                                <input type="number" min="1" placeholder="T" value={season} onChange={e => setSeason(e.target.value)} className="mini-input flex-1" />
+                                <input type="number" min="1" placeholder="E" value={episode} onChange={e => setEpisode(e.target.value)} className="mini-input flex-1" />
                             </>
                         )}
                     </div>
-                    <label className="mini-check">
-                        <input type="checkbox" checked={watched} onChange={e => setWatched(e.target.checked)} /> Visto
+                    <label className="mini-check flex-1">
+                        <input type="checkbox" checked={watched} onChange={e => setWatched(e.target.checked)} />
+                        <span className="ml-1 uppercase tracking-widest text-[8px] font-black">Visto</span>
                     </label>
-                    <button onClick={handleSaveEpisode} className="mini-btn">+EP</button>
-                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">DEL</button>
+                    <button onClick={handleSaveEpisode} className="mini-btn" title="Añadir episodio">
+                        <Check className="w-3.5 h-3.5" />
+                    </button>
                 </div>
                 <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
             </div>
@@ -512,125 +537,77 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
     }) : null;
 
     return (
-        <div className={`disc-card ${expanded ? 'disc-card-expanded' : ''} group/card`}>
-            {/* Portada estilo vinilo */}
-            <div className="disc-cover-wrap cursor-pointer" onClick={() => onOpenDetails && onOpenDetails(item.content)}>
-                <div className="disc-vinyl-ring" />
-                <div className="disc-cover-img">
+        <div className="media-card group/card">
+            <div className="media-card-cover aspect-square cursor-pointer" onClick={() => onOpenDetails && onOpenDetails(item.content)}>
+                <div className="w-full h-full relative">
                     {item.content.coverUrl
-                        ? <img src={item.content.coverUrl} alt={item.content.title} className="hover:scale-110 transition-transform duration-[1s]" />
-                        : <div className="cover-placeholder disc-ph">MUS</div>}
+                        ? <img src={item.content.coverUrl} alt={item.content.title} className="w-full h-full object-cover hover:scale-110 transition-transform duration-[1s]" />
+                        : <div className="cover-placeholder">MUS</div>}
                 </div>
                 <HeartBtn itemId={item.id} initialFavorite={item.favorite} onUpdate={onFavUpdate} />
-                {item.topRank && <div className="top-rank-badge" style={{left:'45%', top:'45%', zIndex:10}}>#{item.topRank}</div>}
+                {item.topRank && <div className="top-rank-badge">#{item.topRank}</div>}
             </div>
 
-            {/* Info principal */}
-            <div className="disc-body">
-                <div className="disc-top">
-                    <div className="w-full">
-                        <p className="disc-title cursor-pointer hover:text-tcd-orange transition-colors" title={item.content.title} onClick={() => onOpenDetails && onOpenDetails(item.content)}>{item.content.title}</p>
-                        <StarRating itemId={item.id} initialRating={item.rating} />
-                        <div className="flex justify-between items-center mb-1">
-                            <StatusChip status={item.status} />
-                            <CompletionDateInput item={item} onUpdate={onUpdateDate} />
-                        </div>
-                        {totalTracks > 0 && (
-                            <p className="disc-meta">{totalTracks} pistas · {listenedCount} escuchadas</p>
-                        )}
-                    </div>
+            <div className="media-card-body">
+                <p className="media-card-title cursor-pointer hover:text-tcd-orange transition-colors" title={item.content.title} onClick={() => onOpenDetails && onOpenDetails(item.content)}>{item.content.title}</p>
+                <StarRating itemId={item.id} initialRating={item.rating} />
+                
+                <div className="flex justify-between items-center gap-2 mb-2">
+                    <StatusChip status={item.status} />
+                    <CompletionDateInput item={item} onUpdate={onUpdateDate} />
                 </div>
 
-                {/* BARRA DE PROGRESO */}
-                <div className="flex items-center gap-3 mt-3">
-                    <button
-                        onClick={() => setExpanded(!expanded)}
-                        className={`disc-expand-btn ${expanded ? 'disc-expand-active' : ''}`}
+                <div className="flex items-center gap-2 mt-auto">
+                    <select 
+                        value={genStatus} 
+                        onChange={(e) => { setGenStatus(e.target.value); handleStatusUpdate(); }}
+                        className="mini-select flex-1"
+                        disabled={saving}
                     >
-                        {expanded ? 'LESS' : 'MORE'}
-                    </button>
-                    {totalTracks > 0 && (
-                        <div className="flex-1 disc-progress h-2">
-                             <div className="disc-progress-track">
-                                <div className="disc-progress-fill" style={{ width: `${pct}%` }} />
-                            </div>
-                        </div>
-                    )}
-                </div>
-
-                <div className="disc-controls mt-4">
-                    <select value={genStatus} onChange={e => setGenStatus(e.target.value)} className="mini-select disc-select">
                         <option value="pendiente">Pendiente</option>
                         <option value="en_progreso">Escuchando</option>
+                        <option value="finalizado">Completado</option>
                         <option value="abandonado">Abandonado</option>
                     </select>
-                    <button onClick={handleStatusUpdate} disabled={saving} className="mini-btn">{saving ? '...' : 'OK'}</button>
-                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">DEL</button>
+                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">🗑</button>
+                    <button
+                        onClick={() => setExpanded(!expanded)}
+                        className={`mini-btn ${expanded ? 'bg-tcd-orange text-white' : ''}`}
+                    >
+                        {expanded ? '−' : '+'}
+                    </button>
                 </div>
 
-                <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
-
-                {/* Panel expandido */}
                 {expanded && (
-                    <div className="disc-expanded-panel">
-                        {/* Lista de canciones marcadas */}
+                    <div className="mt-4 pt-4 border-t border-[#ece7da] flex flex-col gap-3 animate-fade-in">
+                        <div className="flex gap-2">
+                             <input 
+                                type="text" placeholder="Nueva canción..."
+                                value={trackTitle} onChange={e => setTrackTitle(e.target.value)}
+                                className="mini-select flex-1" 
+                            />
+                            <button onClick={handleSaveSong} className="mini-btn text-accent">ADD</button>
+                        </div>
                         {songList.length > 0 && (
-                            <div className="disc-songs-list">
-                                <p className="disc-panel-label">Canciones marcadas</p>
-                                <div className="disc-songs-grid">
-                                    {songList.map(s => (
-                                        <div key={s.trackNumber} className={`disc-song-item ${s.listened ? 'song-listened' : 'song-pending'}`}>
-                                            <span className="song-num">#{s.trackNumber}</span>
-                                            <span className="song-title">{s.trackTitle}</span>
-                                            <span className="song-status">{s.listened ? 'OK' : '..'}</span>
-                                        </div>
-                                    ))}
-                                </div>
+                            <div className="max-h-32 overflow-y-auto flex flex-col gap-1">
+                                {songList.map(song => (
+                                    <div key={song.id} className="flex items-center justify-between text-[10px] bg-[#fcfaf5] p-2 rounded-lg border border-[#ece7da]">
+                                        <span className="truncate flex-1">{song.trackTitle}</span>
+                                        <input 
+                                            type="checkbox" checked={song.listened} 
+                                            onChange={() => {
+                                                fetch(`${API_BASE}/library/songs/${song.id}/listened`, { method: 'PUT', credentials: 'include' })
+                                                    .then(r => r.ok && onSongsRefresh(item.id));
+                                            }}
+                                        />
+                                    </div>
+                                ))}
                             </div>
                         )}
-
-                        {/* Marcar canción */}
-                        <div className="disc-add-song">
-                            <p className="disc-panel-label">+ Marcar canción</p>
-                            <div className="disc-add-controls">
-                                {tracks && tracks.length > 0 ? (
-                                    <select
-                                        className="mini-select disc-select"
-                                        onChange={e => {
-                                            const val = e.target.value;
-                                            if (val) {
-                                                const parts = val.split(':');
-                                                setTrackNum(parts[0]);
-                                                setTrackTitle(parts.slice(1).join(':'));
-                                            } else {
-                                                setTrackNum(''); setTrackTitle('');
-                                            }
-                                        }}
-                                        style={{ flex: 1 }}
-                                    >
-                                        <option value="">-- Seleccionar canción --</option>
-                                        {tracks.map(t => (
-                                            <option key={t.num} value={`${t.num}:${t.title}`}>#{t.num} — {t.title}</option>
-                                        ))}
-                                    </select>
-                                ) : (
-                                    <>
-                                        <input type="number" min="1" placeholder="#" value={trackNum}
-                                            onChange={e => setTrackNum(e.target.value)} className="mini-input" style={{ width: 50 }} />
-                                        <input type="text" placeholder="Título de la canción" value={trackTitle}
-                                            onChange={e => setTrackTitle(e.target.value)} className="mini-input" style={{ flex: 1 }} />
-                                    </>
-                                )}
-                                <label className="mini-check">
-                                    <input type="checkbox" checked={listened} onChange={e => setListened(e.target.checked)} />
-                                    Escuchada
-                                </label>
-                                <button onClick={handleSaveSong} className="mini-btn">Guardar</button>
-                            </div>
-                        </div>
                     </div>
                 )}
             </div>
+            <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
         </div>
     );
 };
@@ -1034,7 +1011,7 @@ const ProfilePage = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     {[
                         { title: 'FILMOGRAFÍA', items: top4Movies, accent: '#c4621a', imgClass: 'rounded-lg' },
-                        { title: 'DISCOGRAFÍA', items: top4Music,  accent: '#1e1c18', imgClass: 'rounded-full animate-spin-slow' },
+                        { title: 'DISCOGRAFÍA', items: top4Music,  accent: '#db2777', imgClass: 'rounded-lg' },
                         { title: 'BIBLIOTECA',   items: top4Books,  accent: '#8b8471', imgClass: 'rounded-lg' },
                         { title: 'TELEVISIÓN',  items: top4Series, accent: '#134e4a', imgClass: 'rounded-lg' }
                     ].map((sec, idx) => (

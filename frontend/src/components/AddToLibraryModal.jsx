@@ -87,14 +87,14 @@ const AddToLibraryModal = ({ isOpen, onClose, onConfirm, itemTitle, itemType }) 
                                     <button 
                                         type="button"
                                         onClick={() => setStatus('no_visto')}
-                                        className={`py-4 px-6 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border ${status === 'no_visto' ? 'bg-[#2d2a26] text-white border-[#2d2a26] shadow-lg' : 'bg-white text-[#8c8471] border-[#ece7da] hover:border-[#2d2a26]'}`}
+                                        className={`py-4 px-6 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border ${status === 'no_visto' ? 'bg-[#fef3c7] text-[#92400e] border-[#fde68a] shadow-md' : 'bg-white text-[#8c8471] border-[#ece7da] hover:border-[#fde68a]'}`}
                                     >
                                         Pendiente
                                     </button>
                                     <button 
                                         type="button"
                                         onClick={() => setStatus('visto')}
-                                        className={`py-4 px-6 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border ${status === 'visto' ? 'bg-tcd-orange text-white border-tcd-orange shadow-lg' : 'bg-white text-[#8c8471] border-[#ece7da] hover:border-tcd-orange'}`}
+                                        className={`py-4 px-6 rounded-2xl text-xs font-black uppercase tracking-wider transition-all border ${status === 'visto' ? 'bg-[#e9f9ee] text-[#166534] border-[#d1f2d9] shadow-md' : 'bg-white text-[#8c8471] border-[#ece7da] hover:border-[#d1f2d9]'}`}
                                     >
                                         Visto
                                     </button>

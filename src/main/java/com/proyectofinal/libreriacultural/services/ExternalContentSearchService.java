@@ -1272,13 +1272,17 @@ public class ExternalContentSearchService {
 
     public List<ExternalContentItem> getDiscsByGenre(String genre) {
         String query = switch (genre.toLowerCase()) {
-            case "pop" -> "genre:pop";
-            case "rock" -> "genre:rock";
-            case "electronic" -> "genre:electronic";
-            case "indie" -> "genre:indie";
+            case "pop" -> "top pop albums";
+            case "rock" -> "classic rock albums";
+            case "electronic" -> "electronic dance music albums";
+            case "indie" -> "indie alternative albums";
             default -> genre;
         };
-        return searchSpotifyAlbums(query, 24);
+        List<ExternalContentItem> results = searchSpotifyAlbums(query, 24);
+        if (results == null || results.isEmpty()) {
+            return getFallBackDiscs();
+        }
+        return results;
     }
 
     public List<ExternalContentItem> getBooksByGenre(String genre) {

@@ -312,7 +312,7 @@ const Explorar = ({ filterType }) => {
                                     const source = item.type === 'DISCO' ? 'Spotify' : (item.type === 'LIBRO' ? 'GoogleBooks' : 'TMDb');
                                     navigate(`/details/${source}/${item.type.toLowerCase()}/${item.externalId}`);
                                 }}
-                                className="aspect-[2/3] w-full bg-[#f4efdf] rounded-[24px] overflow-hidden shadow-sm border border-[#ece7da] transition-all duration-500 hover:shadow-[0_20px_50px_-12px_rgba(45,42,38,0.25)] hover:-translate-y-2 cursor-pointer relative"
+                                className={`${item.type === 'DISCO' ? 'aspect-square' : 'aspect-[2/3]'} w-full bg-[#f4efdf] rounded-[24px] overflow-hidden shadow-sm border border-[#ece7da] transition-all duration-500 hover:shadow-[0_20px_50px_-12px_rgba(45,42,38,0.25)] hover:-translate-y-2 cursor-pointer relative`}
                             >
                                 {item.coverUrl ? (
                                     <img 
@@ -443,7 +443,7 @@ const Explorar = ({ filterType }) => {
             {loading || loadingGenres ? (
                 <div className="grid grid-cols-2 md:grid-cols-6 gap-8">
                     {[1,2,3,4,5,6].map(i => (
-                        <div key={i} className="aspect-[2/3] bg-[#f4efdf] rounded-[32px] animate-pulse"></div>
+                        <div key={i} className={`${searchType === 'DISCO' ? 'aspect-square' : 'aspect-[2/3]'} bg-[#f4efdf] rounded-[32px] animate-pulse`}></div>
                     ))}
                 </div>
             ) : searchResults ? (

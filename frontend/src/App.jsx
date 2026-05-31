@@ -19,8 +19,16 @@ function AppContent() {
       
       {!isAuthPage && (
         <header className="flex justify-between items-center px-10 py-6 sticky top-0 z-50 bg-[#fdfaf5]/80 backdrop-blur-xl border-b border-[#ece7da]">
-          <Link to="/" className="text-2xl font-black italic tracking-tighter text-[#2d2a26] hover:scale-105 transition-transform">
-            <img src="/img/logo.png" alt="TCD Logo" className="h-10 w-auto" />
+          <Link to="/" className="hover:scale-[1.02] transition-transform duration-300">
+            <div className="flex items-center gap-3 group">
+              <div className="w-10 h-10 rounded-xl overflow-hidden bg-white border border-[#ece7da] flex items-center justify-center shadow-[0_4px_12px_rgba(196,98,26,0.2)] group-hover:rotate-6 group-hover:shadow-[0_4px_16px_rgba(196,98,26,0.35)] transition-all duration-300">
+                <img src="/img/logo.png" alt="Logo" className="w-full h-full object-contain p-0.5" />
+              </div>
+              <div className="flex flex-col text-left">
+                <span className="text-sm font-black uppercase tracking-[0.2em] text-[#2d2a26] leading-none mb-0.5">THE CULTURED</span>
+                <span className="text-[9px] font-black uppercase tracking-[0.41em] text-[#c4621a] leading-none">DEPARTMENT</span>
+              </div>
+            </div>
           </Link>
           
           <nav className="bg-[#f0ece3] p-1.5 rounded-full flex gap-1 border border-[#e6e2d8] shadow-sm">
@@ -49,8 +57,16 @@ function AppContent() {
 
       {isAuthPage && (
           <header className="px-12 py-10 flex justify-between items-center bg-transparent">
-             <NavLink to="/landing" className="text-3xl font-black italic tracking-tighter text-[#2d2a26] hover:scale-105 transition-transform">
-               <img src="/img/logo.png" alt="TCD Logo" className="h-12 w-auto" />
+             <NavLink to="/landing" className="hover:scale-[1.02] transition-transform duration-300">
+               <div className="flex items-center gap-3 group">
+                 <div className="w-11 h-11 rounded-xl overflow-hidden bg-white border border-[#ece7da] flex items-center justify-center shadow-[0_4px_12px_rgba(196,98,26,0.2)] group-hover:rotate-6 group-hover:shadow-[0_4px_16px_rgba(196,98,26,0.35)] transition-all duration-300">
+                   <img src="/img/logo.png" alt="Logo" className="w-full h-full object-contain p-0.5" />
+                 </div>
+                 <div className="flex flex-col text-left">
+                   <span className="text-sm font-black uppercase tracking-[0.2em] text-[#2d2a26] leading-none mb-0.5">THE CULTURED</span>
+                   <span className="text-[9px] font-black uppercase tracking-[0.41em] text-[#c4621a] leading-none">DEPARTMENT</span>
+                 </div>
+               </div>
              </NavLink>
              <div className="flex gap-4">
                 <NavLink to="/login" className="text-[10px] font-black uppercase tracking-widest text-[#8c8471] py-2 px-4 hover:text-black transition-colors">Entrar</NavLink>

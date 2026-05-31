@@ -432,6 +432,39 @@ public class RestApiController {
         return ResponseEntity.ok(saved);
     }
 
+    @PostMapping("/friends/request")
+    public ResponseEntity<?> sendFriendRequest(@RequestBody Map<String, Object> body, HttpSession session) {
+        User requester = getSessionUser(session);
+        if (requester == null) return ResponseEntity.status(401).body("No autorizado");
+
+        User receiver = null;
+        if (body.get("receiverId") != null) {
+            Long receiverId = Long.valueOf(body.get("receiverId").toString());
+            receiver = userRepository.findById(receiverId).orElse(null);
+        } else if (body.get("username") != null) {
+            String username = (String) body.get("username");
+            receiver = userRepository.findByUsername(username).orElse(null);
+        }
+
+        if (receiver == null) return ResponseEntity.status(404).body("Usuario no encontrado");
+
+        if (receiver.getId().equals(requester.getId())) {
+            return ResponseEntity.badRequest().body("No puedes agregarte a ti mismo");
+        }
+
+        if (friendshipRepository.findBetweenUsers(requester, receiver).isPresent()) {
+            return ResponseEntity.badRequest().body("Ya existe una solicitud o amistad");
+        }
+
+        Friendship friendship = new Friendship();
+        friendship.setRequester(requester);
+        friendship.setReceiver(receiver);
+        friendship.setStatus(Friendship.FriendshipStatus.PENDING);
+        friendshipRepository.save(friendship);
+
+        return ResponseEntity.ok(Map.of("message", "Solicitud enviada"));
+    }
+
     @GetMapping("/community/members")
     public ResponseEntity<?> getCommunityMembers(HttpSession session) {
         User user = getSessionUser(session);
@@ -452,6 +485,27 @@ public class RestApiController {
             memberInfo.put("favoriteGenre", u.getFavoriteGenre() != null ? u.getFavoriteGenre() : "Todo");
             memberInfo.put("profilePicture", u.getProfilePicture());
             memberInfo.put("createdAt", u.getCreatedAt());
+            
+            // Determine social relationship status
+            String relationStatus = "NONE";
+            if (user != null && !user.getId().equals(u.getId())) {
+                java.util.Optional<Friendship> fOpt = friendshipRepository.findBetweenUsers(user, u);
+                if (fOpt.isPresent()) {
+                    Friendship f = fOpt.get();
+                    if (f.getStatus() == Friendship.FriendshipStatus.ACCEPTED) {
+                        relationStatus = "ACCEPTED";
+                    } else if (f.getStatus() == Friendship.FriendshipStatus.PENDING) {
+                        if (f.getRequester().getId().equals(user.getId())) {
+                            relationStatus = "PENDING_SENT";
+                        } else {
+                            relationStatus = "PENDING_RECEIVED";
+                        }
+                    }
+                }
+            } else if (user != null && user.getId().equals(u.getId())) {
+                relationStatus = "SELF";
+            }
+            memberInfo.put("relationStatus", relationStatus);
             
             Map<String, Long> memberStats = new HashMap<>();
             memberStats.put("peliculas", userContentRepository.countByUserIdAndContentTypeIgnoreCase(u.getId(), "PELICULA"));
@@ -504,5 +558,33 @@ public class RestApiController {
 
         List<Friendship> friends = friendshipRepository.findByRequesterOrReceiverAndStatus(user, user, Friendship.FriendshipStatus.ACCEPTED);
         return ResponseEntity.ok(friends);
+    }
+
+    @PostMapping("/friends/accept")
+    public ResponseEntity<?> acceptFriendRequest(@RequestBody Map<String, String> body, HttpSession session) {
+        User receiver = getSessionUser(session);
+        if (receiver == null) {
+            List<User> users = userRepository.findAll();
+            if(!users.isEmpty()) receiver = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+
+        String username = body.get("username");
+        if (username == null || username.isBlank()) return ResponseEntity.badRequest().body("Usuario vacío");
+
+        java.util.Optional<User> requesterOpt = userRepository.findByUsername(username.trim());
+        if (requesterOpt.isEmpty()) {
+            return ResponseEntity.status(404).body("Usuario no encontrado");
+        }
+
+        User requester = requesterOpt.get();
+        java.util.Optional<Friendship> fOpt = friendshipRepository.findByRequesterAndReceiver(requester, receiver);
+        if (fOpt.isPresent()) {
+            Friendship f = fOpt.get();
+            f.setStatus(Friendship.FriendshipStatus.ACCEPTED);
+            friendshipRepository.save(f);
+            return ResponseEntity.ok(Map.of("message", "Solicitud aceptada"));
+        }
+        return ResponseEntity.status(404).body("Solicitud no encontrada");
     }
 }

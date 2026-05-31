@@ -246,7 +246,7 @@ const DetailsPage = () => {
                 {/* Lateral Izquierdo: Portada */}
                 <div className="w-full lg:w-[400px] flex-shrink-0">
                     <div className="lg:sticky lg:top-24">
-                        <div className="aspect-[2/3] rounded-[48px] overflow-hidden shadow-2xl border border-[#ece7da] bg-[#f4efdf] mb-8 group/poster relative">
+                        <div className={`${t === 'DISCO' ? 'aspect-square' : 'aspect-[2/3]'} rounded-[48px] overflow-hidden shadow-2xl border border-[#ece7da] bg-[#f4efdf] mb-8 group/poster relative`}>
                             <img 
                                 src={itemDetails.coverUrl} 
                                 alt={itemDetails.title} 
