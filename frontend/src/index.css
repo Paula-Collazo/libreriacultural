@@ -653,8 +653,8 @@
 ════════════════════════════════════════════════════ */
 .disc-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1.25rem;
 }
 .disc-card {
   background: #fff;
@@ -707,7 +707,7 @@
   text-transform: uppercase; letter-spacing: -0.01em;
   color: #1e1c18; font-style: italic;
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  max-width: 180px; margin: 0 0 3px;
+  max-width: 100%; margin: 0 0 3px;
   transition: color 0.2s;
 }
 .disc-title:hover { color: var(--accent); }

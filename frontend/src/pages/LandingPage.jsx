@@ -8,13 +8,13 @@ const LandingPage = () => {
                 <span className="text-tcd-orange text-[10px] font-black uppercase tracking-[0.6em] mb-8 block animate-fade-in">
                     TU ARCHIVO CULTURAL PERSONAL
                 </span>
-                
+
                 <h1 className="text-[50px] md:text-[70px] font-black tracking-tighter text-[#2d2a26] leading-[0.85] uppercase mb-10 italic">
                     Sigue todo lo que <span className="text-tcd-orange">ves</span>, lees y escuchas<span className="text-tcd-orange">.</span>
                 </h1>
-                
+
                 <p className="text-lg text-[#8c8471] font-medium tracking-tight mb-10 max-w-2xl mx-auto leading-relaxed">
-                    Películas, series, libros, música. Sin ruido. <br/>
+                    Películas, series, libros, música. Sin ruido. <br />
                     Solo tú y tu cultura en un entorno <span className="text-[#2d2a26] font-black italic">premium</span>.
                 </p>
 
@@ -49,14 +49,14 @@ const LandingPage = () => {
             </div>
 
             {/* Preview Section */}
-            <div className="mt-32 w-full grid grid-cols-2 md:grid-cols-6 gap-6 opacity-30 grayscale hover:grayscale-0 hover:opacity-85 transition-all duration-[1.2s] ease-out">
+            <div className="mt-32 w-full grid grid-cols-2 md:grid-cols-6 gap-6 transition-all duration-[1.2s] ease-out">
                 {[
-                    { title: "Interstellar", url: "https://image.tmdb.org/t/p/w500/gEU2QvJWzIF7efg2t4t7f4j2zsf.jpg" },
-                    { title: "OK Computer", url: "https://i.scdn.co/image/ab67616d0000b273934d4007d4b245084a441113" },
-                    { title: "Dune", url: "https://image.tmdb.org/t/p/w500/d57ubvVpC7pS79uKq9Y96C4v0pS.jpg" },
-                    { title: "Breaking Bad", url: "https://image.tmdb.org/t/p/w500/ztkUQvHnd79fv6rnB69xz9vU046.jpg" },
-                    { title: "AM", url: "https://i.scdn.co/image/ab67616d0000b2737bc0f57dfc201243a860773c" },
-                    { title: "The Godfather", url: "https://image.tmdb.org/t/p/w500/3bhkrjOiERvSTqX6DHAs679Pzmb.jpg" }
+                    { title: "Interstellar", url: "https://image.tmdb.org/t/p/w600_and_h900_face/9cTfZWP5TfdnmAjiD6ZBXWIJ7O9.jpg" },
+                    { title: "OK Computer", url: "https://image.tmdb.org/t/p/w500/q6y0Go1tsGEsmtFryDOJo3dEmqu.jpg" },
+                    { title: "Dune", url: "https://image.tmdb.org/t/p/w600_and_h900_face/szcew6yyjcDvaL0isaPBk2e3nkF.jpg" },
+                    { title: "Breaking Bad", url: "https://image.tmdb.org/t/p/w600_and_h900_face/ztkUQFLlC19CCMYHW9o1zWhJRNq.jpg" },
+                    { title: "Dexter", url: "https://image.tmdb.org/t/p/w600_and_h900_face/q8dWfc4JwQuv3HayIZeO84jAXED.jpg" },
+                    { title: "The Godfather", url: "https://image.tmdb.org/t/p/w600_and_h900_face/ApiEfzSkrqS4m1L5a2GwWXzIiAs.jpg" }
                 ].map((item, idx) => (
                     <div key={idx} className="aspect-[2/3] bg-white rounded-[28px] overflow-hidden shadow-2xl border border-[#ece7da] hover:-translate-y-6 hover:rotate-3 transition-all duration-700 cursor-pointer">
                         <img src={item.url} alt={item.title} className="w-full h-full object-cover" />

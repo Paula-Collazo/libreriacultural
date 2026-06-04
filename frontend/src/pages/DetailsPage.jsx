@@ -301,46 +301,6 @@ const DetailsPage = () => {
                         </p>
                     )}
 
-                    {/* METADATA PERSONALIZADA (RANK & DATE & STATUS) */}
-                    {itemDetails.inLibrary && (
-                        <div className="flex flex-wrap gap-8 mb-16 p-8 rounded-[40px] bg-[#fcfaf5] border border-tcd-orange/20 shadow-sm animate-fade-in">
-                            <div className="flex-1 min-w-[200px]">
-                                <p className="text-[10px] font-black text-tcd-orange uppercase tracking-[0.4em] mb-4">ESTADO ACTUAL</p>
-                                <div className="px-6 py-3 bg-white border border-[#ece7da] rounded-2xl text-[11px] font-black uppercase tracking-widest text-[#2d2a26]">
-                                    {itemDetails.status?.replace('_', ' ') || 'ARCHIVADO'}
-                                </div>
-                            </div>
-
-                            <div className="flex-1 min-w-[200px]">
-                                <p className="text-[10px] font-black text-tcd-orange uppercase tracking-[0.4em] mb-4">FECHA DE FINALIZACIÓN</p>
-                                <input 
-                                    type="date"
-                                    value={itemDetails.completionDate || ''}
-                                    onChange={(e) => updateMetadata('completionDate', e.target.value)}
-                                    className="w-full bg-white border border-[#ece7da] rounded-2xl px-6 py-3 text-sm font-black text-[#2d2a26] focus:outline-none focus:border-tcd-orange"
-                                />
-                            </div>
-                            
-                            <div className="flex-1 min-w-[200px]">
-                                <p className="text-[10px] font-black text-tcd-orange uppercase tracking-[0.4em] mb-4">MI RANKING TOP 4</p>
-                                <div className="flex gap-2">
-                                    {[1, 2, 3, 4].map(rank => (
-                                        <button
-                                            key={rank}
-                                            onClick={() => updateMetadata('topRank', itemDetails.topRank === rank ? null : rank)}
-                                            className={`flex-1 py-3 rounded-2xl text-xs font-black transition-all border ${
-                                                itemDetails.topRank === rank 
-                                                    ? 'bg-tcd-orange text-white border-tcd-orange shadow-lg scale-105' 
-                                                    : 'bg-white text-[#8c8471] border-[#ece7da] hover:border-tcd-orange hover:text-tcd-orange'
-                                            }`}
-                                        >
-                                            #{rank}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </div>
-                    )}
 
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-12 mb-16 py-12 border-y border-[#ece7da]">
                         {itemDetails.releaseDate && (

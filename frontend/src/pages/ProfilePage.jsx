@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, 
-    BarChart, Bar, Cell 
+import {
+    AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+    BarChart, Bar, Cell
 } from 'recharts';
 import { Check, Clock, Calendar, Trash2, ChevronDown, CheckCircle } from 'lucide-react';
 
@@ -24,7 +24,7 @@ const STATUS_CHIP = {
     seguimiento_episodios: 'chip-progress', seguimiento_canciones: 'chip-progress',
 };
 const label = (s) => STATUS_LABELS[s] || s || '—';
-const chip  = (s) => STATUS_CHIP[s]  || '';
+const chip = (s) => STATUS_CHIP[s] || '';
 
 /* ─── Heart Button con actualización optimista ─── */
 const HeartBtn = ({ itemId, initialFavorite, onUpdate }) => {
@@ -39,7 +39,7 @@ const HeartBtn = ({ itemId, initialFavorite, onUpdate }) => {
         e.stopPropagation();
         if (loading) return;
         const newVal = !fav;
-        setFav(newVal); 
+        setFav(newVal);
         setLoading(true);
         try {
             const res = await fetch(`${API_BASE}/api/content/${itemId}/favorite`, { method: 'POST', credentials: 'include' });
@@ -114,23 +114,23 @@ const StarRating = ({ itemId, initialRating }) => {
                 }
 
                 return (
-                    <div 
-                        key={star} 
+                    <div
+                        key={star}
                         className={`star-wrap ${starClass}`}
                         style={{ position: 'relative', display: 'inline-block' }}
                     >
                         <span className="star-bg">★</span>
                         <span className="star-fg">★</span>
-                        
+
                         {/* Left half overlay */}
-                        <div 
+                        <div
                             className="absolute left-0 top-0 w-1/2 h-full z-10 cursor-pointer"
                             onMouseEnter={() => setHover(star - 0.5)}
                             onClick={(e) => { e.stopPropagation(); handleRate(star - 0.5); }}
                             title={`${star - 0.5} estrellas`}
                         />
                         {/* Right half overlay */}
-                        <div 
+                        <div
                             className="absolute right-0 top-0 w-1/2 h-full z-10 cursor-pointer"
                             onMouseEnter={() => setHover(star)}
                             onClick={(e) => { e.stopPropagation(); handleRate(star); }}
@@ -154,18 +154,17 @@ const TopRankSelector = ({ itemId, currentRank, onUpdate }) => {
                     <button
                         key={r}
                         onClick={(e) => { e.stopPropagation(); onUpdate(itemId, r); }}
-                        className={`w-5 h-5 rounded text-[9px] font-black transition-all border ${
-                            currentRank === r 
-                                ? 'bg-tcd-orange text-white border-tcd-orange shadow-sm' 
+                        className={`w-5 h-5 rounded text-[9px] font-black transition-all border ${currentRank === r
+                                ? 'bg-tcd-orange text-white border-tcd-orange shadow-sm'
                                 : 'bg-[#fcfaf5] text-[#8c8471] border-[#ece7da] hover:border-tcd-orange'
-                        }`}
+                            }`}
                     >
                         {r}
                     </button>
                 ))}
                 {currentRank && (
-                    <button 
-                        onClick={(e) => { e.stopPropagation(); onUpdate(itemId, null); }} 
+                    <button
+                        onClick={(e) => { e.stopPropagation(); onUpdate(itemId, null); }}
                         className="w-5 h-5 flex items-center justify-center text-[14px] text-red-500/50 hover:text-red-600 transition-colors"
                         title="Quitar del top"
                     >
@@ -185,8 +184,8 @@ const CompletionDateInput = ({ item, onUpdate }) => {
     return (
         <div className="flex items-center gap-2 mt-1 group/date">
             <Calendar className="w-2.5 h-2.5 text-[#8c8471] opacity-70" />
-            <input 
-                type="date" 
+            <input
+                type="date"
                 defaultValue={item.completionDate}
                 onChange={(e) => onUpdate(item.id, e.target.value)}
                 className="text-[10px] font-bold bg-transparent border-none text-[#5c554a] cursor-pointer hover:text-tcd-orange transition-colors focus:ring-0 p-0"
@@ -354,10 +353,10 @@ const BookCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, o
 ══════════════════════════════════════════════ */
 const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate }) => {
     const [genStatus, setGenStatus] = useState(item.status || 'pendiente');
-    const [season, setSeason]   = useState('');
+    const [season, setSeason] = useState('');
     const [episode, setEpisode] = useState('');
     const [watched, setWatched] = useState(false);
-    const [saving, setSaving]   = useState(false);
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => { setGenStatus(item.status || 'pendiente'); }, [item.status]);
 
@@ -480,11 +479,11 @@ const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate,
 ══════════════════════════════════════════════ */
 const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate }) => {
     const [genStatus, setGenStatus] = useState(item.status || 'pendiente');
-    const [trackNum, setTrackNum]   = useState('');
+    const [trackNum, setTrackNum] = useState('');
     const [trackTitle, setTrackTitle] = useState('');
-    const [listened, setListened]   = useState(false);
-    const [saving, setSaving]       = useState(false);
-    const [expanded, setExpanded]   = useState(false);
+    const [listened, setListened] = useState(false);
+    const [saving, setSaving] = useState(false);
+    const [expanded, setExpanded] = useState(false);
 
     useEffect(() => { setGenStatus(item.status || 'pendiente'); }, [item.status]);
 
@@ -538,7 +537,7 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
 
     return (
         <div className="media-card group/card">
-            <div className="media-card-cover aspect-square cursor-pointer" onClick={() => onOpenDetails && onOpenDetails(item.content)}>
+            <div className="media-card-cover cursor-pointer" style={{ aspectRatio: '2/3' }} onClick={() => onOpenDetails && onOpenDetails(item.content)}>
                 <div className="w-full h-full relative">
                     {item.content.coverUrl
                         ? <img src={item.content.coverUrl} alt={item.content.title} className="w-full h-full object-cover hover:scale-110 transition-transform duration-[1s]" />
@@ -551,15 +550,15 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
             <div className="media-card-body">
                 <p className="media-card-title cursor-pointer hover:text-tcd-orange transition-colors" title={item.content.title} onClick={() => onOpenDetails && onOpenDetails(item.content)}>{item.content.title}</p>
                 <StarRating itemId={item.id} initialRating={item.rating} />
-                
-                <div className="flex justify-between items-center gap-2 mb-2">
+
+                <div className="flex flex-col gap-1 mb-2">
                     <StatusChip status={item.status} />
                     <CompletionDateInput item={item} onUpdate={onUpdateDate} />
                 </div>
 
                 <div className="flex items-center gap-2 mt-auto">
-                    <select 
-                        value={genStatus} 
+                    <select
+                        value={genStatus}
                         onChange={(e) => { setGenStatus(e.target.value); handleStatusUpdate(); }}
                         className="mini-select flex-1"
                         disabled={saving}
@@ -581,10 +580,10 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
                 {expanded && (
                     <div className="mt-4 pt-4 border-t border-[#ece7da] flex flex-col gap-3 animate-fade-in">
                         <div className="flex gap-2">
-                             <input 
+                            <input
                                 type="text" placeholder="Nueva canción..."
                                 value={trackTitle} onChange={e => setTrackTitle(e.target.value)}
-                                className="mini-select flex-1" 
+                                className="mini-select flex-1"
                             />
                             <button onClick={handleSaveSong} className="mini-btn text-accent">ADD</button>
                         </div>
@@ -593,8 +592,8 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
                                 {songList.map(song => (
                                     <div key={song.id} className="flex items-center justify-between text-[10px] bg-[#fcfaf5] p-2 rounded-lg border border-[#ece7da]">
                                         <span className="truncate flex-1">{song.trackTitle}</span>
-                                        <input 
-                                            type="checkbox" checked={song.listened} 
+                                        <input
+                                            type="checkbox" checked={song.listened}
                                             onChange={() => {
                                                 fetch(`${API_BASE}/library/songs/${song.id}/listened`, { method: 'PUT', credentials: 'include' })
                                                     .then(r => r.ok && onSongsRefresh(item.id));
@@ -606,8 +605,9 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
                         )}
                     </div>
                 )}
+                <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
             </div>
-            <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
+
         </div>
     );
 };
@@ -617,11 +617,11 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
 ══════════════════════════════════════════════ */
 const ProfilePage = () => {
     const navigate = useNavigate();
-    const [data, setData]             = useState(null);
-    const [loading, setLoading]       = useState(true);
+    const [data, setData] = useState(null);
+    const [loading, setLoading] = useState(true);
     const [episodesByEntry, setEpisodesByEntry] = useState({});
-    const [songsByEntry, setSongsByEntry]       = useState({});
-    const [activeTab, setActiveTab]   = useState('all');
+    const [songsByEntry, setSongsByEntry] = useState({});
+    const [activeTab, setActiveTab] = useState('all');
 
     // Profile customization states
     const [editingProfile, setEditingProfile] = useState(false);
@@ -693,14 +693,14 @@ const ProfilePage = () => {
         fetch(`${API_BASE}/library/${entryId}/episodes`, { credentials: 'include' })
             .then(r => r.json())
             .then(eps => setEpisodesByEntry(prev => ({ ...prev, [entryId]: eps })))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     const refreshSongs = useCallback((entryId) => {
         fetch(`${API_BASE}/library/${entryId}/songs`, { credentials: 'include' })
             .then(r => r.json())
             .then(songs => setSongsByEntry(prev => ({ ...prev, [entryId]: songs })))
-            .catch(() => {});
+            .catch(() => { });
     }, []);
 
     const refreshProfile = useCallback(() => {
@@ -719,9 +719,9 @@ const ProfilePage = () => {
                     if (t === 'disco') refreshSongs(item.id);
                 });
             })
-            .catch(err => { 
-                console.error("Error fetching profile:", err); 
-                setLoading(false); 
+            .catch(err => {
+                console.error("Error fetching profile:", err);
+                setLoading(false);
                 // Si falla, podemos intentar redirigir a login si es un 401 real
             });
     }, [refreshEpisodes, refreshSongs]);
@@ -753,8 +753,8 @@ const ProfilePage = () => {
             .catch(err => console.error("Error fetching time-stats:", err));
     }, [data?.user?.id]);
 
-    useEffect(() => { 
-        if (data?.user?.id) refreshTimeStats(); 
+    useEffect(() => {
+        if (data?.user?.id) refreshTimeStats();
     }, [data?.user?.id, refreshTimeStats]);
 
     const handleUpdateRank = async (itemId, rank) => {
@@ -770,8 +770,8 @@ const ProfilePage = () => {
             } else {
                 alert('Error al actualizar ranking');
             }
-        } catch (err) { 
-            console.error(err); 
+        } catch (err) {
+            console.error(err);
             alert('Error de conexión al actualizar ranking');
         }
     };
@@ -790,8 +790,8 @@ const ProfilePage = () => {
             } else {
                 alert('Error al actualizar fecha de finalización');
             }
-        } catch (err) { 
-            console.error(err); 
+        } catch (err) {
+            console.error(err);
             alert('Error de conexión al actualizar fecha');
         }
     };
@@ -801,7 +801,7 @@ const ProfilePage = () => {
         const type = (content.type || '').toLowerCase();
         if (type === 'disco') source = 'Spotify';
         if (type === 'libro') {
-            source = (content.externalId && (content.externalId.toLowerCase().includes('ol') || content.externalId.toLowerCase().includes('works'))) 
+            source = (content.externalId && (content.externalId.toLowerCase().includes('ol') || content.externalId.toLowerCase().includes('works')))
                 ? 'OpenLibrary' : 'GoogleBooks';
         }
         navigate(`/details/${source}/${type}/${content.externalId}`);
@@ -823,9 +823,9 @@ const ProfilePage = () => {
         </div>
     );
 
-    const user       = data?.user       || { username: 'USUARIO' };
-    const stats      = data?.stats      || {};
-    const libraryItems = data?.content    || [];
+    const user = data?.user || { username: 'USUARIO' };
+    const stats = data?.stats || {};
+    const libraryItems = data?.content || [];
     const totalCount = libraryItems.length;
     const favEntries = libraryItems.filter(i => i.favorite);
 
@@ -834,19 +834,19 @@ const ProfilePage = () => {
     const bookEntries = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'libro');
     const discEntries = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'disco');
 
-    const top4Movies = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'pelicula' && i.topRank).sort((a,b) => a.topRank - b.topRank);
-    const top4Series = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'serie' && i.topRank).sort((a,b) => a.topRank - b.topRank);
-    const top4Books  = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'libro' && i.topRank).sort((a,b) => a.topRank - b.topRank);
-    const top4Music  = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'disco' && i.topRank).sort((a,b) => a.topRank - b.topRank);
+    const top4Movies = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'pelicula' && i.topRank).sort((a, b) => a.topRank - b.topRank);
+    const top4Series = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'serie' && i.topRank).sort((a, b) => a.topRank - b.topRank);
+    const top4Books = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'libro' && i.topRank).sort((a, b) => a.topRank - b.topRank);
+    const top4Music = libraryItems.filter(i => (i.content.type || '').toLowerCase() === 'disco' && i.topRank).sort((a, b) => a.topRank - b.topRank);
 
     /* ── Filtrado por pestañas ── */
     const TABS = [
-        { key: 'all',      label: 'Todo',    count: libraryItems.length },
-        { key: 'pelicula', label: 'Cine',    count: stats.peliculas || 0 },
-        { key: 'serie',    label: 'Series',  count: stats.series || 0 },
-        { key: 'libro',    label: 'Libros',  count: stats.libros || 0 },
-        { key: 'disco',    label: 'Música',  count: stats.discos || 0 },
-        { key: 'favs',     label: 'Favs',    count: favEntries.length },
+        { key: 'all', label: 'Todo', count: libraryItems.length },
+        { key: 'pelicula', label: 'Cine', count: stats.peliculas || 0 },
+        { key: 'serie', label: 'Series', count: stats.series || 0 },
+        { key: 'libro', label: 'Libros', count: stats.libros || 0 },
+        { key: 'disco', label: 'Música', count: stats.discos || 0 },
+        { key: 'favs', label: 'Favs', count: favEntries.length },
     ];
 
     const currentTab = TABS.find(t => t.key === activeTab) || TABS[0];
@@ -862,12 +862,12 @@ const ProfilePage = () => {
 
     const tabItems = getTabItems();
 
-    const showAll    = activeTab === 'all';
+    const showAll = activeTab === 'all';
     const showMovies = activeTab === 'all' || activeTab === 'pelicula';
     const showSeries = activeTab === 'all' || activeTab === 'serie';
-    const showBooks  = activeTab === 'all' || activeTab === 'libro';
-    const showDiscs  = activeTab === 'all' || activeTab === 'disco';
-    const showFavs   = activeTab === 'favs';
+    const showBooks = activeTab === 'all' || activeTab === 'libro';
+    const showDiscs = activeTab === 'all' || activeTab === 'disco';
+    const showFavs = activeTab === 'favs';
 
     return (
         <main className="profile-container animate-fade-in pb-20 pt-10 px-4 md:px-0">
@@ -875,17 +875,17 @@ const ProfilePage = () => {
             <section className="profile-hero mb-16 p-8 lg:p-16 rounded-[60px] relative overflow-hidden bg-white border border-[#ece7da] shadow-2xl">
                 {/* Decoración de fondo */}
                 <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-tcd-orange/5 to-transparent pointer-events-none"></div>
-                
+
                 <div className="flex flex-col lg:flex-row items-center lg:items-end gap-12 relative z-10">
                     <div className="avatar-large-container group">
                         <div className="avatar-large shadow-2xl border-4 border-white transition-transform duration-700 group-hover:scale-105">
-                            {user.profilePicture 
+                            {user.profilePicture
                                 ? <img src={user.profilePicture} alt={user.username} className="w-full h-full object-cover" />
                                 : <div className="w-full h-full bg-[#f4efdf] flex items-center justify-center text-4xl font-black text-[#8c8471]">{user.username?.charAt(0).toUpperCase()}</div>
                             }
                         </div>
                     </div>
-                    
+
                     <div className="flex-1 text-center lg:text-left">
                         <span className="text-[10px] font-black tracking-[0.5em] text-tcd-orange uppercase mb-4 block">PERFIL ARCHIVISTA</span>
                         <h1 className="text-6xl lg:text-8xl font-black text-[#2d2a26] uppercase italic tracking-tighter leading-[0.8] mb-8">
@@ -894,7 +894,7 @@ const ProfilePage = () => {
                         <p className="text-xl text-[#8c8471] font-medium leading-relaxed max-w-2xl italic mb-10">
                             {user.bio || "Explorador del archivo cultural universal. Documentando cada historia, cada nota y cada palabra."}
                         </p>
-                        
+
                         <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6">
                             <div className="summary-pill flex flex-col items-center lg:items-end py-4 px-8 rounded-3xl">
                                 <span className="text-[8px] uppercase font-black tracking-widest text-[#8c8471] mb-0.5">INDEXADO</span>
@@ -938,38 +938,38 @@ const ProfilePage = () => {
                             </div>
                         </div>
                     </div>
-                    
+
                     <div className="h-[260px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                 <defs>
                                     <linearGradient id="gradConsumo" x1="0" y1="0" x2="0" y2="1">
-                                        <stop offset="5%" stopColor="#c4621a" stopOpacity={0.3}/>
-                                        <stop offset="95%" stopColor="#c4621a" stopOpacity={0}/>
+                                        <stop offset="5%" stopColor="#c4621a" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#c4621a" stopOpacity={0} />
                                     </linearGradient>
                                 </defs>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#ece7da" />
-                                <XAxis 
-                                    dataKey="name" 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#8c8471'}} 
+                                <XAxis
+                                    dataKey="name"
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 900, fill: '#8c8471' }}
                                 />
-                                <YAxis 
-                                    axisLine={false} 
-                                    tickLine={false} 
-                                    tick={{fontSize: 9, fontWeight: 900, fill: '#8c8471'}}
+                                <YAxis
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fontSize: 9, fontWeight: 900, fill: '#8c8471' }}
                                     allowDecimals={false}
                                 />
-                                <Tooltip 
+                                <Tooltip
                                     contentStyle={{ borderRadius: '16px', border: 'none', boxShadow: '0 10px 25px rgba(0,0,0,0.12)', fontWeight: 900, fontSize: '10px', background: '#fff' }}
                                     cursor={{ stroke: '#c4621a', strokeWidth: 1, strokeDasharray: '4 4' }}
                                     formatter={(v) => [v, 'Consumido']}
                                 />
-                                <Area 
-                                    type="monotone" 
-                                    dataKey="consumido" 
-                                    stroke="#b8601a" 
+                                <Area
+                                    type="monotone"
+                                    dataKey="consumido"
+                                    stroke="#b8601a"
                                     strokeWidth={3}
                                     fill="url(#gradConsumo)"
                                     dot={{ r: 5, fill: '#b8601a', strokeWidth: 2, stroke: '#fff' }}
@@ -982,10 +982,10 @@ const ProfilePage = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                     {[
-                        { label: 'Cine',    val: stats.peliculas, unit: 'FILMS',  icon: 'MOV' },
-                        { label: 'TV',      val: stats.series,    unit: 'SERIES', icon: 'TV' },
-                        { label: 'Libros',  val: stats.libros,    unit: 'VOLS',   icon: 'BK' },
-                        { label: 'Música',  val: stats.discos,    unit: 'ALBUMS', icon: 'MS' },
+                        { label: 'Cine', val: stats.peliculas, unit: 'FILMS', icon: 'MOV' },
+                        { label: 'TV', val: stats.series, unit: 'SERIES', icon: 'TV' },
+                        { label: 'Libros', val: stats.libros, unit: 'VOLS', icon: 'BK' },
+                        { label: 'Música', val: stats.discos, unit: 'ALBUMS', icon: 'MS' },
                     ].map((s, i) => (
                         <div key={i} className="stat-card p-6 border border-[#ece7da] rounded-[30px] bg-white group hover:border-[#b8601a]/30 transition-all flex flex-col justify-between">
                             <div>
@@ -1011,23 +1011,23 @@ const ProfilePage = () => {
             {/* ── TOP 4 SECTION ── */}
             <section className="mb-20">
                 <div className="flex items-center gap-6 mb-12">
-                     <h2 className="text-4xl font-black text-[#2d2a26] uppercase italic tracking-tighter">MI TOP 4 <span className="text-tcd-orange">PERSONAL</span></h2>
-                     <div className="h-px bg-[#ece7da] flex-1"></div>
+                    <h2 className="text-4xl font-black text-[#2d2a26] uppercase italic tracking-tighter">MI TOP 4 <span className="text-tcd-orange">PERSONAL</span></h2>
+                    <div className="h-px bg-[#ece7da] flex-1"></div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
                     {[
                         { title: 'FILMOGRAFÍA', items: top4Movies, accent: '#c4621a', imgClass: 'rounded-lg' },
-                        { title: 'DISCOGRAFÍA', items: top4Music,  accent: '#db2777', imgClass: 'rounded-lg' },
-                        { title: 'BIBLIOTECA',   items: top4Books,  accent: '#8b8471', imgClass: 'rounded-lg' },
-                        { title: 'TELEVISIÓN',  items: top4Series, accent: '#134e4a', imgClass: 'rounded-lg' }
+                        { title: 'DISCOGRAFÍA', items: top4Music, accent: '#db2777', imgClass: 'rounded-lg' },
+                        { title: 'BIBLIOTECA', items: top4Books, accent: '#8b8471', imgClass: 'rounded-lg' },
+                        { title: 'TELEVISIÓN', items: top4Series, accent: '#134e4a', imgClass: 'rounded-lg' }
                     ].map((sec, idx) => (
                         <div key={idx} className="bg-[#fcfaf5] p-8 rounded-[40px] border border-[#ece7da]">
                             <div className="flex items-center justify-between mb-8 border-b border-[#ece7da] pb-4">
                                 <p className="text-[10px] font-black text-tcd-orange uppercase tracking-[0.4em]">{sec.title}</p>
                             </div>
                             <div className="flex flex-col gap-6">
-                                {[1,2,3,4].map(rank => {
+                                {[1, 2, 3, 4].map(rank => {
                                     const item = sec.items.find(m => m.topRank === rank);
                                     return (
                                         <div key={rank} className="flex items-center gap-4 group cursor-pointer" onClick={() => item && handleOpenDetails(item.content)}>
@@ -1055,11 +1055,10 @@ const ProfilePage = () => {
                     <button
                         key={tab.key}
                         onClick={() => setActiveTab(tab.key)}
-                        className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
-                            activeTab === tab.key
+                        className={`px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === tab.key
                                 ? 'bg-[#2d2a26] text-white shadow-md'
                                 : 'bg-[#f0ece3] text-[#8c8471] hover:text-[#2d2a26]'
-                        }`}
+                            }`}
                     >
                         {tab.label} {tab.count > 0 && <span className="ml-1 opacity-60">({tab.count})</span>}
                     </button>
@@ -1184,7 +1183,7 @@ const ProfilePage = () => {
 
                         <form onSubmit={handleSaveProfile} className="space-y-8">
                             <div className="flex flex-col md:flex-row gap-8 items-center mb-8">
-                                <div className="w-24 h-24 text-3xl overflow-hidden bg-[#f4efdf] flex items-center justify-center border-4 border-[#ece7da] flex-shrink-0 rounded-full shadow-lg" style={{background: 'linear-gradient(135deg,#c4621a,#e07a3a)', color:'#fff'}}>
+                                <div className="w-24 h-24 text-3xl overflow-hidden bg-[#f4efdf] flex items-center justify-center border-4 border-[#ece7da] flex-shrink-0 rounded-full shadow-lg" style={{ background: 'linear-gradient(135deg,#c4621a,#e07a3a)', color: '#fff' }}>
                                     {editProfilePic ? (
                                         <img src={editProfilePic} alt="Previsualización" className="w-full h-full object-cover" />
                                     ) : (
@@ -1193,14 +1192,14 @@ const ProfilePage = () => {
                                 </div>
                                 <div className="flex-1 w-full">
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Foto de Perfil</label>
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         accept="image/*"
                                         onChange={handleFileChange}
                                         className="w-full bg-[#fdfaf5] border border-[#ece7da] p-4 rounded-2xl text-xs font-bold"
                                     />
                                     <p className="text-[9px] text-[#8c8471] mt-2 uppercase tracking-wider font-semibold">O pega una URL de imagen:</p>
-                                    <input 
+                                    <input
                                         type="text"
                                         value={editProfilePic}
                                         onChange={e => setEditProfilePic(e.target.value)}
@@ -1213,8 +1212,8 @@ const ProfilePage = () => {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Nombre de Usuario</label>
-                                    <input 
-                                        type="text" 
+                                    <input
+                                        type="text"
                                         required
                                         value={editUsername}
                                         onChange={e => setEditUsername(e.target.value)}
@@ -1223,8 +1222,8 @@ const ProfilePage = () => {
                                 </div>
                                 <div>
                                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Email</label>
-                                    <input 
-                                        type="email" 
+                                    <input
+                                        type="email"
                                         required
                                         value={editEmail}
                                         onChange={e => setEditEmail(e.target.value)}
@@ -1235,7 +1234,7 @@ const ProfilePage = () => {
 
                             <div>
                                 <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Biografía</label>
-                                <textarea 
+                                <textarea
                                     value={editBio}
                                     onChange={e => setEditBio(e.target.value)}
                                     className="w-full bg-[#fdfaf5] border border-[#ece7da] p-5 rounded-2xl focus:outline-none focus:border-tcd-orange font-bold text-xs h-24"
@@ -1245,8 +1244,8 @@ const ProfilePage = () => {
 
                             <div>
                                 <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Género Favorito</label>
-                                <input 
-                                    type="text" 
+                                <input
+                                    type="text"
                                     value={editFavGenre}
                                     onChange={e => setEditFavGenre(e.target.value)}
                                     className="w-full bg-[#fdfaf5] border border-[#ece7da] p-5 rounded-2xl focus:outline-none focus:border-tcd-orange font-bold text-xs"
