@@ -314,11 +314,11 @@ public class ExternalContentSearchService {
     private List<ExternalContentItem> getFallBackDiscs() {
         List<ExternalContentItem> fallback = new ArrayList<>();
         // Radiohead - OK Computer
-        fallback.add(new ExternalContentItem("Spotify", "63O49Zp9RJHExmYv6yY8YF", "Radiohead - OK Computer", "DISCO", "Álbum clásico", LocalDate.of(1997, 6, 16), "https://i.scdn.co/image/ab67616d0000b273c8cc781467468132e48232c9", null, "Radiohead", "4Z8W4f9KiYMW9d6tFSRS6z", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "63O49Zp9RJHExmYv6yY8YF", "Radiohead - OK Computer", "DISCO", "Álbum clásico", LocalDate.of(1997, 6, 16), "https://i.scdn.co/image/ab67616d0000b273934d4007d4b245084a441113", null, "Radiohead", "4Z8W4f9KiYMW9d6tFSRS6z", null, null));
         // David Bowie - Ziggy Stardust
-        fallback.add(new ExternalContentItem("Spotify", "48DnkS399vY39p9vY39p9v", "David Bowie - Ziggy Stardust", "DISCO", "Rock clásico", LocalDate.of(1972, 6, 16), "https://i.scdn.co/image/ab67616d0000b27301648937000300a74bca0d32", null, "David Bowie", "0oSGxfWSnnOXX64STFv9qI", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "48DnkS399vY39p9vY39p9v", "David Bowie - Ziggy Stardust", "DISCO", "Rock clásico", LocalDate.of(1972, 6, 16), "https://i.scdn.co/image/ab67616d0000b273b508937000300a74bca0d32", null, "David Bowie", "0oSGxfWSnnOXX64STFv9qI", null, null));
         // Arctic Monkeys - AM
-        fallback.add(new ExternalContentItem("Spotify", "78bpImsn2u69v9R4p9vY39", "Arctic Monkeys - AM", "DISCO", "Indie Rock", LocalDate.of(2013, 9, 9), "https://i.scdn.co/image/ab67616d0000b2734ae6f69348dbdc552e646f90", null, "Arctic Monkeys", "7Ln80S36vabn0YelfuA3Gq", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "78bpImsn2u69v9R4p9vY39", "Arctic Monkeys - AM", "DISCO", "Indie Rock", LocalDate.of(2013, 9, 9), "https://i.scdn.co/image/ab67616d0000b2737bc0f57dfc201243a860773c", null, "Arctic Monkeys", "7Ln80S36vabn0YelfuA3Gq", null, null));
         // Rosalía - MOTOMAMI
         fallback.add(new ExternalContentItem("Spotify", "66S9vY39p9vY39p9vY39p9", "Rosalía - MOTOMAMI", "DISCO", "Pop Experimental", LocalDate.of(2022, 3, 18), "https://i.scdn.co/image/ab67616d0000b273fd68853b00681db6fd122c4f", null, "Rosalía", "7ltDVBr6mKbvMDzq3t0cN8", null, null));
         // Pink Floyd - The Dark Side of the Moon
@@ -332,19 +332,19 @@ public class ExternalContentSearchService {
         // Fleetwood Mac - Rumours
         fallback.add(new ExternalContentItem("Spotify", "1bt6q2SruMs7u0ZpPs9h7R", "Fleetwood Mac - Rumours", "DISCO", "Soft Rock", LocalDate.of(1977, 2, 4), "https://i.scdn.co/image/ab67616d0000b273eb64a938c35928d32095ccfe", null, "Fleetwood Mac", "08td7MxvCkrn6pS3vU9PjC", null, null));
         // Michael Jackson - Thriller
-        fallback.add(new ExternalContentItem("Spotify", "2ANVgaSgkIlmYv378unS3u", "Michael Jackson - Thriller", "DISCO", "Pop", LocalDate.of(1982, 11, 30), "https://i.scdn.co/image/ab67616d0000b2734121a36452292f75a6c174f8", null, "Michael Jackson", "3fMbd9B4jeas0p6uYq木", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "2ANVgaSgkIlmYv378unS3u", "Michael Jackson - Thriller", "DISCO", "Pop", LocalDate.of(1982, 11, 30), "https://i.scdn.co/image/ab67616d0000b2734121a36452292f75a6c174f8", null, "Michael Jackson", "3fMbd9B4jeas0p6uYq", null, null));
         // Amy Winehouse - Back To Black
         fallback.add(new ExternalContentItem("Spotify", "09777_backtoblack", "Amy Winehouse - Back To Black", "DISCO", "Soul", LocalDate.of(2006, 10, 27), "https://i.scdn.co/image/ab67616d0000b27364653_amy", null, "Amy Winehouse", "6eUov_amy", null, null));
         // Queen - A Night At The Opera
-        fallback.add(new ExternalContentItem("Spotify", " Queen_NightOpera", "Queen - A Night At The Opera", "DISCO", "Rock", LocalDate.of(1975, 11, 21), "https://i.scdn.co/image/ab67616d0000b273 Queen_Cover", null, "Queen", "1vC_Queen", null, null));
+        fallback.add(new ExternalContentItem("Spotify", " Queen_NightOpera", "Queen - A Night At The Opera", "DISCO", "Rock", LocalDate.of(1975, 11, 21), "https://i.scdn.co/image/ab67616d0000b2731c36005086d7950949102431", null, "Queen", "1vC_Queen", null, null));
         // Kendrick Lamar - DAMN.
-        fallback.add(new ExternalContentItem("Spotify", "Kendrick_DAMN", "Kendrick Lamar - DAMN.", "DISCO", "Hip Hop", LocalDate.of(2017, 4, 14), "https://i.scdn.co/image/ab67616d0000b273 Kendrick_Cover", null, "Kendrick Lamar", "2YZ_Kendrick", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "Kendrick_DAMN", "Kendrick Lamar - DAMN.", "DISCO", "Hip Hop", LocalDate.of(2017, 4, 14), "https://i.scdn.co/image/ab67616d0000b273d28daa1e9ba0d3482928a9b2", null, "Kendrick Lamar", "2YZ_Kendrick", null, null));
         // Led Zeppelin - IV
-        fallback.add(new ExternalContentItem("Spotify", "LedZeppelin_IV", "Led Zeppelin - IV", "DISCO", "Hard Rock", LocalDate.of(1971, 11, 8), "https://i.scdn.co/image/ab67616d0000b273 Zeppelin_Cover", null, "Led Zeppelin", "36Q_Zeppelin", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "LedZeppelin_IV", "Led Zeppelin - IV", "DISCO", "Hard Rock", LocalDate.of(1971, 11, 8), "https://i.scdn.co/image/ab67616d0000b273c3d5175949102431bba0", null, "Led Zeppelin", "36Q_Zeppelin", null, null));
         // Miles Davis - Kind of Blue
-        fallback.add(new ExternalContentItem("Spotify", "MilesDavis_KindBlue", "Miles Davis - Kind of Blue", "DISCO", "Jazz", LocalDate.of(1959, 8, 17), "https://i.scdn.co/image/ab67616d0000b273 Miles_Cover", null, "Miles Davis", "0kb_Miles", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "MilesDavis_KindBlue", "Miles Davis - Kind of Blue", "DISCO", "Jazz", LocalDate.of(1959, 8, 17), "https://i.scdn.co/image/ab67616d0000b27394c8b871c508a8cc2058", null, "Miles Davis", "0kb_Miles", null, null));
         // Tame Impala - Currents
-        fallback.add(new ExternalContentItem("Spotify", "TameImpala_Currents", "Tame Impala - Currents", "DISCO", "Psych Pop", LocalDate.of(2015, 7, 17), "https://i.scdn.co/image/ab67616d0000b273 Tame_Cover", null, "Tame Impala", "5q_Tame", null, null));
+        fallback.add(new ExternalContentItem("Spotify", "TameImpala_Currents", "Tame Impala - Currents", "DISCO", "Psych Pop", LocalDate.of(2015, 7, 17), "https://i.scdn.co/image/ab67616d0000b2739b15239ba0d3482928a9b2", null, "Tame Impala", "5q_Tame", null, null));
         return fallback;
     }
 

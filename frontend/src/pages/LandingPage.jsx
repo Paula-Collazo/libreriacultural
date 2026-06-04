@@ -52,11 +52,11 @@ const LandingPage = () => {
             <div className="mt-32 w-full grid grid-cols-2 md:grid-cols-6 gap-6 opacity-30 grayscale hover:grayscale-0 hover:opacity-85 transition-all duration-[1.2s] ease-out">
                 {[
                     { title: "Interstellar", url: "https://image.tmdb.org/t/p/w500/gEU2QvJWzIF7efg2t4t7f4j2zsf.jpg" },
-                    { title: "OK Computer", url: "https://i.scdn.co/image/ab67616d0000b273c8cc781467468132e48232c9" },
-                    { title: "Dune", url: "https://covers.openlibrary.org/b/id/11494808-L.jpg" },
-                    { title: "Breaking Bad", url: "https://image.tmdb.org/t/p/w500/811m42687yClvBzZCFN0vNu63zH.jpg" },
-                    { title: "AM", url: "https://i.scdn.co/image/ab67616d0000b2734ae6f69348dbdc552e646f90" },
-                    { title: "The Godfather", url: "https://image.tmdb.org/t/p/w500/3bhkrj68V4sz2EWg7mYP7i4xN19.jpg" }
+                    { title: "OK Computer", url: "https://i.scdn.co/image/ab67616d0000b273934d4007d4b245084a441113" },
+                    { title: "Dune", url: "https://image.tmdb.org/t/p/w500/d57ubvVpC7pS79uKq9Y96C4v0pS.jpg" },
+                    { title: "Breaking Bad", url: "https://image.tmdb.org/t/p/w500/ztkUQvHnd79fv6rnB69xz9vU046.jpg" },
+                    { title: "AM", url: "https://i.scdn.co/image/ab67616d0000b2737bc0f57dfc201243a860773c" },
+                    { title: "The Godfather", url: "https://image.tmdb.org/t/p/w500/3bhkrjOiERvSTqX6DHAs679Pzmb.jpg" }
                 ].map((item, idx) => (
                     <div key={idx} className="aspect-[2/3] bg-white rounded-[28px] overflow-hidden shadow-2xl border border-[#ece7da] hover:-translate-y-6 hover:rotate-3 transition-all duration-700 cursor-pointer">
                         <img src={item.url} alt={item.title} className="w-full h-full object-cover" />

@@ -706,7 +706,10 @@ const ProfilePage = () => {
     const refreshProfile = useCallback(() => {
         setLoading(true);
         fetch(`${API_BASE}/api/profile`, { headers: { Accept: 'application/json' }, credentials: 'include' })
-            .then(r => r.json())
+            .then(r => {
+                if (!r.ok) throw new Error('No autorizado o error de sesión');
+                return r.json();
+            })
             .then(json => {
                 setData(json);
                 setLoading(false);
@@ -716,7 +719,11 @@ const ProfilePage = () => {
                     if (t === 'disco') refreshSongs(item.id);
                 });
             })
-            .catch(err => { console.error(err); setLoading(false); });
+            .catch(err => { 
+                console.error("Error fetching profile:", err); 
+                setLoading(false); 
+                // Si falla, podemos intentar redirigir a login si es un 401 real
+            });
     }, [refreshEpisodes, refreshSongs]);
 
     useEffect(() => { refreshProfile(); }, [refreshProfile]);

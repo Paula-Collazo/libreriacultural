@@ -9,6 +9,7 @@ import com.proyectofinal.libreriacultural.Repositories.ContentRepository;
 import com.proyectofinal.libreriacultural.Repositories.UserRepository;
 import com.proyectofinal.libreriacultural.domain.Content;
 import com.proyectofinal.libreriacultural.domain.User;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 @SpringBootApplication
 public class LibreriaculturalApplication {
@@ -18,7 +19,7 @@ public class LibreriaculturalApplication {
     }
 
     @Bean
-    CommandLineRunner init(UserRepository userRepo, ContentRepository contentRepo) {
+    CommandLineRunner init(UserRepository userRepo, ContentRepository contentRepo, PasswordEncoder passwordEncoder) {
         return args -> {
             // Limpieza de duplicados si existen (para arreglar el error de "visto 53 resultados")
             java.util.List<User> paulas = userRepo.findAll().stream()
@@ -35,9 +36,15 @@ public class LibreriaculturalApplication {
                 User user = new User();
                 user.setUsername("paula");
                 user.setEmail("paula@test.com");
-                user.setPassword("1234");
+                user.setPassword(passwordEncoder.encode("123456"));
                 userRepo.save(user);
                 System.out.println("Usuario 'paula' insertado.");
+            } else {
+                // Aseguramos que el usuario existente también tenga la contraseña codificada
+                User paula = paulas.get(0);
+                paula.setPassword(passwordEncoder.encode("123456"));
+                userRepo.save(paula);
+                System.out.println("Contraseña de 'paula' actualizada.");
             }
 
             if (contentRepo.findAll().isEmpty()) {

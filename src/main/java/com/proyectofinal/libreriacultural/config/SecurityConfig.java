@@ -22,7 +22,8 @@ public class SecurityConfig {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:5173", "http://localhost:5174",
-            "http://127.0.0.1:5173", "http://127.0.0.1:5174", "http://localhost"
+            "http://127.0.0.1:5173", "http://127.0.0.1:5174",
+            "http://localhost:8080", "http://127.0.0.1:8080", "http://localhost"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("*"));
@@ -47,6 +48,7 @@ public class SecurityConfig {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        System.out.println("[DEBUG] Initializing SecurityFilterChain...");
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())

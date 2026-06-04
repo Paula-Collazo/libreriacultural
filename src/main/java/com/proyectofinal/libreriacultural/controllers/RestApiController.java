@@ -212,6 +212,79 @@ public class RestApiController {
     }
 
 
+    @PostMapping("/content/{id}/rating")
+    public ResponseEntity<?> updateRating(@PathVariable Long id, @RequestBody Map<String, Object> body, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if(!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+
+        UserContent uc = userContentRepository.findById(id).orElse(null);
+        if (uc != null) {
+            Object rating = body.get("rating");
+            if (rating instanceof Number) {
+                uc.setRating(((Number) rating).doubleValue());
+                userContentRepository.save(uc);
+                return ResponseEntity.ok().build();
+            }
+        }
+        return ResponseEntity.status(404).body("No encontrado");
+    }
+
+    @PostMapping("/content/{id}/top-rank")
+    public ResponseEntity<?> updateTopRank(@PathVariable Long id, @RequestBody Map<String, Integer> body, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if(!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+
+        UserContent uc = userContentRepository.findById(id).orElse(null);
+        if (uc != null) {
+            Integer rank = body.get("topRank");
+            // Clear existing rank if needed
+            if (rank != null) {
+                List<UserContent> others = userContentRepository.findByUserId(user.getId());
+                for (UserContent other : others) {
+                    if (rank.equals(other.getTopRank()) && !other.getId().equals(uc.getId())) {
+                        other.setTopRank(null);
+                        userContentRepository.save(other);
+                    }
+                }
+            }
+            uc.setTopRank(rank);
+            userContentRepository.save(uc);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(404).body("No encontrado");
+    }
+
+    @PostMapping("/content/{id}/completion-date")
+    public ResponseEntity<?> updateCompletionDate(@PathVariable Long id, @RequestBody Map<String, String> body, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if(!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+
+        UserContent uc = userContentRepository.findById(id).orElse(null);
+        if (uc != null) {
+            String date = body.get("completionDate");
+            if (date == null || date.isBlank()) {
+                uc.setCompletionDate(null);
+            } else {
+                uc.setCompletionDate(java.time.LocalDate.parse(date));
+            }
+            userContentRepository.save(uc);
+            return ResponseEntity.ok().build();
+        }
+        return ResponseEntity.status(404).body("No encontrado");
+    }
+
     @PostMapping("/content/add")
     public ResponseEntity<?> addContent(@RequestBody Map<String, String> body, HttpSession session) {
         User user = getSessionUser(session);

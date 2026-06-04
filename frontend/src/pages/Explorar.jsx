@@ -200,13 +200,17 @@ const Explorar = ({ filterType }) => {
         const fetchData = async () => {
             try {
                 // FETCH TRENDING DATA FROM BACKEND
-                const [moviesRes, seriesRes, albumsRes, booksRes] = await Promise.all([
-                    fetch(`${API_BASE}/api/external/trending/movies`, { credentials: 'include' }),
-                    fetch(`${API_BASE}/api/external/trending/series`, { credentials: 'include' }),
-                    fetch(`${API_BASE}/api/external/trending/discs`, { credentials: 'include' }),
-                    fetch(`${API_BASE}/api/external/trending/books`, { credentials: 'include' })
-                ]);
-                
+                const endpoints = [
+                    `${API_BASE}/api/external/trending/movies`,
+                    `${API_BASE}/api/external/trending/series`,
+                    `${API_BASE}/api/external/trending/discs`,
+                    `${API_BASE}/api/external/trending/books`
+                ];
+
+                const [moviesRes, seriesRes, albumsRes, booksRes] = await Promise.all(
+                    endpoints.map(url => fetch(url, { credentials: 'include' }))
+                );
+
                 if (moviesRes.ok) {
                     const moviesData = await moviesRes.json();
                     setMovies(moviesData || []);
