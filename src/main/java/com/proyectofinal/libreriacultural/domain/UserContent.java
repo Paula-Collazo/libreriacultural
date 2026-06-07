@@ -34,7 +34,7 @@ public class UserContent {
     @JoinColumn(name = "content_id", nullable = false)
     private Content content;
 
-    @Column(length = 20)
+    @Column(length = 50)
     private String status;
 
     @Column(name = "movie_watched")

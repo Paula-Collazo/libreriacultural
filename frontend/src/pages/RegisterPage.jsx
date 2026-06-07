@@ -24,7 +24,7 @@ const RegisterPage = () => {
             });
             
             if (res.ok) {
-                navigate('/');
+                navigate('/perfil');
             } else {
                 const msg = await res.text();
                 setError(msg);

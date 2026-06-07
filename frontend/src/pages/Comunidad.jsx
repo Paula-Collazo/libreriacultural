@@ -72,15 +72,30 @@ const Comunidad = () => {
     }, []);
 
     const fetchMemberShelf = (memberId) => {
+        if (!memberId) {
+            console.error("[Comunidad] No se proporcionó ID de miembro");
+            return;
+        }
         setLoadingShelf(true);
-        fetch(`${API_BASE}/api/library/user/${memberId}`, { credentials: 'include' })
-            .then(res => res.json())
+        console.log(`[Comunidad] Cargando estantería para el ID: ${memberId}`);
+        
+        // Probamos sin /api ya que UserContentController mapea a /library
+        fetch(`${API_BASE}/library/user/${memberId}`, { credentials: 'include' })
+            .then(res => {
+                if (!res.ok) {
+                    console.error(`[Comunidad] Error en la petición: ${res.status} ${res.statusText}`);
+                    throw new Error(`Error del servidor: ${res.status}`);
+                }
+                return res.json();
+            })
             .then(data => {
-                setMemberShelf(data || []);
+                console.log('[Comunidad] Datos de estantería recibidos:', data);
+                setMemberShelf(Array.isArray(data) ? data : []);
                 setLoadingShelf(false);
             })
             .catch(err => {
-                console.error("Error fetching member library:", err);
+                console.error("[Comunidad] Error fetching member library:", err);
+                setMemberShelf([]);
                 setLoadingShelf(false);
             });
     };
@@ -327,7 +342,8 @@ const Comunidad = () => {
                             <div className="space-y-12">
                                 {/* Group items by type */}
                                 {['PELICULA', 'SERIE', 'LIBRO', 'DISCO'].map(type => {
-                                    const items = memberShelf.filter(it => it.content.type === type || it.content.type?.toUpperCase() === type);
+                                    if (!Array.isArray(memberShelf)) return null;
+                                    const items = memberShelf.filter(it => it && it.content && (it.content.type === type || it.content.type?.toUpperCase() === type));
                                     if (items.length === 0) return null;
 
                                     const typeLabel = 

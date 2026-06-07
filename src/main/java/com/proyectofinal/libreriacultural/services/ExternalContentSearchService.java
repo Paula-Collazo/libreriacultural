@@ -650,6 +650,10 @@ public class ExternalContentSearchService {
     }
 
     public Map<String, Object> getDetails(String source, String externalId, String type) {
+        return getDetails(source, externalId, type, 1L);
+    }
+
+    public Map<String, Object> getDetails(String source, String externalId, String type, Long userId) {
         Map<String, Object> details = new HashMap<>();
         try {
             if ("Spotify".equalsIgnoreCase(source)) {
@@ -665,7 +669,7 @@ public class ExternalContentSearchService {
             }
             
             // Enriquecer con info de la biblioteca local
-            enrichWithLibraryInfo(details, externalId);
+            enrichWithLibraryInfo(details, externalId, userId);
             
         } catch (Exception e) {
             System.err.println("[ERROR] Details general: " + e.getMessage());
@@ -673,11 +677,11 @@ public class ExternalContentSearchService {
         return details;
     }
 
-    private void enrichWithLibraryInfo(Map<String, Object> details, String externalId) {
+    private void enrichWithLibraryInfo(Map<String, Object> details, String externalId, Long userId) {
         if (externalId == null || externalId.isBlank()) return;
         
-        // Buscamos si existe en la biblioteca de 'paula' (id=1, según DataLoader)
-        Optional<UserContent> uc = userContentRepository.findByUserIdAndContentExternalId(1L, externalId);
+        Long finalUserId = userId != null ? userId : 1L;
+        Optional<UserContent> uc = userContentRepository.findByUserIdAndContentExternalId(finalUserId, externalId);
         if (uc.isPresent()) {
             details.put("inLibrary", true);
             details.put("libraryId", uc.get().getId());

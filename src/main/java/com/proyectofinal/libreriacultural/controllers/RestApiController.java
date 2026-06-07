@@ -660,4 +660,152 @@ public class RestApiController {
         }
         return ResponseEntity.status(404).body("Solicitud no encontrada");
     }
+
+    // ══════════════════════════════════════════════
+    //  LISTAS PERSONALIZADAS (CustomList)
+    // ══════════════════════════════════════════════
+
+    @GetMapping("/lists")
+    public ResponseEntity<?> getLists(HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if (!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+        List<CustomList> lists = customListRepository.findByUser(user);
+        List<Map<String, Object>> result = new java.util.ArrayList<>();
+        for (CustomList list : lists) {
+            Map<String, Object> m = new HashMap<>();
+            m.put("id", list.getId());
+            m.put("name", list.getName());
+            m.put("description", list.getDescription());
+            m.put("coverUrl", list.getCoverUrl());
+            m.put("itemCount", list.getItems().size());
+            List<Map<String, Object>> items = new java.util.ArrayList<>();
+            for (com.proyectofinal.libreriacultural.domain.UserContent uc : list.getItems()) {
+                Map<String, Object> item = new HashMap<>();
+                item.put("id", uc.getId());
+                item.put("title", uc.getContent().getTitle());
+                item.put("type", uc.getContent().getType());
+                item.put("coverUrl", uc.getContent().getCoverUrl());
+                item.put("status", uc.getStatus());
+                item.put("externalId", uc.getContent().getExternalId());
+                items.add(item);
+            }
+            m.put("items", items);
+            result.add(m);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/lists")
+    public ResponseEntity<?> createList(@RequestBody Map<String, String> body, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if (!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+        String name = body.get("name");
+        if (name == null || name.isBlank()) return ResponseEntity.badRequest().body("El nombre es obligatorio");
+
+        CustomList list = new CustomList();
+        list.setName(name.trim());
+        list.setDescription(body.getOrDefault("description", ""));
+        list.setCoverUrl(body.getOrDefault("coverUrl", ""));
+        list.setUser(user);
+        CustomList saved = customListRepository.save(list);
+
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", saved.getId());
+        m.put("name", saved.getName());
+        m.put("description", saved.getDescription());
+        m.put("coverUrl", saved.getCoverUrl());
+        m.put("itemCount", 0);
+        m.put("items", new java.util.ArrayList<>());
+        return ResponseEntity.ok(m);
+    }
+
+    @PutMapping("/lists/{listId}")
+    public ResponseEntity<?> updateList(@PathVariable Long listId, @RequestBody Map<String, String> body, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if (!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+        CustomList list = customListRepository.findById(listId).orElse(null);
+        if (list == null || list.getUser() == null || !list.getUser().getId().equals(user.getId()))
+            return ResponseEntity.status(404).body("Lista no encontrada");
+
+        String name = body.get("name");
+        if (name != null && !name.isBlank()) list.setName(name.trim());
+        if (body.containsKey("description")) list.setDescription(body.get("description"));
+        if (body.containsKey("coverUrl")) list.setCoverUrl(body.get("coverUrl"));
+
+        CustomList saved = customListRepository.save(list);
+        Map<String, Object> m = new HashMap<>();
+        m.put("id", saved.getId());
+        m.put("name", saved.getName());
+        m.put("description", saved.getDescription());
+        m.put("coverUrl", saved.getCoverUrl());
+        m.put("itemCount", saved.getItems().size());
+        return ResponseEntity.ok(m);
+    }
+
+    @DeleteMapping("/lists/{listId}")
+    public ResponseEntity<?> deleteList(@PathVariable Long listId, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if (!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+        CustomList list = customListRepository.findById(listId).orElse(null);
+        if (list == null || list.getUser() == null || !list.getUser().getId().equals(user.getId()))
+            return ResponseEntity.status(404).body("Lista no encontrada");
+
+        customListRepository.delete(list);
+        return ResponseEntity.ok(Map.of("message", "Lista eliminada"));
+    }
+
+    @PostMapping("/lists/{listId}/items/{userContentId}")
+    public ResponseEntity<?> addItemToList(@PathVariable Long listId, @PathVariable Long userContentId, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if (!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+        CustomList list = customListRepository.findById(listId).orElse(null);
+        if (list == null || list.getUser() == null || !list.getUser().getId().equals(user.getId()))
+            return ResponseEntity.status(404).body("Lista no encontrada");
+
+        com.proyectofinal.libreriacultural.domain.UserContent uc = userContentRepository.findById(userContentId).orElse(null);
+        if (uc == null) return ResponseEntity.status(404).body("Contenido no encontrado");
+
+        if (!list.getItems().contains(uc)) {
+            list.getItems().add(uc);
+            customListRepository.save(list);
+        }
+        return ResponseEntity.ok(Map.of("message", "Ítem añadido a la lista"));
+    }
+
+    @DeleteMapping("/lists/{listId}/items/{userContentId}")
+    public ResponseEntity<?> removeItemFromList(@PathVariable Long listId, @PathVariable Long userContentId, HttpSession session) {
+        User user = getSessionUser(session);
+        if (user == null) {
+            List<User> users = userRepository.findAll();
+            if (!users.isEmpty()) user = users.get(0);
+            else return ResponseEntity.status(401).body("No autorizado");
+        }
+        CustomList list = customListRepository.findById(listId).orElse(null);
+        if (list == null || list.getUser() == null || !list.getUser().getId().equals(user.getId()))
+            return ResponseEntity.status(404).body("Lista no encontrada");
+
+        list.getItems().removeIf(item -> item.getId().equals(userContentId));
+        customListRepository.save(list);
+        return ResponseEntity.ok(Map.of("message", "Ítem eliminado de la lista"));
+    }
 }

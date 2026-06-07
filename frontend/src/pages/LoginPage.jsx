@@ -23,7 +23,7 @@ const LoginPage = () => {
             
             if (res.ok) {
                 // For simplicity we just navigate, the backend handles session cookie
-                navigate('/');
+                navigate('/perfil');
             } else {
                 setError('Usuario o contraseña incorrectos');
             }

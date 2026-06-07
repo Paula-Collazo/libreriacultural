@@ -32,7 +32,7 @@ function AppContent() {
           </Link>
           
           <nav className="bg-[#f0ece3] p-1.5 rounded-full flex gap-1 border border-[#e6e2d8] shadow-sm">
-              <NavLink to="/" className={({ isActive }) => `px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive ? 'bg-[#b8601a] text-white shadow-lg scale-105' : 'text-[#8c8471] hover:text-[#2d2a26]'}`}>Mi perfil</NavLink>
+              <NavLink to="/perfil" className={({ isActive }) => `px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive ? 'bg-[#b8601a] text-white shadow-lg scale-105' : 'text-[#8c8471] hover:text-[#2d2a26]'}`}>Mi perfil</NavLink>
               <NavLink to="/explorar" className={({ isActive }) => `px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive ? 'bg-[#b8601a] text-white shadow-lg scale-105' : 'text-[#8c8471] hover:text-[#2d2a26]'}`}>Explorar</NavLink>
               <NavLink to="/peliculas" className={({ isActive }) => `px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive ? 'bg-[#b8601a] text-white shadow-lg scale-105' : 'text-[#8c8471] hover:text-[#2d2a26]'}`}>Cine</NavLink>
               <NavLink to="/series" className={({ isActive }) => `px-6 py-2.5 rounded-full text-[10px] font-black uppercase tracking-widest transition-all duration-300 ${isActive ? 'bg-[#b8601a] text-white shadow-lg scale-105' : 'text-[#8c8471] hover:text-[#2d2a26]'}`}>TV</NavLink>
@@ -77,7 +77,8 @@ function AppContent() {
 
       <main className="mx-auto px-10 pt-4 max-w-[1600px]">
         <Routes>
-           <Route path="/" element={<ProfilePage />} />
+           <Route path="/" element={<LandingPage />} />
+           <Route path="/perfil" element={<ProfilePage />} />
            <Route path="/explorar" element={<Explorar />} />
            <Route path="/peliculas" element={<Explorar filterType="PELICULA" />} />
            <Route path="/series" element={<Explorar filterType="SERIE" />} />

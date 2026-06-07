@@ -195,6 +195,61 @@ const CompletionDateInput = ({ item, onUpdate }) => {
     );
 };
 
+/* ─── Botón Añadir a Lista ─── */
+const AddToListBtn = ({ itemId, lists, onRefreshLists }) => {
+    const [open, setOpen] = useState(false);
+    const [adding, setAdding] = useState(null);
+
+    if (!lists || lists.length === 0) return null;
+
+    const handleAdd = async (e, listId) => {
+        e.stopPropagation();
+        setAdding(listId);
+        try {
+            const res = await fetch(`${API_BASE}/api/lists/${listId}/items/${itemId}`, {
+                method: 'POST',
+                credentials: 'include'
+            });
+            if (res.ok) {
+                if (onRefreshLists) onRefreshLists();
+            }
+        } finally {
+            setAdding(null);
+            setOpen(false);
+        }
+    };
+
+    return (
+        <div className="relative" onClick={e => e.stopPropagation()}>
+            <button
+                onClick={() => setOpen(v => !v)}
+                className="mini-btn text-[9px]"
+                title="Añadir a lista"
+            >
+                📋
+            </button>
+            {open && (
+                <div className="absolute bottom-full right-0 mb-1 bg-white border border-[#ece7da] rounded-2xl shadow-xl z-50 overflow-hidden min-w-[140px] animate-fade-in">
+                    <p className="text-[8px] font-black uppercase tracking-widest text-[#8c8471] px-3 pt-2 pb-1">Añadir a lista</p>
+                    {lists.map(list => (
+                        <button
+                            key={list.id}
+                            onClick={(e) => handleAdd(e, list.id)}
+                            disabled={adding === list.id}
+                            className="w-full text-left px-3 py-2 text-[10px] font-bold hover:bg-[#f4efdf] text-[#2d2a26] transition-colors truncate flex items-center gap-1"
+                        >
+                            <span className="w-4 h-4 rounded bg-gradient-to-br from-[#7c3aed] to-[#a855f7] flex items-center justify-center text-white text-[7px] font-black shrink-0">
+                                {list.name.charAt(0).toUpperCase()}
+                            </span>
+                            {adding === list.id ? '...' : list.name}
+                        </button>
+                    ))}
+                </div>
+            )}
+        </div>
+    );
+};
+
 /* ─── SectionHeader ─── */
 const SectionHeader = ({ title, count, color }) => (
     <div className="section-hd" style={{ '--accent-col': color }}>
@@ -205,10 +260,11 @@ const SectionHeader = ({ title, count, color }) => (
     </div>
 );
 
+
 /* ══════════════════════════════════════════════
    PELÍCULAS — diseño tarjeta compacta
 ══════════════════════════════════════════════ */
-const MovieCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate }) => {
+const MovieCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate, lists, onRefreshLists }) => {
     const [sel, setSel] = useState(item.status || 'no_visto');
     const [saving, setSaving] = useState(false);
 
@@ -247,17 +303,33 @@ const MovieCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, 
                     <StatusChip status={item.status} />
                     <CompletionDateInput item={item} onUpdate={onUpdateDate} />
                 </div>
-                <div className="media-card-controls gap-1">
-                    <select value={sel} onChange={e => setSel(e.target.value)} className="mini-select flex-1">
+                <div className="flex flex-col gap-1.5 mt-auto pt-2">
+                    <select
+                        value={sel}
+                        onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            setSel(newStatus);
+                            setSaving(true);
+                            await fetch(`${API_BASE}/library/${item.id}/movie-status`, {
+                                method: 'PUT',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: newStatus }),
+                            }).then(r => r.ok ? onRefresh() : alert('Error al actualizar estado'));
+                            setSaving(false);
+                        }}
+                        className="mini-select w-full"
+                        disabled={saving}
+                    >
                         <option value="visto">Visto</option>
                         <option value="no_visto">No visto</option>
                     </select>
-                    <button onClick={handleUpdate} disabled={saving} className="mini-btn" title="Guardar">
-                        {saving ? '...' : <Check className="w-3.5 h-3.5" />}
-                    </button>
-                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex gap-1 w-full">
+                        <AddToListBtn itemId={item.id} lists={lists} onRefreshLists={onRefreshLists} />
+                        <button onClick={handleDelete} className="mini-btn danger-btn flex-1 justify-center" title="Eliminar">
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
                 </div>
                 <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
             </div>
@@ -268,7 +340,7 @@ const MovieCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, 
 /* ══════════════════════════════════════════════
    LIBROS — diseño tarjeta con barra de progreso
 ══════════════════════════════════════════════ */
-const BookCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate }) => {
+const BookCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate, lists, onRefreshLists }) => {
     const [currPage, setCurrPage] = useState(item.bookCurrentPage ?? 0);
     const [totalPages, setTotalPages] = useState(item.bookTotalPages ?? 0);
     const [saving, setSaving] = useState(false);
@@ -323,23 +395,28 @@ const BookCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, o
                     <span className="progress-label">{currPage}/{totalPages}</span>
                 </div>
                 {editing ? (
-                    <div className="media-card-controls gap-1">
-                        <input type="number" min="0" value={currPage} onChange={e => setCurrPage(e.target.value)}
-                            className="mini-input flex-1" placeholder="Pág" />
-                        <input type="number" min="0" value={totalPages} onChange={e => setTotalPages(e.target.value)}
-                            className="mini-input flex-1" placeholder="Total" />
-                        <button onClick={handleSave} disabled={saving} className="mini-btn" title="Guardar">
-                            {saving ? '...' : <Check className="w-3.5 h-3.5" />}
-                        </button>
+                    <div className="flex flex-col gap-1.5 mt-auto pt-2">
+                        <div className="flex gap-1 w-full">
+                            <input type="number" min="0" value={currPage} onChange={e => setCurrPage(e.target.value)}
+                                className="mini-input flex-1" placeholder="Pág" />
+                            <input type="number" min="0" value={totalPages} onChange={e => setTotalPages(e.target.value)}
+                                className="mini-input flex-1" placeholder="Total" />
+                            <button onClick={handleSave} disabled={saving} className="mini-btn" title="Guardar">
+                                {saving ? '...' : <Check className="w-3.5 h-3.5" />}
+                            </button>
+                        </div>
                     </div>
                 ) : (
-                    <div className="media-card-controls gap-1">
-                        <button onClick={() => setEditing(true)} className="mini-btn flex-1" title="Editar progreso">
+                    <div className="flex flex-col gap-1.5 mt-auto pt-2">
+                        <button onClick={() => setEditing(true)} className="mini-btn w-full" title="Editar progreso">
                             <span className="text-[10px]">EDITAR PROGRESO</span>
                         </button>
-                        <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">
-                            <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex gap-1 w-full">
+                            <AddToListBtn itemId={item.id} lists={lists} onRefreshLists={onRefreshLists} />
+                            <button onClick={handleDelete} className="mini-btn danger-btn flex-1 justify-center" title="Eliminar">
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
                     </div>
                 )}
                 <TopRankSelector itemId={item.id} currentRank={item.topRank} onUpdate={onUpdateRank} />
@@ -351,7 +428,7 @@ const BookCard = ({ item, onRefresh, onFavUpdate, onOpenDetails, onUpdateRank, o
 /* ══════════════════════════════════════════════
    SERIES — tarjeta con episodios
 ══════════════════════════════════════════════ */
-const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate }) => {
+const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate, lists, onRefreshLists }) => {
     const [genStatus, setGenStatus] = useState(item.status || 'pendiente');
     const [season, setSeason] = useState('');
     const [episode, setEpisode] = useState('');
@@ -423,18 +500,34 @@ const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate,
                         ))}
                     </div>
                 )}
-                <div className="media-card-controls gap-1">
-                    <select value={genStatus} onChange={e => setGenStatus(e.target.value)} className="mini-select flex-1">
+                <div className="flex flex-col gap-1.5 mt-auto pt-2">
+                    <select
+                        value={genStatus}
+                        onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            setGenStatus(newStatus);
+                            setSaving(true);
+                            await fetch(`${API_BASE}/library/${item.id}/status`, {
+                                method: 'PUT',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: newStatus }),
+                            }).then(r => r.ok ? onRefresh() : alert('Error al actualizar estado'));
+                            setSaving(false);
+                        }}
+                        className="mini-select w-full"
+                        disabled={saving}
+                    >
                         <option value="pendiente">Pendiente</option>
                         <option value="en_progreso">En progreso</option>
                         <option value="abandonado">Abandonado</option>
                     </select>
-                    <button onClick={handleStatusUpdate} disabled={saving} className="mini-btn" title="Guardar">
-                        {saving ? '...' : <Check className="w-3.5 h-3.5" />}
-                    </button>
-                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    <div className="flex gap-1 w-full">
+                        <AddToListBtn itemId={item.id} lists={lists} onRefreshLists={onRefreshLists} />
+                        <button onClick={handleDelete} className="mini-btn danger-btn flex-1 justify-center" title="Eliminar">
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    </div>
                 </div>
                 <div className="media-card-controls flex-wrap mt-2 gap-1">
                     <div className="flex gap-1 w-full mb-1">
@@ -477,13 +570,14 @@ const SeriesCard = ({ item, episodes, onRefresh, onEpisodesRefresh, onFavUpdate,
 /* ══════════════════════════════════════════════
    DISCOS — tarjeta musical premium con vinilo
 ══════════════════════════════════════════════ */
-const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate }) => {
+const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenDetails, onUpdateRank, onUpdateDate, lists, onRefreshLists }) => {
     const [genStatus, setGenStatus] = useState(item.status || 'pendiente');
     const [trackNum, setTrackNum] = useState('');
     const [trackTitle, setTrackTitle] = useState('');
     const [listened, setListened] = useState(false);
     const [saving, setSaving] = useState(false);
     const [expanded, setExpanded] = useState(false);
+    const [manualEntry, setManualEntry] = useState(false);
 
     useEffect(() => { setGenStatus(item.status || 'pendiente'); }, [item.status]);
 
@@ -556,11 +650,22 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
                     <CompletionDateInput item={item} onUpdate={onUpdateDate} />
                 </div>
 
-                <div className="flex items-center gap-2 mt-auto">
+                <div className="flex flex-col gap-1.5 mt-auto pt-2">
                     <select
                         value={genStatus}
-                        onChange={(e) => { setGenStatus(e.target.value); handleStatusUpdate(); }}
-                        className="mini-select flex-1"
+                        onChange={async (e) => {
+                            const newStatus = e.target.value;
+                            setGenStatus(newStatus);
+                            setSaving(true);
+                            await fetch(`${API_BASE}/library/${item.id}/status`, {
+                                method: 'PUT',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ status: newStatus }),
+                            }).then(r => r.ok ? onRefresh() : alert('Error al actualizar estado'));
+                            setSaving(false);
+                        }}
+                        className="mini-select w-full"
                         disabled={saving}
                     >
                         <option value="pendiente">Pendiente</option>
@@ -568,37 +673,85 @@ const DiscCard = ({ item, songs, onRefresh, onSongsRefresh, onFavUpdate, onOpenD
                         <option value="finalizado">Completado</option>
                         <option value="abandonado">Abandonado</option>
                     </select>
-                    <button onClick={handleDelete} className="mini-btn danger-btn" title="Eliminar">🗑</button>
-                    <button
-                        onClick={() => setExpanded(!expanded)}
-                        className={`mini-btn ${expanded ? 'bg-tcd-orange text-white' : ''}`}
-                    >
-                        {expanded ? '−' : '+'}
-                    </button>
+                    <div className="flex gap-1 w-full">
+                        <AddToListBtn itemId={item.id} lists={lists} onRefreshLists={onRefreshLists} />
+                        <button onClick={handleDelete} className="mini-btn danger-btn justify-center" title="Eliminar">🗑</button>
+                        <button
+                            onClick={() => setExpanded(!expanded)}
+                            className={`mini-btn ${expanded ? 'bg-tcd-orange text-white' : ''}`}
+                        >
+                            {expanded ? '−' : '+'}
+                        </button>
+                    </div>
                 </div>
 
                 {expanded && (
                     <div className="mt-4 pt-4 border-t border-[#ece7da] flex flex-col gap-3 animate-fade-in">
-                        <div className="flex gap-2">
-                            <input
-                                type="text" placeholder="Nueva canción..."
-                                value={trackTitle} onChange={e => setTrackTitle(e.target.value)}
-                                className="mini-select flex-1"
-                            />
-                            <button onClick={handleSaveSong} className="mini-btn text-accent">ADD</button>
-                        </div>
+                        {tracks && tracks.length > 0 && !manualEntry ? (
+                            <div className="flex flex-col gap-2 w-full">
+                                <select
+                                    className="mini-select w-full"
+                                    value={trackNum ? `${trackNum}:${trackTitle}` : ''}
+                                    onChange={e => {
+                                        const val = e.target.value;
+                                        if (val === '__manual__') {
+                                            setManualEntry(true);
+                                            setTrackNum('');
+                                            setTrackTitle('');
+                                        } else if (val) {
+                                            const idx = val.indexOf(':');
+                                            const num = val.substring(0, idx);
+                                            const title = val.substring(idx + 1);
+                                            setTrackNum(num);
+                                            setTrackTitle(title);
+                                        } else {
+                                            setTrackNum('');
+                                            setTrackTitle('');
+                                        }
+                                    }}
+                                >
+                                    <option value="">Selecciona la canción...</option>
+                                    {tracks.map(t => (
+                                        <option key={t.num} value={`${t.num}:${t.title}`}>
+                                            {t.num}. {t.title}
+                                        </option>
+                                    ))}
+                                    <option value="__manual__">✍️ Escribir manualmente...</option>
+                                </select>
+                                <button onClick={handleSaveSong} className="mini-btn text-accent w-full justify-center">ADD</button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-2 w-full">
+                                <div className="flex gap-1 w-full">
+                                    <input
+                                        type="number" min="1" placeholder="Nº"
+                                        value={trackNum} onChange={e => setTrackNum(e.target.value)}
+                                        className="mini-input w-12 text-center"
+                                    />
+                                    <input
+                                        type="text" placeholder="Canción..."
+                                        value={trackTitle} onChange={e => setTrackTitle(e.target.value)}
+                                        className="mini-input flex-1"
+                                    />
+                                    {tracks && tracks.length > 0 && (
+                                        <button
+                                            type="button"
+                                            onClick={() => { setManualEntry(false); setTrackNum(''); setTrackTitle(''); }}
+                                            className="mini-btn"
+                                            title="Volver a la lista"
+                                        >
+                                            📋
+                                        </button>
+                                    )}
+                                </div>
+                                <button onClick={handleSaveSong} className="mini-btn text-accent w-full justify-center">ADD</button>
+                            </div>
+                        )}
                         {songList.length > 0 && (
                             <div className="max-h-32 overflow-y-auto flex flex-col gap-1">
                                 {songList.map(song => (
-                                    <div key={song.id} className="flex items-center justify-between text-[10px] bg-[#fcfaf5] p-2 rounded-lg border border-[#ece7da]">
-                                        <span className="truncate flex-1">{song.trackTitle}</span>
-                                        <input
-                                            type="checkbox" checked={song.listened}
-                                            onChange={() => {
-                                                fetch(`${API_BASE}/library/songs/${song.id}/listened`, { method: 'PUT', credentials: 'include' })
-                                                    .then(r => r.ok && onSongsRefresh(item.id));
-                                            }}
-                                        />
+                                    <div key={song.id} className="text-[10px] bg-[#fcfaf5] p-2 rounded-lg border border-[#ece7da] truncate">
+                                        {song.trackNumber ? `${song.trackNumber}. ` : ''}{song.trackTitle}
                                     </div>
                                 ))}
                             </div>
@@ -622,6 +775,93 @@ const ProfilePage = () => {
     const [episodesByEntry, setEpisodesByEntry] = useState({});
     const [songsByEntry, setSongsByEntry] = useState({});
     const [activeTab, setActiveTab] = useState('all');
+
+    // Listas personalizadas
+    const [lists, setLists] = useState([]);
+    const [showListModal, setShowListModal] = useState(false);
+    const [editingList, setEditingList] = useState(null); // null = crear nuevo
+    const [listName, setListName] = useState('');
+    const [listDesc, setListDesc] = useState('');
+    const [listCoverUrl, setListCoverUrl] = useState('');
+    const [listSaving, setListSaving] = useState(false);
+    const [expandedList, setExpandedList] = useState(null);
+    const [listSearchQuery, setListSearchQuery] = useState({});
+    const [listSearchType, setListSearchType] = useState({});
+    const [listSearchResults, setListSearchResults] = useState({});
+
+    const handleSearchForList = async (listId) => {
+        const query = listSearchQuery[listId];
+        const type = listSearchType[listId] || 'PELICULA';
+        if (!query || !query.trim()) return;
+        
+        try {
+            const res = await fetch(`${API_BASE}/api/external/search?query=${encodeURIComponent(query)}&type=${type}`, { credentials: 'include' });
+            if (res.ok) {
+                const results = await res.json();
+                setListSearchResults(prev => ({ ...prev, [listId]: results }));
+            }
+        } catch (err) {
+            console.error("Error searching for list:", err);
+        }
+    };
+
+    const handleToggleSearchItemInList = async (listId, searchItem, isAlreadyInList) => {
+        try {
+            if (isAlreadyInList) {
+                const list = lists.find(l => l.id === listId);
+                const itemInList = list?.items?.find(it => it.externalId === searchItem.externalId);
+                if (itemInList) {
+                    await handleRemoveItemFromList(listId, itemInList.id);
+                }
+            } else {
+                let libraryItem = (data?.content || []).find(item => item.content.externalId === searchItem.externalId);
+                let userContentId = libraryItem?.id;
+                
+                if (!userContentId) {
+                    const addRes = await fetch(`${API_BASE}/api/content/add`, {
+                        method: 'POST',
+                        credentials: 'include',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            externalId: searchItem.externalId,
+                            type: searchItem.type,
+                            title: searchItem.title,
+                            imageUrl: searchItem.coverUrl,
+                            status: 'PLANNING',
+                            favorite: false
+                        })
+                    });
+                    
+                    if (addRes.ok || addRes.status === 400) {
+                        const profRes = await fetch(`${API_BASE}/api/profile`, { headers: { Accept: 'application/json' }, credentials: 'include' });
+                        if (profRes.ok) {
+                            const profJson = await profRes.json();
+                            setData(profJson);
+                            const newLibraryItem = (profJson.content || []).find(item => item.content.externalId === searchItem.externalId);
+                            userContentId = newLibraryItem?.id;
+                        }
+                    } else {
+                        alert("Error al añadir a la biblioteca");
+                        return;
+                    }
+                }
+                
+                if (userContentId) {
+                    const addToListRes = await fetch(`${API_BASE}/api/lists/${listId}/items/${userContentId}`, {
+                        method: 'POST',
+                        credentials: 'include'
+                    });
+                    if (addToListRes.ok) {
+                        refreshLists();
+                    } else {
+                        alert("Error al añadir a la lista");
+                    }
+                }
+            }
+        } catch (err) {
+            console.error("Error toggling search item in list:", err);
+        }
+    };
 
     // Profile customization states
     const [editingProfile, setEditingProfile] = useState(false);
@@ -722,11 +962,76 @@ const ProfilePage = () => {
             .catch(err => {
                 console.error("Error fetching profile:", err);
                 setLoading(false);
-                // Si falla, podemos intentar redirigir a login si es un 401 real
             });
     }, [refreshEpisodes, refreshSongs]);
 
+    const refreshLists = useCallback(() => {
+        fetch(`${API_BASE}/api/lists`, { credentials: 'include' })
+            .then(r => r.ok ? r.json() : [])
+            .then(json => setLists(json))
+            .catch(() => setLists([]));
+    }, []);
+
     useEffect(() => { refreshProfile(); }, [refreshProfile]);
+    useEffect(() => { refreshLists(); }, [refreshLists]);
+
+    const handleCreateList = async (e) => {
+        e.preventDefault();
+        if (!listName.trim()) return;
+        setListSaving(true);
+        try {
+            const method = editingList ? 'PUT' : 'POST';
+            const url = editingList ? `${API_BASE}/api/lists/${editingList.id}` : `${API_BASE}/api/lists`;
+            const res = await fetch(url, {
+                method,
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: listName, description: listDesc, coverUrl: listCoverUrl })
+            });
+            if (res.ok) {
+                refreshLists();
+                setShowListModal(false);
+                setEditingList(null);
+                setListName('');
+                setListDesc('');
+                setListCoverUrl('');
+            } else {
+                const msg = await res.text();
+                alert(msg || 'Error al guardar la lista');
+            }
+        } finally {
+            setListSaving(false);
+        }
+    };
+
+    const handleDeleteList = async (listId) => {
+        if (!window.confirm('¿Eliminar esta lista? Los ítems no se borrarán de tu biblioteca.')) return;
+        const res = await fetch(`${API_BASE}/api/lists/${listId}`, { method: 'DELETE', credentials: 'include' });
+        if (res.ok) refreshLists();
+        else alert('Error al eliminar la lista');
+    };
+
+    const handleRemoveItemFromList = async (listId, userContentId) => {
+        const res = await fetch(`${API_BASE}/api/lists/${listId}/items/${userContentId}`, { method: 'DELETE', credentials: 'include' });
+        if (res.ok) refreshLists();
+        else alert('Error al eliminar el ítem');
+    };
+
+    const openCreateModal = () => {
+        setEditingList(null);
+        setListName('');
+        setListDesc('');
+        setListCoverUrl('');
+        setShowListModal(true);
+    };
+
+    const openEditModal = (list) => {
+        setEditingList(list);
+        setListName(list.name);
+        setListDesc(list.description || '');
+        setListCoverUrl(list.coverUrl || '');
+        setShowListModal(true);
+    };
 
     // Actualización de favorito sin recargar todo
     const handleFavUpdate = useCallback((itemId, newVal) => {
@@ -897,7 +1202,7 @@ const ProfilePage = () => {
 
                         <div className="flex flex-wrap items-center justify-center lg:justify-start gap-6">
                             <div className="summary-pill flex flex-col items-center lg:items-end py-4 px-8 rounded-3xl">
-                                <span className="text-[8px] uppercase font-black tracking-widest text-[#8c8471] mb-0.5">INDEXADO</span>
+                                <span className="text-[8px] uppercase font-black tracking-widest text-[#8c8471] mb-0.5">Registrado</span>
                                 <strong className="text-3xl font-black tracking-tighter text-[#2d2a26] leading-none">{totalCount}</strong>
                             </div>
                             <div className="flex gap-3">
@@ -1083,16 +1388,16 @@ const ProfilePage = () => {
                             ) : (
                                 <div className="media-grid">
                                     {favEntries.filter(i => (i.content.type || '').toLowerCase() === 'pelicula').map(item => (
-                                        <MovieCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} />
+                                        <MovieCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} lists={lists} onRefreshLists={refreshLists} />
                                     ))}
                                     {favEntries.filter(i => (i.content.type || '').toLowerCase() === 'libro').map(item => (
-                                        <BookCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} />
+                                        <BookCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} lists={lists} onRefreshLists={refreshLists} />
                                     ))}
                                     {favEntries.filter(i => (i.content.type || '').toLowerCase() === 'serie').map(item => (
-                                        <SeriesCard key={item.id} item={item} episodes={episodesByEntry[item.id]} onRefresh={refreshProfile} onEpisodesRefresh={refreshEpisodes} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} />
+                                        <SeriesCard key={item.id} item={item} episodes={episodesByEntry[item.id]} onRefresh={refreshProfile} onEpisodesRefresh={refreshEpisodes} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} lists={lists} onRefreshLists={refreshLists} />
                                     ))}
                                     {favEntries.filter(i => (i.content.type || '').toLowerCase() === 'disco').map(item => (
-                                        <DiscCard key={item.id} item={item} songs={songsByEntry[item.id]} onRefresh={refreshProfile} onSongsRefresh={refreshSongs} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} />
+                                        <DiscCard key={item.id} item={item} songs={songsByEntry[item.id]} onRefresh={refreshProfile} onSongsRefresh={refreshSongs} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} lists={lists} onRefreshLists={refreshLists} />
                                     ))}
                                 </div>
                             )}
@@ -1106,7 +1411,7 @@ const ProfilePage = () => {
                             <SectionHeader title="Películas" count={movieEntries.length} color="#c2410c" />
                             <div className="media-grid">
                                 {movieEntries.map(item => (
-                                    <MovieCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} />
+                                    <MovieCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} lists={lists} onRefreshLists={refreshLists} />
                                 ))}
                             </div>
                         </section>
@@ -1118,7 +1423,7 @@ const ProfilePage = () => {
                             <SectionHeader title="Libros" count={bookEntries.length} color="#b45309" />
                             <div className="media-grid">
                                 {bookEntries.map(item => (
-                                    <BookCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} />
+                                    <BookCard key={item.id} item={item} onRefresh={refreshProfile} onFavUpdate={handleFavUpdate} onOpenDetails={handleOpenDetails} onUpdateRank={handleUpdateRank} onUpdateDate={handleUpdateDate} lists={lists} onRefreshLists={refreshLists} />
                                 ))}
                             </div>
                         </section>
@@ -1140,6 +1445,8 @@ const ProfilePage = () => {
                                         onOpenDetails={handleOpenDetails}
                                         onUpdateRank={handleUpdateRank}
                                         onUpdateDate={handleUpdateDate}
+                                        lists={lists}
+                                        onRefreshLists={refreshLists}
                                     />
                                 ))}
                             </div>
@@ -1162,11 +1469,199 @@ const ProfilePage = () => {
                                         onOpenDetails={handleOpenDetails}
                                         onUpdateRank={handleUpdateRank}
                                         onUpdateDate={handleUpdateDate}
+                                        lists={lists}
+                                        onRefreshLists={refreshLists}
                                     />
                                 ))}
                             </div>
                         </section>
                     )}
+
+                    {/* ═══ LISTAS PERSONALIZADAS ═══ */}
+                    <section className="mt-16 mb-16 pt-12 border-t border-[#ece7da]">
+                        <div className="section-hd" style={{ '--accent-col': '#7c3aed' }}>
+                            <div className="flex items-center gap-3">
+                                <h2 className="section-title">Mis Listas</h2>
+                            </div>
+                            <div className="flex items-center gap-3">
+                                <span className="count-pill">{lists.length}</span>
+                                <button
+                                    onClick={openCreateModal}
+                                    className="px-4 py-2 bg-[#7c3aed] text-white text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-[#6d28d9] transition-all shadow-sm hover:shadow-md"
+                                >
+                                    + Nueva Lista
+                                </button>
+                            </div>
+                        </div>
+
+                        {lists.length === 0 ? (
+                            <div className="empty-section">
+                                <p>Aún no tienes listas. ¡Crea tu primera lista personalizada!</p>
+                                <button
+                                    onClick={openCreateModal}
+                                    className="mt-4 px-6 py-3 bg-[#7c3aed] text-white text-[9px] font-black uppercase tracking-widest rounded-full hover:bg-[#6d28d9] transition-all"
+                                >
+                                    + Crear Lista
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex flex-col gap-6">
+                                {lists.map(list => (
+                                    <div key={list.id} className="bg-white border border-[#ece7da] rounded-[30px] overflow-hidden shadow-sm hover:shadow-md transition-all">
+                                        {/* Cabecera de lista */}
+                                        <div
+                                            className="flex items-center justify-between p-6 cursor-pointer"
+                                            onClick={() => setExpandedList(expandedList === list.id ? null : list.id)}
+                                        >
+                                            <div className="flex items-center gap-4">
+                                                {list.coverUrl ? (
+                                                    <img src={list.coverUrl} alt={list.name} className="w-12 h-12 rounded-2xl object-cover shadow-md shrink-0" />
+                                                ) : (
+                                                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#7c3aed] to-[#a855f7] flex items-center justify-center text-white font-black text-lg shadow-md shrink-0">
+                                                        {list.name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                                <div>
+                                                    <h3 className="font-black text-[#2d2a26] text-sm uppercase tracking-tight">{list.name}</h3>
+                                                    {list.description && (
+                                                        <p className="text-[10px] text-[#8c8471] mt-0.5 italic">{list.description}</p>
+                                                    )}
+                                                    <span className="text-[9px] font-black text-[#7c3aed] uppercase tracking-widest mt-1 block">{list.itemCount} {list.itemCount === 1 ? 'ítem' : 'ítems'}</span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); openEditModal(list); }}
+                                                    className="w-8 h-8 rounded-full border border-[#ece7da] flex items-center justify-center hover:border-[#7c3aed] hover:text-[#7c3aed] transition-all text-[#8c8471] text-xs"
+                                                    title="Editar lista"
+                                                >
+                                                    ✎
+                                                </button>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleDeleteList(list.id); }}
+                                                    className="w-8 h-8 rounded-full border border-[#ece7da] flex items-center justify-center hover:border-red-400 hover:text-red-500 transition-all text-[#8c8471] text-xs"
+                                                    title="Eliminar lista"
+                                                >
+                                                    ✕
+                                                </button>
+                                                <span className={`text-[#8c8471] transition-transform duration-300 ${expandedList === list.id ? 'rotate-180' : ''}`}>▾</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Ítems de la lista */}
+                                        {expandedList === list.id && (
+                                            <div className="border-t border-[#ece7da] px-6 pb-6 pt-4 animate-fade-in">
+                                                {/* Buscador de contenido integrado en la lista */}
+                                                <div className="mb-8 bg-[#fcfaf5] p-6 rounded-[24px] border border-[#ece7da]">
+                                                    <p className="text-[10px] font-black text-[#8c8471] uppercase tracking-[0.2em] mb-3">Buscar y Añadir Contenido a esta Lista</p>
+                                                    <div className="flex flex-col sm:flex-row gap-3">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Buscar por título..."
+                                                            value={listSearchQuery[list.id] || ''}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setListSearchQuery(prev => ({ ...prev, [list.id]: val }));
+                                                            }}
+                                                            className="flex-1 bg-white border border-[#ece7da] px-5 py-3 rounded-2xl text-xs font-bold focus:outline-none focus:border-[#7c3aed]"
+                                                            onKeyDown={(e) => {
+                                                                if (e.key === 'Enter') {
+                                                                    e.preventDefault();
+                                                                    handleSearchForList(list.id);
+                                                                }
+                                                            }}
+                                                        />
+                                                        <select
+                                                            value={listSearchType[list.id] || 'PELICULA'}
+                                                            onChange={(e) => {
+                                                                const val = e.target.value;
+                                                                setListSearchType(prev => ({ ...prev, [list.id]: val }));
+                                                            }}
+                                                            className="bg-white border border-[#ece7da] px-4 py-3 rounded-2xl text-xs font-bold focus:outline-none focus:border-[#7c3aed]"
+                                                        >
+                                                            <option value="PELICULA">🎬 Películas</option>
+                                                            <option value="SERIE">📺 Series</option>
+                                                            <option value="LIBRO">📖 Libros</option>
+                                                            <option value="DISCO">🎵 Discos</option>
+                                                        </select>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSearchForList(list.id)}
+                                                            className="bg-[#7c3aed] text-white px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest hover:bg-[#6d28d9] transition-colors"
+                                                        >
+                                                            Buscar
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    {/* Resultados de la búsqueda */}
+                                                    {listSearchResults[list.id] && listSearchResults[list.id].length > 0 && (
+                                                        <div className="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-64 overflow-y-auto p-2 bg-white rounded-2xl border border-[#ece7da] shadow-inner">
+                                                            {listSearchResults[list.id].map(resItem => {
+                                                                const isAlreadyInList = list.items && list.items.some(item => item.externalId === resItem.externalId);
+                                                                return (
+                                                                    <div key={resItem.externalId} className="flex items-center justify-between p-3 hover:bg-[#fcfaf5] rounded-xl border border-transparent hover:border-[#ece7da] transition-all">
+                                                                        <div className="flex items-center gap-3 min-w-0">
+                                                                            {resItem.coverUrl ? (
+                                                                                <img src={resItem.coverUrl} alt={resItem.title} className="w-10 h-10 rounded-lg object-cover shrink-0 border border-[#ece7da]" />
+                                                                            ) : (
+                                                                                <div className="w-10 h-10 rounded-lg bg-[#f4efdf] flex items-center justify-center text-[8px] font-black text-[#8c8471] shrink-0 border border-[#ece7da]">IMG</div>
+                                                                            )}
+                                                                            <div className="min-w-0">
+                                                                                <p className="text-[11px] font-black text-[#2d2a26] truncate" title={resItem.title}>{resItem.title}</p>
+                                                                                <p className="text-[9px] text-[#8c8471] uppercase font-bold">{resItem.type}</p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleToggleSearchItemInList(list.id, resItem, isAlreadyInList)}
+                                                                            className={`px-4 py-2 rounded-xl text-[9px] font-black uppercase tracking-widest transition-colors ${
+                                                                                isAlreadyInList 
+                                                                                    ? 'bg-red-100 text-red-600 hover:bg-red-200' 
+                                                                                    : 'bg-green-100 text-green-600 hover:bg-green-200'
+                                                                            }`}
+                                                                        >
+                                                                            {isAlreadyInList ? 'Quitar' : 'Añadir'}
+                                                                        </button>
+                                                                    </div>
+                                                                );
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                {(list.items || []).length === 0 ? (
+                                                    <p className="text-[10px] text-[#8c8471] italic text-center py-6">Esta lista está vacía. Añade ítems usando el buscador de arriba o desde los detalles de cualquier obra.</p>
+                                                ) : (
+                                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                                                        {(list.items || []).map(item => (
+                                                            <div key={item.id} className="group relative">
+                                                                <div className="aspect-[2/3] rounded-xl overflow-hidden bg-[#f4efdf] shadow-sm">
+                                                                    {item.coverUrl ? (
+                                                                        <img src={item.coverUrl} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                                                    ) : (
+                                                                        <div className="w-full h-full flex items-center justify-center text-[#8c8471] text-xs font-black">IMG</div>
+                                                                    )}
+                                                                    <button
+                                                                        onClick={() => handleRemoveItemFromList(list.id, item.id)}
+                                                                        className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white text-xs font-black opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center shadow-md"
+                                                                        title="Quitar de la lista"
+                                                                    >
+                                                                        ×
+                                                                    </button>
+                                                                </div>
+                                                                <p className="text-[9px] font-black text-[#2d2a26] uppercase tracking-tight mt-2 truncate" title={item.title}>{item.title}</p>
+                                                                <span className="text-[8px] text-[#8c8471] capitalize">{item.type}</span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </section>
                 </>
             )}
 
@@ -1258,6 +1753,100 @@ const ProfilePage = () => {
                                     GUARDAR CAMBIOS
                                 </button>
                                 <button type="button" onClick={() => setEditingProfile(false)} className="px-8 bg-white border border-[#ece7da] text-[#8c8471] py-5 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#f4efdf] transition-all">
+                                    CANCELAR
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* ── MODAL CREAR/EDITAR LISTA ── */}
+            {showListModal && (
+                <div className="fixed inset-0 bg-[#2d2a26]/80 backdrop-blur-md flex items-center justify-center z-[2000] p-4">
+                    <div className="bg-white rounded-[40px] border border-[#ece7da] p-8 w-full max-w-md shadow-[0_25px_80px_rgba(0,0,0,0.4)] animate-fade-in">
+                        <div className="flex justify-between items-center mb-8">
+                            <h2 className="text-2xl font-black italic tracking-tighter text-[#2d2a26] uppercase">
+                                {editingList ? 'Editar Lista' : 'Nueva Lista'}<span className="text-[#7c3aed]">.</span>
+                            </h2>
+                            <button
+                                onClick={() => { setShowListModal(false); setEditingList(null); }}
+                                className="w-10 h-10 rounded-full border border-[#ece7da] flex items-center justify-center hover:bg-[#f4efdf] transition-all font-bold"
+                            >X</button>
+                        </div>
+
+                        <form onSubmit={handleCreateList} className="flex flex-col gap-5">
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Nombre de la lista *</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={listName}
+                                    onChange={e => setListName(e.target.value)}
+                                    className="w-full bg-[#fdfaf5] border border-[#ece7da] p-4 rounded-2xl focus:outline-none focus:border-[#7c3aed] font-bold text-sm"
+                                    placeholder="Ej: Favoritos de verano, Pendientes urgentes..."
+                                    autoFocus
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Descripción</label>
+                                <textarea
+                                    value={listDesc}
+                                    onChange={e => setListDesc(e.target.value)}
+                                    className="w-full bg-[#fdfaf5] border border-[#ece7da] p-4 rounded-2xl focus:outline-none focus:border-[#7c3aed] font-bold text-sm h-20 resize-none"
+                                    placeholder="Describe el propósito de esta lista..."
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-[#8c8471] mb-2">Foto / Portada de la Lista</label>
+                                <div className="flex gap-4 items-center mb-3">
+                                    {listCoverUrl ? (
+                                        <img src={listCoverUrl} alt="Vista previa" className="w-12 h-12 rounded-xl object-cover border border-[#ece7da]" />
+                                    ) : (
+                                        <div className="w-12 h-12 rounded-xl bg-[#f4efdf] flex items-center justify-center text-xs font-black text-[#8c8471]">LIST</div>
+                                    )}
+                                    <div className="flex-1">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={(e) => {
+                                                const file = e.target.files[0];
+                                                if (file) {
+                                                    if (file.size > 10 * 1024 * 1024) {
+                                                        alert("La imagen es demasiado grande. Máximo 10MB.");
+                                                        return;
+                                                    }
+                                                    const reader = new FileReader();
+                                                    reader.onloadend = () => setListCoverUrl(reader.result);
+                                                    reader.readAsDataURL(file);
+                                                }
+                                            }}
+                                            className="w-full bg-[#fdfaf5] border border-[#ece7da] p-3 rounded-2xl text-xs font-bold"
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-[9px] text-[#8c8471] mb-2 uppercase tracking-wider font-semibold">O pega una URL de imagen:</p>
+                                <input
+                                    type="text"
+                                    value={listCoverUrl}
+                                    onChange={e => setListCoverUrl(e.target.value)}
+                                    className="w-full bg-[#fdfaf5] border border-[#ece7da] p-4 rounded-2xl focus:outline-none focus:border-[#7c3aed] font-bold text-sm"
+                                    placeholder="https://ejemplo.com/mi-portada.jpg"
+                                />
+                            </div>
+                            <div className="flex gap-3 pt-2">
+                                <button
+                                    type="submit"
+                                    disabled={listSaving || !listName.trim()}
+                                    className="flex-1 bg-[#7c3aed] text-white py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#6d28d9] transition-all disabled:opacity-50"
+                                >
+                                    {listSaving ? 'Guardando...' : editingList ? 'GUARDAR CAMBIOS' : 'CREAR LISTA'}
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => { setShowListModal(false); setEditingList(null); }}
+                                    className="px-6 bg-white border border-[#ece7da] text-[#8c8471] py-4 rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-[#f4efdf] transition-all"
+                                >
                                     CANCELAR
                                 </button>
                             </div>

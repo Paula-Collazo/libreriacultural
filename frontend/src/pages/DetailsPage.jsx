@@ -53,6 +53,87 @@ const DetailsPage = () => {
     const [relatedItems, setRelatedItems] = useState([]);
     const [actorDetails, setActorDetails] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [lists, setLists] = useState([]);
+    const [showListDropdown, setShowListDropdown] = useState(false);
+    const [addingToList, setAddingToList] = useState(null);
+
+    const fetchLists = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/api/lists`, { credentials: 'include' });
+            if (res.ok) {
+                const data = await res.json();
+                setLists(data);
+            }
+        } catch (err) {
+            console.error("Error fetching lists:", err);
+        }
+    };
+
+    useEffect(() => {
+        fetchLists();
+    }, []);
+
+    const handleToggleList = async (listId, isAlreadyInList) => {
+        if (addingToList) return;
+        setAddingToList(listId);
+        try {
+            let userContentId = itemDetails.libraryId;
+
+            // If not in library, add it first with default planning status
+            if (!itemDetails.inLibrary) {
+                const addRes = await fetch(`${API_BASE}/api/content/add`, {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        externalId: itemDetails.externalId || id,
+                        type: itemDetails.type || type.toUpperCase(),
+                        title: itemDetails.title,
+                        imageUrl: itemDetails.coverUrl,
+                        status: 'PLANNING',
+                        favorite: false
+                    })
+                });
+
+                if (addRes.ok || addRes.status === 400) {
+                    // Refetch details to get the libraryId
+                    const detailsRes = await fetch(`${API_BASE}/api/external/details?source=${source}&id=${id}&type=${type.toUpperCase()}`, { credentials: 'include' });
+                    if (detailsRes.ok) {
+                        const updatedDetails = await detailsRes.json();
+                        setItemDetails(updatedDetails);
+                        userContentId = updatedDetails.libraryId;
+                    }
+                } else {
+                    const msg = await addRes.text();
+                    alert(msg || "Error al añadir a la biblioteca");
+                    setAddingToList(null);
+                    return;
+                }
+            }
+
+            if (!userContentId) {
+                alert("Error al obtener el ID de biblioteca");
+                setAddingToList(null);
+                return;
+            }
+
+            const method = isAlreadyInList ? 'DELETE' : 'POST';
+            const res = await fetch(`${API_BASE}/api/lists/${listId}/items/${userContentId}`, {
+                method,
+                credentials: 'include'
+            });
+
+            if (res.ok) {
+                await fetchLists();
+            } else {
+                alert("Error al actualizar la lista");
+            }
+        } catch (err) {
+            console.error("Error toggling item in list:", err);
+        } finally {
+            setAddingToList(null);
+        }
+    };
 
     useEffect(() => {
         const fetchDetails = async () => {
@@ -270,6 +351,52 @@ const DetailsPage = () => {
                                     initialFavorite={itemDetails.favorite} 
                                     onUpdate={(val) => setItemDetails(prev => ({ ...prev, favorite: val }))}
                                 />
+                            )}
+                        </div>
+
+                        {/* AÑADIR A LISTAS */}
+                        <div className="mb-8 relative">
+                            <button
+                                onClick={() => setShowListDropdown(v => !v)}
+                                className="w-full py-5 rounded-[24px] font-black text-[11px] uppercase tracking-[0.3em] transition-all shadow-md bg-white border border-[#ece7da] text-[#2d2a26] hover:bg-[#f4efdf] flex items-center justify-center gap-3"
+                            >
+                                <span>📋 Añadir a una lista</span>
+                                <span className="text-xs">▾</span>
+                            </button>
+                            {showListDropdown && (
+                                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-[#ece7da] rounded-[24px] shadow-2xl z-50 overflow-hidden max-h-60 overflow-y-auto p-2 space-y-1">
+                                    {lists.length === 0 ? (
+                                        <div className="text-[10px] font-bold text-[#8c8471] p-4 text-center">
+                                            No tienes listas creadas. Créalas en tu perfil.
+                                        </div>
+                                    ) : (
+                                        lists.map(list => {
+                                            const isAlreadyInList = list.items && list.items.some(item => item.externalId === id);
+                                            return (
+                                                <button
+                                                    key={list.id}
+                                                    onClick={() => handleToggleList(list.id, isAlreadyInList)}
+                                                    disabled={addingToList === list.id}
+                                                    className="w-full text-left px-4 py-3 text-[11px] font-bold hover:bg-[#f4efdf] text-[#2d2a26] transition-colors rounded-xl flex items-center justify-between"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        {list.coverUrl ? (
+                                                            <img src={list.coverUrl} alt={list.name} className="w-6 h-6 rounded-lg object-cover shrink-0" />
+                                                        ) : (
+                                                            <div className="w-6 h-6 rounded-lg bg-gradient-to-br from-[#7c3aed] to-[#a855f7] flex items-center justify-center text-white text-[9px] font-black shrink-0">
+                                                                {list.name.charAt(0).toUpperCase()}
+                                                            </div>
+                                                        )}
+                                                        <span>{list.name}</span>
+                                                    </div>
+                                                    <span className="text-[10px] font-bold text-[#8c8471]">
+                                                        {addingToList === list.id ? '...' : isAlreadyInList ? '✓ Quitar' : '+ Añadir'}
+                                                    </span>
+                                                </button>
+                                            );
+                                        })
+                                    )}
+                                </div>
                             )}
                         </div>
 

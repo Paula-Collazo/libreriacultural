@@ -29,6 +29,9 @@ public class CustomList {
     )
     private List<UserContent> items = new ArrayList<>();
 
+    @Column(columnDefinition = "TEXT")
+    private String coverUrl;
+
     public CustomList() {}
 
     // Getters and Setters
@@ -38,6 +41,8 @@ public class CustomList {
     public void setName(String name) { this.name = name; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
+    public String getCoverUrl() { return coverUrl; }
+    public void setCoverUrl(String coverUrl) { this.coverUrl = coverUrl; }
     public User getUser() { return user; }
     public void setUser(User user) { this.user = user; }
     public List<UserContent> getItems() { return items; }

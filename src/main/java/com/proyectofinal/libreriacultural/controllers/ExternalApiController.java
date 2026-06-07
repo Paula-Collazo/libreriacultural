@@ -14,14 +14,20 @@ import java.util.Map;
 import com.proyectofinal.libreriacultural.services.ExternalContentItem;
 import com.proyectofinal.libreriacultural.services.ExternalContentSearchService;
 
+import com.proyectofinal.libreriacultural.Repositories.UserRepository;
+import com.proyectofinal.libreriacultural.domain.User;
+import jakarta.servlet.http.HttpSession;
+
 @RestController
 @RequestMapping("/api/external")
 public class ExternalApiController {
 
     private final ExternalContentSearchService externalContentSearchService;
+    private final UserRepository userRepository;
 
-    public ExternalApiController(ExternalContentSearchService externalContentSearchService) {
+    public ExternalApiController(ExternalContentSearchService externalContentSearchService, UserRepository userRepository) {
         this.externalContentSearchService = externalContentSearchService;
+        this.userRepository = userRepository;
     }
 
     @GetMapping("/search")
@@ -77,8 +83,13 @@ public class ExternalApiController {
     }
 
     @GetMapping("/details")
-    public Map<String, Object> getDetails(@RequestParam String source, @RequestParam String id, @RequestParam String type) {
-        return externalContentSearchService.getDetails(source, id, type);
+    public Map<String, Object> getDetails(@RequestParam String source, @RequestParam String id, @RequestParam String type, HttpSession session) {
+        Long userId = (Long) session.getAttribute("sessionUserId");
+        if (userId == null) {
+            List<User> users = userRepository.findAll();
+            if (!users.isEmpty()) userId = users.get(0).getId();
+        }
+        return externalContentSearchService.getDetails(source, id, type, userId);
     }
 
     @GetMapping("/actor")

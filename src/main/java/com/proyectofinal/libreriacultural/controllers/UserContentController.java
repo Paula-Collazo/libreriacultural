@@ -358,6 +358,14 @@ public class UserContentController {
         return userSongProgressRepository.save(progress);
     }
 
+    @PutMapping("/songs/{songId}/listened")
+    public UserSongProgress toggleSongListened(@PathVariable Long songId) {
+        UserSongProgress song = userSongProgressRepository.findById(songId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Canción no encontrada"));
+        song.setListened(song.getListened() == null ? true : !song.getListened());
+        return userSongProgressRepository.save(song);
+    }
+
     @DeleteMapping("/{userContentId}")
     public void deleteFromLibrary(@PathVariable Long userContentId) {
         if (!userContentRepository.existsById(userContentId)) {
