@@ -46,7 +46,7 @@ const HeartBtn = ({ itemId, initialFavorite, onUpdate }) => {
 };
 
 const DetailsPage = () => {
-    const { source, type, id } = useParams();
+    const { source, type, '*': id } = useParams();
     const navigate = useNavigate();
     const [itemDetails, setItemDetails] = useState(null);
     const [loading, setLoading] = useState(true);

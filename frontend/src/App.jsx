@@ -85,7 +85,7 @@ function AppContent() {
            <Route path="/libros" element={<Explorar filterType="LIBRO" />} />
            <Route path="/discos" element={<Explorar filterType="DISCO" />} />
            <Route path="/comunidad" element={<Comunidad />} />
-           <Route path="/details/:source/:type/:id" element={<DetailsPage />} />
+           <Route path="/details/:source/:type/*" element={<DetailsPage />} />
            <Route path="/landing" element={<LandingPage />} />
            <Route path="/login" element={<LoginPage />} />
            <Route path="/register" element={<RegisterPage />} />
